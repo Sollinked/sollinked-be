@@ -1,0 +1,16 @@
+/node_modules
+*.js
+package-lock.json
+.DS_Store
+.env
+.local_keys
+._local_keys
+.user_keys
+
+test.ts
+
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.webp
