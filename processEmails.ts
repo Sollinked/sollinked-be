@@ -77,11 +77,14 @@ export const processEmails = () => {
                                     tiplink_url: tiplink.url.toString(),
                                     tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
                                 });
+
+                                // need to include guide to deposit?
+                                let returnText = `Please deposit USDC (Solana) to the Solana Address below for a guaranteed audience\n${tiplink.keypair.publicKey.toBase58()}`;
                                 
                                 await sendEmail({
                                     to: returnToEmail,
                                     subject: `Re: ${subject}`,
-                                    text: `Please deposit USDC (Solana) to the Solana Address below for a guaranteed audience\n${tiplink.keypair.publicKey.toBase58()}`,
+                                    text: returnText,
                                     inReplyTo: messageId, // have to set this to reply to message in a thread
                                     references: messageId, // have to set this to reply to message in a thread
                                 });
