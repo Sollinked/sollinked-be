@@ -574,3 +574,12 @@ export const transferCNfts = async(nft_ids: string[], nonPublicKeyAccount: strin
 
     return true;
 }
+
+export const getMailCredentials = () => {
+    return {
+        host: process.env.EMAIL_HOST!,
+        user: process.env.EMAIL_ADDRESS!,
+        pass: process.env.EMAIL_PASSWORD!,
+        name: process.env.EMAIL_NAME!,
+    }
+}

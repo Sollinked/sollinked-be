@@ -147,7 +147,7 @@ export default class DB {
         }
 
         catch (e){
-            // console.log(query);
+            console.log(query);
             console.error(e);
         }
 
@@ -173,7 +173,7 @@ export default class DB {
         }
 
         catch (e){
-            // console.log(query);
+            console.log(query);
             console.error(e);
         }
 

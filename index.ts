@@ -7,6 +7,8 @@ import path from 'path';
 import dotenv from 'dotenv';
 import { getServerPort } from './utils';
 import { routes as onchainRoutes } from './src/Routes/sample';
+import cron from 'node-cron';
+import { processEmails } from './processEmails';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
 process.on('uncaughtException', function (err) {
@@ -51,4 +53,9 @@ app.get('/', function(req, res) {
 // start the server
 http.listen(port, () => {
     console.log("I'm alive!");
+});
+
+// run every 2 minutes
+cron.schedule('*/2 * * * *', () => {
+    processEmails();
 });
