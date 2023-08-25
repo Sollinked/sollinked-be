@@ -1,10 +1,10 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { Profile, fillableColumns } from "../Models/profile";
-import * as profileTierController from './profileTiersController';
+import { User, fillableColumns } from "../Models/user";
+import * as userTierController from './userTierController';
 
-const table = 'profiles';
+const table = 'users';
 
 // init entry for user
 export const init = async() => { }
@@ -30,7 +30,7 @@ export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult<Profile>(query);
+    const result = await db.executeQueryForSingleResult<User>(query);
 
     return result ?? {};
 }
@@ -41,14 +41,14 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    let result = await db.executeQueryForResults<Profile>(query);
+    let result = await db.executeQueryForResults<User>(query);
 
     if(!result) {
         return result;
     }
 
     for(const [index, res] of result.entries()) {
-        result[index].tiers =  await profileTierController.find({'profile_id': res.id});
+        result[index].tiers =  await userTierController.find({'user_id': res.id});
     }
 
     return result;
@@ -59,7 +59,7 @@ export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<Profile>(query);
+    const result = await db.executeQueryForResults<User>(query);
 
     return result ?? [];
 }

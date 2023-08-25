@@ -1,6 +1,6 @@
 export type Mail = {
     id: number;
-    profile_id: number;
+    user_id: number;
     from: string;
     to: string;
     message_id: string;
@@ -12,7 +12,7 @@ export type Mail = {
 
 export const fillableColumns = [
     'id',
-    'profile_id',
+    'user_id',
     'from_email',
     'to_email',
     'message_id',

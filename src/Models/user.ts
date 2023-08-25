@@ -1,11 +1,11 @@
-import { ProfileTier } from "./profileTier";
+import { UserTier } from "./userTier";
 
-export type Profile = {
+export type User = {
     id: number;
     address: string;
     username: string;
     email_address?: string;
-    tiers?: ProfileTier[];
+    tiers?: UserTier[];
 }
 
 export const fillableColumns = [

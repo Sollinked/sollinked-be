@@ -1,12 +1,12 @@
-export type ProfileTier = {
+export type UserTier = {
     id: number;
-    profile_id: number;
+    user_id: number;
     value_usd: number;
     respond_days: number;
 }
 
 export const fillableColumns = [
-    'profile_id',
+    'user_id',
     'value_usd',
     'respond_days',
 ];

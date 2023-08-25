@@ -40,7 +40,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(filtered, ' AND ');
     const query = `SELECT 
                         id,
-                        profile_id,
+                        user_id,
                         from,
                         to,
                         message_id,

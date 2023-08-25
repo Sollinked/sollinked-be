@@ -1,11 +1,11 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { seedProfileTiers, seedProfiles } from './src/Seeders';
+import { seedUserTiers, seedUsers } from './src/Seeders';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
 (async() => {
-    await seedProfiles();
-    await seedProfileTiers();
+    await seedUsers();
+    await seedUserTiers();
     console.log('Seed ended, press CTRL / CMD + C');
     return;
 })();

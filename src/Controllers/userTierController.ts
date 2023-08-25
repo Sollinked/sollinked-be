@@ -1,9 +1,9 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { ProfileTier, fillableColumns } from "../Models/profileTier";
+import { UserTier, fillableColumns } from "../Models/userTier";
 
-const table = 'profile_tiers';
+const table = 'user_tiers';
 
 // init entry for user
 export const init = async() => { }
@@ -29,7 +29,7 @@ export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult<ProfileTier>(query);
+    const result = await db.executeQueryForSingleResult<UserTier>(query);
 
     return result ?? {};
 }
@@ -40,7 +40,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY value_usd desc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<ProfileTier>(query);
+    const result = await db.executeQueryForResults<UserTier>(query);
 
     return result;
 }
@@ -50,7 +50,7 @@ export const list = async() => {
     const query = `SELECT * FROM ${table} ORDER BY value_usd desc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<ProfileTier>(query);
+    const result = await db.executeQueryForResults<UserTier>(query);
 
     return result ?? [];
 }

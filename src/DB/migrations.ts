@@ -15,7 +15,7 @@ export default [
         query: `
             CREATE TABLE mails (
                 id serial PRIMARY KEY,
-                profile_id int not null,
+                user_id int not null,
                 from_email text not null,
                 to_email text not null,
                 message_id text not null,
@@ -42,36 +42,36 @@ export default [
         `,
     },
     {
-        name: "create_profiles_table",
+        name: "create_users_table",
         query: `
-            CREATE TABLE profiles (
+            CREATE TABLE users (
                 id serial PRIMARY KEY,
                 address text not null,
                 username text UNIQUE not null,
                 email_address text null
             )
         `,
-        rollback_query: `DROP TABLE profiles;`,
+        rollback_query: `DROP TABLE users;`,
     },
     {
-        name: "create_profile_tiers_table",
+        name: "create_user_tiers_table",
         query: `
-            CREATE TABLE profile_tiers (
+            CREATE TABLE user_tiers (
                 id serial PRIMARY KEY,
-                profile_id int not null,
+                user_id int not null,
                 value_usd decimal not null,
                 respond_days int not null
             )
         `,
-        rollback_query: `DROP TABLE profile_tiers;`,
+        rollback_query: `DROP TABLE user_tiers;`,
     },
     {
-        name: "create_profile_tier_indexes",
+        name: "create_user_tier_indexes",
         query: `
-            CREATE INDEX profile_tier_profile_id_idx ON profile_tiers(profile_id);
+            CREATE INDEX user_tier_user_id_idx ON user_tiers(user_id);
         `,
         rollback_query: `
-            DROP INDEX profile_tier_profile_id_idx;
+            DROP INDEX user_tier_user_id_idx;
         `,
     },
     {

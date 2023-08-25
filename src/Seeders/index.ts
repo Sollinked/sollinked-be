@@ -6,9 +6,9 @@ import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
-export const seedProfiles = async() => {
+export const seedUsers = async() => {
     let db = new DB();
-    let table = 'profiles';
+    let table = 'users';
     let checkerQuery = `SELECT COUNT(*) as count FROM ${table}`;
     let checkerRes = await db.executeQueryForResults<{count: number}>(checkerQuery);
 
@@ -33,9 +33,9 @@ export const seedProfiles = async() => {
     }
 }
 
-export const seedProfileTiers = async() => {
+export const seedUserTiers = async() => {
     let db = new DB();
-    let table = 'profile_tiers';
+    let table = 'user_tiers';
     let checkerQuery = `SELECT COUNT(*) as count FROM ${table}`;
     let checkerRes = await db.executeQueryForResults<{count: number}>(checkerQuery);
 
@@ -44,7 +44,7 @@ export const seedProfileTiers = async() => {
         return;
     }
 
-    let columns = ['profile_id', 'value_usd', 'respond_days'];
+    let columns = ['user_id', 'value_usd', 'respond_days'];
     let values = [[1, 1, 1]];
 
     let query = getInsertQuery(columns, values, table);

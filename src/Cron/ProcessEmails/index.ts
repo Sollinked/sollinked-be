@@ -3,7 +3,7 @@ import { simpleParser } from 'mailparser';
 import { TipLink } from '@tiplink/api';
 import { sendEmail } from '../../../src/Mail';
 import * as controller from '../../../src/Controllers/mailController';
-import * as profileController from '../../../src/Controllers/profilesController';
+import * as userController from '../../Controllers/userController';
 
 const imapConfig: Imap.Config = {
     user: 'test@kida.tech',
@@ -67,9 +67,9 @@ export const processEmails = () => {
                                 let returnToEmail = fromEmailMatch[0];
                                 let toEmail = toEmailMatch[0];
 
-                                let profiles = await profileController.find({ email_address: toEmail });
-                                if(!profiles || profiles.length === 0){
-                                    console.log('cant find profile');
+                                let users = await userController.find({ email_address: toEmail });
+                                if(!users || users.length === 0){
+                                    console.log('cant find user');
                                     return;
                                 }
 
@@ -78,7 +78,7 @@ export const processEmails = () => {
 
                                 // save from, to, messageId and tiplink url to db
                                 await controller.create({
-                                    profile_id: profiles[0].id,
+                                    user_id: users[0].id,
                                     from_email: returnToEmail,
                                     to_email: toEmail,
                                     message_id: messageId,
