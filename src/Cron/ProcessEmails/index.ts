@@ -1,8 +1,8 @@
 import Imap from 'imap';
 import { simpleParser } from 'mailparser';
 import { TipLink } from '@tiplink/api';
-import { sendEmail } from './src/Mail';
-import * as controller from './src/Controllers/mailController';
+import { sendEmail } from '../../../src/Mail';
+import * as controller from '../../../src/Controllers/mailController';
 
 const imapConfig: Imap.Config = {
     user: 'test@kida.tech',

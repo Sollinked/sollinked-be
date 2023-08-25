@@ -1,57 +1,61 @@
 import DB from '../DB';
 
-import { getInsertQuery, getRandomNumber } from '../../utils';
+import { getInsertQuery } from '../../utils';
 import _ from 'lodash';
 import dotenv from 'dotenv';
 import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
-export const seedCraftableSkills = async() => {
-    // let db = new DB();
-    // let table = 'craftable_skills';
-    // let checkerQuery = `SELECT COUNT(*) as count FROM ${table}`;
-    // let checkerRes = await db.executeQueryForResults<{count: number}>(checkerQuery);
+export const seedProfiles = async() => {
+    let db = new DB();
+    let table = 'profiles';
+    let checkerQuery = `SELECT COUNT(*) as count FROM ${table}`;
+    let checkerRes = await db.executeQueryForResults<{count: number}>(checkerQuery);
 
-    // if(checkerRes && checkerRes[0].count > 0) {
-    //     console.log(`${table} already seeded! Skipping..`);
-    //     return;
-    // }
+    if(checkerRes && checkerRes[0].count > 0) {
+        console.log(`${table} already seeded! Skipping..`);
+        return;
+    }
 
-    // let craftableCounterQuery = `SELECT COUNT(*) as count FROM craftables`;
-    // let craftableCounterRes = await db.executeQueryForResults<{count: number}>(craftableCounterQuery);
+    let columns = ['address', 'username', 'email_address'];
+    let values = [['admin123', 'test', 'admin@email.com']]; // change test to admin later
 
-    // if(!craftableCounterRes || craftableCounterRes[0].count === 0) {
-    //     console.log(`No craftables detected! Skipping..`);
-    //     return;
-    // }
+    let query = getInsertQuery(columns, values, table);
+    try {
+        await db.executeQuery(query);
+        console.log(`Seeded ${table}`);
+        return true;
+    }
 
-    // let columns = ['craftable_id', 'name', 'value'];
-    // let values: any[][] = [];
-    // let craftableCount = craftableCounterRes[0].count;
-    // let skillNames = ['increase_loot_drop', 'increase_catch_rate', 'increase_exp_rate', 'increase_gold_rate'];
+    catch (e){
+        console.log(e);
+        return false;
+    }
+}
 
-    // for(let i = 0; i < craftableCount; i++) {
-    //     let craftableId = i + 1; // reference current craftable
+export const seedProfileTiers = async() => {
+    let db = new DB();
+    let table = 'profile_tiers';
+    let checkerQuery = `SELECT COUNT(*) as count FROM ${table}`;
+    let checkerRes = await db.executeQueryForResults<{count: number}>(checkerQuery);
 
-    //     let abilityCount = getRandomNumber(1, skillNames.length, true);
+    if(checkerRes && checkerRes[0].count > 0) {
+        console.log(`${table} already seeded! Skipping..`);
+        return;
+    }
 
-    //     for(let j = 0; j < abilityCount; j++) {
-    //         let skillIndex = getRandomNumber(0, skillNames.length - 1, true);
-    //         let skillName = skillNames[skillIndex]; // can have multiple same abilities
-    //         let value = getRandomNumber(MIN_SKILL_VALUE, MAX_SKILL_VALUE);
-    //         values.push([craftableId, skillName, value]);
-    //     }
-    // }
+    let columns = ['profile_id', 'value_usd', 'respond_days'];
+    let values = [[1, 1, 1]];
 
-    // let query = getInsertQuery(columns, values, table);
-    // try {
-    //     await db.executeQuery(query);
-    //     console.log(`Seeded ${table}`);
-    //     return true;
-    // }
+    let query = getInsertQuery(columns, values, table);
+    try {
+        await db.executeQuery(query);
+        console.log(`Seeded ${table}`);
+        return true;
+    }
 
-    // catch (e){
-    //     console.log(e);
-    //     return false;
-    // }
+    catch (e){
+        console.log(e);
+        return false;
+    }
 }
