@@ -3,6 +3,7 @@ import { simpleParser } from 'mailparser';
 import { TipLink } from '@tiplink/api';
 import { sendEmail } from '../../../src/Mail';
 import * as controller from '../../../src/Controllers/mailController';
+import * as profileController from '../../../src/Controllers/profilesController';
 
 const imapConfig: Imap.Config = {
     user: 'test@kida.tech',
@@ -66,11 +67,18 @@ export const processEmails = () => {
                                 let returnToEmail = fromEmailMatch[0];
                                 let toEmail = toEmailMatch[0];
 
+                                let profiles = await profileController.find({ email_address: toEmail });
+                                if(!profiles || profiles.length === 0){
+                                    console.log('cant find profile');
+                                    return;
+                                }
+
                                 // we process emails here
                                 const tiplink = await TipLink.create();
 
                                 // save from, to, messageId and tiplink url to db
                                 await controller.create({
+                                    profile_id: profiles[0].id,
                                     from_email: returnToEmail,
                                     to_email: toEmail,
                                     message_id: messageId,
@@ -83,7 +91,7 @@ export const processEmails = () => {
                                 
                                 await sendEmail({
                                     to: returnToEmail,
-                                    subject: `Re: ${subject}`,
+                                    subject: subject ?? "Re:",
                                     text: returnText,
                                     inReplyTo: messageId, // have to set this to reply to message in a thread
                                     references: messageId, // have to set this to reply to message in a thread
@@ -93,7 +101,7 @@ export const processEmails = () => {
                         msg.once('attributes', attrs => {
                             const {uid} = attrs;
                             imap.addFlags(uid, ['\\Seen'], () => {
-                                console.log(`${uid} marked as read!`);
+                                // do nothing
                             });
                         });
                     });

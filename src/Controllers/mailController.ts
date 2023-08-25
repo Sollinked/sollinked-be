@@ -36,8 +36,22 @@ export const view = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
-    const query = `SELECT * FROM ${table} WHERE ${params}`;
+    const filtered = _.pick(whereParams, fillableColumns);
+    const params = formatDBParamsToStr(filtered, ' AND ');
+    const query = `SELECT 
+                        id,
+                        profile_id,
+                        from,
+                        to,
+                        message_id,
+                        case 
+                        when is_processed then tiplink_url
+                        else '' end as tiplink_url,
+                        tiplink_pubilc_key,
+                        is_processed,
+                        has_responded
+                    FROM ${table} 
+                    WHERE ${params}`;
 
     const db = new DB();
     const result = await db.executeQueryForResults<Mail>(query);

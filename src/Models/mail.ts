@@ -11,6 +11,8 @@ export type Mail = {
 }
 
 export const fillableColumns = [
+    'id',
+    'profile_id',
     'from_email',
     'to_email',
     'message_id',
