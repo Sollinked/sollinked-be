@@ -1,4 +1,4 @@
-import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, sendSOLTo, transferCNfts } from "../../utils";
+import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import { UserTier, fillableColumns } from "../Models/userTier";
@@ -56,14 +56,20 @@ export const list = async() => {
 }
 
 // update
-export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
+export const update = async(user_id: number, tiers: UserTier[]): Promise<void> => {
     // filter
-    const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
-
-    const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
-
     const db = new DB();
+
+    const deleteQuery = `DELETE FROM ${table} WHERE user_id = ${user_id}`;
+    await db.executeQuery(deleteQuery);
+
+    let columns = ['user_id', 'value_usd', 'respond_days'];
+    let values: any[] = []; // change test to admin later
+    tiers.forEach(tier => {
+        values.push([user_id, tier.value_usd, tier.respond_days]);
+    });
+
+    let query = getInsertQuery(columns, values, table);
     await db.executeQueryForSingleResult(query);
 }
 
