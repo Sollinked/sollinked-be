@@ -1,0 +1,1 @@
+export const VERIFY_MESSAGE = `This message is to prove that you're the owner of this address!`

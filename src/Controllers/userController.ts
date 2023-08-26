@@ -1,8 +1,9 @@
-import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, sendSOLTo, transferCNfts } from "../../utils";
+import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getDappDomain, getProfilePictureLink, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import { User, fillableColumns } from "../Models/user";
 import * as userTierController from './userTierController';
+import * as mailController from './mailController';
 
 const table = 'users';
 
@@ -32,7 +33,12 @@ export const view = async(id: number) => {
     const db = new DB();
     const result = await db.executeQueryForSingleResult<User>(query);
 
-    return result ?? {};
+    if(!result) {
+        return result;
+    }
+    
+    result.profile_picture = getProfilePictureLink(result.profile_picture);
+    return result;
 }
 
 // find (all match)
@@ -49,6 +55,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     for(const [index, res] of result.entries()) {
         result[index].tiers =  await userTierController.find({'user_id': res.id});
+        result[index].mails =  await mailController.find({'user_id': res.id});
+        result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
     }
 
     return result;

@@ -48,7 +48,14 @@ export default [
                 id serial PRIMARY KEY,
                 address text not null,
                 username text UNIQUE not null,
-                email_address text null
+                display_name text null,
+                email_address text null,
+                facebook text null,
+                twitter text null,
+                twitch text null,
+                instagram text null,
+                tiktok text null,
+                youtube text null
             )
         `,
         rollback_query: `DROP TABLE users;`,

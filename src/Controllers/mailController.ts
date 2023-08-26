@@ -41,13 +41,13 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const query = `SELECT 
                         id,
                         user_id,
-                        from,
-                        to,
+                        from_email,
+                        to_email,
                         message_id,
                         case 
                         when is_processed then tiplink_url
                         else '' end as tiplink_url,
-                        tiplink_pubilc_key,
+                        tiplink_public_key,
                         is_processed,
                         has_responded
                     FROM ${table} 

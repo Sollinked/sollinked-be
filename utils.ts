@@ -12,6 +12,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { WrapperConnection } from './src/ReadAPI';
 import { base58 } from 'ethers/lib/utils';
 import { createTransferCompressedNftInstruction } from './src/NFT/Transfer';
+import nacl from 'tweetnacl';
+import bs58 from 'bs58';
+import { base64 } from 'ethers/lib/utils';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -582,4 +585,22 @@ export const getMailCredentials = () => {
         pass: process.env.EMAIL_PASSWORD!,
         name: process.env.EMAIL_NAME!,
     }
+}
+
+export const verifySignature = (address: string, signature: string, message: string) => { 
+    return nacl
+            .sign
+            .detached
+            .verify(
+                new TextEncoder().encode(message),
+                base64.decode(signature),
+                bs58.decode(address)
+            );
+}
+
+export const getProfilePictureLink = (filename?: string) => {
+    if(!filename) {
+        return undefined;
+    }
+    return getDappDomain() + "/public/content/" + filename;
 }
