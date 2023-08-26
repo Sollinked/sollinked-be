@@ -22,6 +22,7 @@ export const fillableColumns = [
     'address',
     'username',
     'display_name',
+    'profile_picture',
     'email_address',
     'facebook',
     'twitter',

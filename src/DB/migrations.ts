@@ -48,6 +48,7 @@ export default [
                 id serial PRIMARY KEY,
                 address text not null,
                 username text UNIQUE not null,
+                profile_picture text null,
                 display_name text null,
                 email_address text null,
                 facebook text null,
