@@ -39,7 +39,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const filtered = _.pick(whereParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, ' AND ');
     const query = `SELECT 
-                        id,
+                        id as key,
                         user_id,
                         from_email,
                         to_email,
@@ -49,12 +49,22 @@ export const find = async(whereParams: {[key: string]: any}) => {
                         else '' end as tiplink_url,
                         tiplink_public_key,
                         is_processed,
-                        has_responded
+                        has_responded,
+                        is_claimed,
+                        value_usd,
+                        created_at,
+                        processed_at,
+                        value_usd,
+                        expiry_date
                     FROM ${table} 
                     WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<Mail>(query);
+    let result = await db.executeQueryForResults<Mail>(query);
+
+    if(!result) {
+        return result;
+    }
 
     return result;
 }

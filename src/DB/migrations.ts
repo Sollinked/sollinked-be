@@ -23,7 +23,11 @@ export default [
                 tiplink_public_key text not null,
                 is_processed bool default(false) not null,
                 has_responded bool default(false) not null,
-                created_at timestamp default(current_timestamp) not null
+                is_claimed bool default(false) not null,
+                created_at timestamp default(current_timestamp) not null,
+                processed_at timestamp null,
+                value_usd decimal null,
+                expiry_date timestamp null
             )
         `,
         rollback_query: `DROP TABLE mails;`,
