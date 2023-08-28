@@ -1,6 +1,7 @@
 import { processEmails } from "./ProcessEmails";
 import cron from 'node-cron';
 import { processPayments } from "./ProcessPayments";
+import { processClaims } from "./ProcessClaims";
 
 
 export const init = () => {
@@ -8,5 +9,6 @@ export const init = () => {
     cron.schedule('*/2 * * * *', () => {
         processEmails();
         processPayments();
+        processClaims();
     });
 }
