@@ -4,6 +4,7 @@ import _ from "lodash";
 import { User, fillableColumns } from "../Models/user";
 import * as userTierController from './userTierController';
 import * as mailController from './mailController';
+import { changeEmailForwarder, createEmailForwarder } from "../Mail";
 
 const table = 'users';
 
@@ -22,6 +23,7 @@ export const create = async(insertParams: any) => {
 
     const db = new DB();
     const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    await createEmailForwarder(filtered.username);
 
     return result;
 }
@@ -75,9 +77,19 @@ export const list = async() => {
 // update
 export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
     // filter
-    const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
+    const user = await view(id);
+    if(!user) {
+        return;
+    }
 
+    const filtered = _.pick(updateParams, fillableColumns);
+
+    //update email forwarders if username is different
+    if(user.username !== filtered.username) {
+        await changeEmailForwarder(filtered.username, user.username);
+    }
+
+    const params = formatDBParamsToStr(filtered, ', ');
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
     const db = new DB();

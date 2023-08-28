@@ -1,7 +1,7 @@
 export type UserTier = {
     id: number;
     user_id: number;
-    value_usd: number;
+    value_usd: string;
     respond_days: number;
 }
 

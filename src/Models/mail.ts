@@ -8,11 +8,11 @@ export type Mail = {
     tiplink_public_key: string;
     is_processed: boolean;
     has_responded: boolean;
+    is_claimed: boolean;
     created_at: string;
     processed_at?: string;
-    value_usd?: number;
+    value_usd?: string;
     expiry_date?: string;
-    tier_name?: string;
 }
 
 export const fillableColumns = [
@@ -25,6 +25,9 @@ export const fillableColumns = [
     'tiplink_public_key',
     'is_processed',
     'has_responded',
+    'is_claimed',
     'created_at',
     'processed_at',
+    'value_usd',
+    'expiry_date',
 ];

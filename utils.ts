@@ -10,11 +10,10 @@ import _ from 'lodash';
 import { loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
 import { v4 as uuidv4 } from 'uuid'; 
 import { WrapperConnection } from './src/ReadAPI';
-import { base58 } from 'ethers/lib/utils';
+import { base58, base64 } from 'ethers/lib/utils';
 import { createTransferCompressedNftInstruction } from './src/NFT/Transfer';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
-import { base64 } from 'ethers/lib/utils';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -578,15 +577,6 @@ export const transferCNfts = async(nft_ids: string[], nonPublicKeyAccount: strin
     return true;
 }
 
-export const getMailCredentials = () => {
-    return {
-        host: process.env.EMAIL_HOST!,
-        user: process.env.EMAIL_ADDRESS!,
-        pass: process.env.EMAIL_PASSWORD!,
-        name: process.env.EMAIL_NAME!,
-    }
-}
-
 export const verifySignature = (address: string, signature: string, message: string) => { 
     return nacl
             .sign
@@ -603,4 +593,19 @@ export const getProfilePictureLink = (filename?: string) => {
         return undefined;
     }
     return getDappDomain() + "/public/content/" + filename;
+}
+
+/*
+ *  Mail functions
+ */
+export const getMailCredentials = () => {
+    return {
+        cpanel: process.env.EMAIL_CPANEL!,
+        auth: process.env.EMAIL_AUTH!,
+        domain: process.env.EMAIL_DOMAIN!,
+        host: process.env.EMAIL_HOST!,
+        user: process.env.EMAIL_ADDRESS!,
+        pass: process.env.EMAIL_PASSWORD!,
+        name: process.env.EMAIL_NAME!,
+    }
 }

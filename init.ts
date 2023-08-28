@@ -1,11 +1,7 @@
 import { initializeTree } from "./src/NFT/Initializer";
+import { initializeToken, mintTo } from "./src/Token";
 
+// for testing purposes only
 (async() => {
-    /* await initializeTree({
-        name: "",
-        symbol: "",
-        whichCollection: "",
-        uri: "",
-        sellerFeeBasisPoints: 0,
-    }); */
+    await initializeToken("gold");
 })();
