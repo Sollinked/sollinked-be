@@ -18,6 +18,7 @@ export default [
                 user_id int not null,
                 from_email text not null,
                 to_email text not null,
+                bcc_to_email text null,
                 message_id text not null,
                 tiplink_url text not null,
                 tiplink_public_key text not null,

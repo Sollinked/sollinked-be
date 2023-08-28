@@ -137,6 +137,7 @@ export const getEmailByMessageId = (messageId: string) => {
 export const createEmailForwarder = async(username: string) => {
     let { cpanel, user: admin, auth, domain } = getMailCredentials();
     admin = admin.replace("@", "%40");
+    username = username.toLowerCase();
 
     let url = `${cpanel}/execute/Email/add_forwarder?domain=${domain}&email=${username}%40${domain}&fwdopt=fwd&fwdemail=${admin}`;
     const res = await axios.post(url, undefined, {
@@ -156,6 +157,8 @@ export const createEmailForwarder = async(username: string) => {
 
 export const deleteEmailForwarder = async(username: string) => {
     let { cpanel, user: admin, auth, domain } = getMailCredentials();
+    username = username.toLowerCase();
+    
     let url = `${cpanel}/execute/Email/delete_forwarder?address=${username}%40${domain}&forwarder=${admin}`;
     const res = await axios.post(url, undefined, {
         headers: {

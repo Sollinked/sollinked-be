@@ -2,10 +2,13 @@ import * as mailController from '../../Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
 import moment from 'moment';
-import { deleteAttachments, getEmailByMessageId, mapAttachments, sendEmail } from '../../Mail';
+import { createEmailForwarder, deleteAttachments, getEmailByMessageId, mapAttachments, sendEmail } from '../../Mail';
 import { getAddressUSDCBalance } from '../../Token';
+import { v4 as uuidv4 } from 'uuid';
+import { getMailCredentials } from '../../../utils';
 
 export const processPayments = async() => {
+    let credentials = getMailCredentials();
     let createdAfter = moment().add(-2, 'd').format('YYYY-MM-DD')
     let mails = await mailController.find({
         is_processed: false,
@@ -70,6 +73,11 @@ export const processPayments = async() => {
 
             let processed_at = moment().format('YYYY-MM-DD HH:mm:ss');
             let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm:ss');
+            let uuid = uuidv4();
+
+            // create a forwarder for responses
+            // delete this forwarder once done
+            await createEmailForwarder(uuid);
 
             // update the mail to contain the necessary info
             await mailController.update(mail.key, { 
@@ -77,6 +85,7 @@ export const processPayments = async() => {
                 expiry_date,
                 value_usd: tokenBalance,
                 is_processed: true,
+                bcc_to_email: `${uuid}@${credentials.domain}`,
             });
 
             // delete attachments

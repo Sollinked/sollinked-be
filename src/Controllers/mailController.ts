@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { Mail, fillableColumns } from "../Models/mail";
+import { Mail, ProcessedMail, fillableColumns } from "../Models/mail";
 
 const table = 'mails';
 
@@ -30,8 +30,14 @@ export const view = async(id: number) => {
 
     const db = new DB();
     const result = await db.executeQueryForSingleResult<Mail>(query);
-
-    return result ?? {};
+    if(!result) {
+        return undefined;
+    }
+    let processedResult: ProcessedMail = {
+        ...result,
+        value_usd: parseFloat(result.value_usd ?? '0'),
+    }
+    return processedResult;
 }
 
 // find (all match)
@@ -43,6 +49,7 @@ export const find = async(whereParams: {[key: string]: any}, createdAfter?: stri
                         user_id,
                         from_email,
                         to_email,
+                        bcc_to_email,
                         message_id,
                         case 
                         when is_processed then tiplink_url
@@ -60,13 +67,21 @@ export const find = async(whereParams: {[key: string]: any}, createdAfter?: stri
                     ${createdAfter? `AND created_at >= '${createdAfter}'` : ""}`;
 
     const db = new DB();
-    let result = await db.executeQueryForResults<Mail>(query);
+    let results = await db.executeQueryForResults<Mail>(query);
 
-    if(!result) {
-        return result;
+    if(!results) {
+        return results;
     }
 
-    return result;
+    let processedResults: ProcessedMail[] = [];
+    for(const [index, result] of results.entries()) {
+        processedResults.push({
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        })
+    }
+
+    return processedResults;
 }
 
 // list (all)

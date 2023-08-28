@@ -1,4 +1,4 @@
-import { Mail } from "./mail";
+import { ProcessedMail } from "./mail";
 import { UserTier } from "./userTier";
 
 export type User = {
@@ -15,7 +15,7 @@ export type User = {
     tiktok?: string;
     youtube?: string;
     tiers?: UserTier[];
-    mails?: Mail[];
+    mails?: ProcessedMail[];
 }
 
 export const fillableColumns = [
