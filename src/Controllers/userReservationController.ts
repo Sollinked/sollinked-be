@@ -2,6 +2,7 @@ import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQu
 import DB from "../DB"
 import _ from "lodash";
 import { UserReservation, fillableColumns } from "../Models/userReservation";
+import { RESERVATION_STATUS_BLOCKED } from "../Constants";
 
 const table = 'user_reservations';
 
@@ -37,7 +38,17 @@ export const view = async(id: number) => {
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
-    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY value_usd desc`;
+    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY date desc`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<UserReservation>(query);
+
+    return result;
+}
+
+export const findForUser = async(user_id: number) => {
+    // ignore cancelled
+    const query = `SELECT * FROM ${table} WHERE user_id = ${user_id} AND status >= ${RESERVATION_STATUS_BLOCKED} ORDER BY date asc`;
 
     const db = new DB();
     const result = await db.executeQueryForResults<UserReservation>(query);

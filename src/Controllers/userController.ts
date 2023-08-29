@@ -60,7 +60,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
     for(const [index, res] of result.entries()) {
         result[index].tiers =  await userTierController.find({'user_id': res.id});
         result[index].mails =  await mailController.find({'user_id': res.id});
-        result[index].reservations =  await userReservationController.find({'user_id': res.id});
+        result[index].reservations =  await userReservationController.findForUser(res.id);
         result[index].reservationSettings =  await userReservationSettingController.find({'user_id': res.id});
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
     }
@@ -86,7 +86,6 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
         return;
     }
 
-    console.log(updateParams);
     const filtered = _.pick(updateParams, fillableColumns);
 
     //update email forwarders if username is different
