@@ -141,7 +141,7 @@ export const executeByUserId = async(user_id: number, params: WebhookExecutePara
         }
     
         if(reserve_date) {
-            message += `\n${payer} reserved a meeting on ${reserve_date}\n Subject: ${reserve_title? reserve_title : 'No Subject'})`
+            message += `\n${payer} reserved a meeting on ${reserve_date}\nSubject: ${reserve_title? reserve_title : 'No Subject'}`
         }
         await axios.post(webhook.value, { content: message });
     }

@@ -94,7 +94,7 @@ export const processPayments = async() => {
             // delete attachments
             deleteAttachments(attachments);
 
-            await webhookController.executeByUserId(user.id, {
+            await webhookController.executeByUserId(mail.user_id, {
                 payer: mail.from_email,
                 amount: tokenBalance,
                 expiry_date: utc_expiry_date + " UTC",
