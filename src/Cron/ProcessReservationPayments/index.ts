@@ -1,5 +1,6 @@
 import * as userController from '../../Controllers/userController';
 import * as userReservationController from '../../Controllers/userReservationController';
+import * as webhookController from '../../Controllers/webhookController';
 import moment from 'moment';
 import { getAddressUSDCBalance } from '../../Token';
 import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_CANCELLED, RESERVATION_STATUS_CLAIMED, RESERVATION_STATUS_PAID, RESERVATION_STATUS_PENDING } from '../../Constants';
@@ -28,9 +29,16 @@ export const processReservationPayments = async() => {
             continue;
         }
 
-        console.log(tokenBalance);
         await userReservationController.update(reservation.id, {
             status: RESERVATION_STATUS_PAID,
+        });
+
+        let reserve_date = moment(reservation.date).utc().format('YYYY-MM-DD HH:mm');
+        await webhookController.executeByUserId(reservation.user_id, {
+            payer: reservation.reserve_email!,
+            amount: tokenBalance,
+            reserve_date: reserve_date + " UTC",
+            reserve_title: reservation.reserve_title,
         });
     } 
 }

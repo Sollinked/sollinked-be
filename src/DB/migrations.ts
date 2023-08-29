@@ -91,7 +91,7 @@ export default [
         `,
     },
 
-    // to do -- calendars
+    // calendars
     {
         name: "create_user_reservations_table",
         query: `
@@ -141,5 +141,69 @@ export default [
         rollback_query: `
             DROP INDEX user_reservation_settings_user_id_idx;
         `,
+    },
+
+    //webhooks
+    {
+        // https://stackoverflow.com/questions/9556474/how-do-i-automatically-update-a-timestamp-in-postgresql
+        name: "create_updated_at_function",
+        query: `
+                CREATE OR REPLACE FUNCTION update_at_column()
+                RETURNS TRIGGER AS $$
+                BEGIN
+                IF row(NEW.*) IS DISTINCT FROM row(OLD.*) THEN
+                    NEW.updated_at = now();
+                    RETURN NEW;
+                ELSE
+                    RETURN OLD;
+                END IF;
+                END;
+                $$ language 'plpgsql';
+            `,
+        rollback_query: `
+            DROP FUNCTION update_at_column;
+        `
+    },
+    {
+        name: "create_stream_webhooks_table",
+        query: `
+            CREATE TYPE webhook_status AS ENUM ('active', 'inactive');
+            CREATE TYPE webhook_type AS ENUM ('discord', 'custom');
+
+            CREATE TABLE stream_webhooks (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                type webhook_type not null,
+                value text not null,
+                template text not null,
+                status webhook_status default 'inactive',
+                created_at timestamp default current_timestamp,
+                updated_at timestamp
+            );`,
+        rollback_query: `
+            DROP TABLE stream_webhooks;
+        `
+    },
+    {
+        name: "create_stream_webhooks_idx",
+        query: `
+            CREATE TRIGGER update_stream_webhooks_updated_at BEFORE UPDATE ON stream_webhooks FOR EACH ROW EXECUTE PROCEDURE update_at_column();
+            CREATE INDEX stream_webhook_type_idx ON stream_webhooks (type);
+            CREATE INDEX stream_webhook_status_idx ON stream_webhooks (status);
+            `,
+        rollback_query: `
+            DROP TRIGGER update_stream_webhooks_updated_at;
+            DROP INDEX stream_webhook_type_idx;
+            DROP INDEX stream_webhook_status_idx;
+        `
+    },
+    {
+        name: "create_stream_webhooks_concurrently_idx",
+        query: `
+            CREATE INDEX CONCURRENTLY stream_webhooks_user_id_idx ON stream_webhooks (user_id);
+            `,
+        rollback_query: `
+            DROP INDEX stream_webhooks_user_id_idx;
+        `
     },
 ];

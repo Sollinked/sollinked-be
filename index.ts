@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { getServerPort, verifySignature } from './utils';
 import { routes as userRoutes } from './src/Routes/user';
 import { routes as reservationRoutes } from './src/Routes/reservation';
+import { routes as webhookRoutes } from './src/Routes/webhook';
 import * as cron from './src/Cron';
 import { VERIFY_MESSAGE } from './src/Constants';
 
@@ -61,6 +62,7 @@ app.use((req, res, next) => {
 
 app.use('/user', userRoutes);
 app.use('/reservation', reservationRoutes);
+app.use('/webhooks', webhookRoutes);
 
 //connect app to websocket
 let http = createServer(app);

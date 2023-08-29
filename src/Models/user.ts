@@ -2,6 +2,7 @@ import { ProcessedMail } from "./mail";
 import { ProcessedUserReservation, UserReservation } from "./userReservation";
 import { ProcessedUserReservationSetting, UserReservationSetting } from "./userReservationSetting";
 import { UserTier } from "./userTier";
+import { Webhook } from "./webhook";
 
 export type User = {
     id: number;
@@ -21,6 +22,7 @@ export type User = {
     mails?: ProcessedMail[];
     reservations?: ProcessedUserReservation[];
     reservationSettings?: ProcessedUserReservationSetting[];
+    webhooks?: Webhook[];
 }
 
 export const fillableColumns = [

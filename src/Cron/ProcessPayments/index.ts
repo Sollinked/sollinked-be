@@ -1,6 +1,7 @@
 import * as mailController from '../../Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
+import * as webhookController from '../../Controllers/webhookController';
 import moment from 'moment';
 import { createEmailForwarder, deleteAttachments, getEmailByMessageId, mapAttachments, sendEmail } from '../../Mail';
 import { getAddressUSDCBalance } from '../../Token';
@@ -72,8 +73,10 @@ export const processPayments = async() => {
             });
 
             let processed_at = moment().format('YYYY-MM-DD HH:mm:ss');
-            let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm:ss');
+            let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
+            let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
             let uuid = uuidv4();
+            let bcc_to_email = `${uuid}@${credentials.domain}`;
 
             // create a forwarder for responses
             // delete this forwarder once done
@@ -85,11 +88,18 @@ export const processPayments = async() => {
                 expiry_date,
                 value_usd: tokenBalance,
                 is_processed: true,
-                bcc_to_email: `${uuid}@${credentials.domain}`,
+                bcc_to_email,
             });
 
             // delete attachments
             deleteAttachments(attachments);
+
+            await webhookController.executeByUserId(user.id, {
+                payer: mail.from_email,
+                amount: tokenBalance,
+                expiry_date: utc_expiry_date + " UTC",
+                bcc_to: bcc_to_email,
+            });
 
             // dont process the rest of the tiers
             break;
