@@ -22,7 +22,7 @@ export type ProcessedUserReservation= {
     reserve_title?: string;
     tiplink_url?: string;
     tiplink_public_key?: string;
-    value_usd?: string;
+    value_usd?: number;
     status: number;
 }
 

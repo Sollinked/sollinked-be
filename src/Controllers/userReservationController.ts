@@ -46,6 +46,52 @@ export const find = async(whereParams: {[key: string]: any}) => {
     return result;
 }
 
+// find all reserved after the date
+export const findAfter = async(whereParams: {[key: string]: any}, reservedAfter: string) => {
+    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const query = `SELECT * FROM ${table} WHERE ${params} AND reserved_at >= '${reservedAfter}' ORDER BY date desc`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<UserReservation>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    let ret = result.map(x => {
+        return ({
+            ...x,
+            reservation_price: Number(x.reservation_price),
+            value_usd: Number(x.value_usd),
+        } as ProcessedUserReservation);
+    });
+
+    return ret;
+}
+
+// find all reserved before the date
+export const findBefore = async(whereParams: {[key: string]: any}, reservedBefore: string) => {
+    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const query = `SELECT * FROM ${table} WHERE ${params} AND reserved_at <= '${reservedBefore}' ORDER BY date desc`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<UserReservation>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    let ret = result.map(x => {
+        return ({
+            ...x,
+            reservation_price: Number(x.reservation_price),
+            value_usd: Number(x.value_usd),
+        } as ProcessedUserReservation);
+    });
+
+    return ret;
+}
+
 export const findForUser = async(user_id: number, hideDetails: boolean = false) => {
     // ignore cancelled
     const query = `SELECT * FROM ${table} WHERE user_id = ${user_id} AND status >= ${RESERVATION_STATUS_BLOCKED} ORDER BY date asc`;
@@ -75,6 +121,7 @@ export const findForUser = async(user_id: number, hideDetails: boolean = false) 
             return ({
                 ...x,
                 reservation_price: Number(x.reservation_price),
+                value_usd: Number(x.value_usd),
             } as ProcessedUserReservation);
         });
     }

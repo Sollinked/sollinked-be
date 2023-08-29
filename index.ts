@@ -88,4 +88,4 @@ http.listen(port, () => {
 
 
 // init cron jobs
-// cron.init();
+cron.init();
