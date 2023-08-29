@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { UserReservationSetting, fillableColumns } from "../Models/userReservationSetting";
+import { ProcessedUserReservationSetting, UserReservationSetting, fillableColumns } from "../Models/userReservationSetting";
 
 const table = 'user_reservation_settings';
 
@@ -41,8 +41,16 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     const db = new DB();
     const result = await db.executeQueryForResults<UserReservationSetting>(query);
+    if(!result) {
+        return result;
+    }
 
-    return result;
+    let ret: ProcessedUserReservationSetting[] = result.map(x => ({
+        ...x,
+        reservation_price: Number(x.reservation_price),
+    }));
+
+    return ret;
 }
 
 // list (all)

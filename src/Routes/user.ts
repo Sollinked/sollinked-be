@@ -174,6 +174,10 @@ routes.post('/updateReservationSettings/:user_id', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
+    if(!user_id) {
+        return res.status(400).send("No user id");
+    }
+
     let verified = verifySignature(address, signature, VERIFY_MESSAGE);
     if(!verified) {
         return res.status(401).send("Unauthorized");
@@ -252,5 +256,26 @@ routes.post('/me', async(req, res) => {
         message: "Success",
         data: users[0]
     });
+});
 
+routes.get('/name/:user_id', async(req, res) => {
+    let {user_id} = req.params;
+
+    if(!user_id) {
+        return res.status(400).send("No user id");
+    }
+
+    let user = await userController.view(Number(user_id));
+    if(!user) {
+        return res.send({
+            success: false,
+            message: "Unable to find user",
+        });
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: user.display_name,
+    });
 });

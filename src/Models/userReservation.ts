@@ -7,7 +7,21 @@ export type UserReservation= {
     reserved_at?: string;
     reserve_title?: string;
     tiplink_url?: string;
-    tiplink_public_key: string;
+    tiplink_public_key?: string;
+    value_usd?: string;
+    status: number;
+}
+
+export type ProcessedUserReservation= {
+    id: number;
+    date: string;
+    user_id: number;
+    reservation_price?: number;
+    reserve_email?: string;
+    reserved_at?: string;
+    reserve_title?: string;
+    tiplink_url?: string;
+    tiplink_public_key?: string;
     value_usd?: string;
     status: number;
 }

@@ -1,6 +1,6 @@
 import { ProcessedMail } from "./mail";
-import { UserReservation } from "./userReservation";
-import { UserReservationSetting } from "./userReservationSetting";
+import { ProcessedUserReservation, UserReservation } from "./userReservation";
+import { ProcessedUserReservationSetting, UserReservationSetting } from "./userReservationSetting";
 import { UserTier } from "./userTier";
 
 export type User = {
@@ -19,8 +19,8 @@ export type User = {
     youtube?: string;
     tiers?: UserTier[];
     mails?: ProcessedMail[];
-    reservations?: UserReservation[];
-    reservationSettings?: UserReservationSetting[];
+    reservations?: ProcessedUserReservation[];
+    reservationSettings?: ProcessedUserReservationSetting[];
 }
 
 export const fillableColumns = [

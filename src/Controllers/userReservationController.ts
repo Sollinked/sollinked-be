@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { UserReservation, fillableColumns } from "../Models/userReservation";
+import { ProcessedUserReservation, UserReservation, fillableColumns } from "../Models/userReservation";
 import { RESERVATION_STATUS_BLOCKED } from "../Constants";
 
 const table = 'user_reservations';
@@ -57,19 +57,29 @@ export const findForUser = async(user_id: number, hideDetails: boolean = false) 
         return result;
     }
 
+    let ret: ProcessedUserReservation[] = [];
     if(hideDetails) {
-        result = result.map(x => {
+        ret = result.map(x => {
             return ({
                 id: x.id,
                 date: x.date,
                 user_id: x.user_id,
-                reservation_price: x.reservation_price,
+                reservation_price: Number(x.reservation_price),
                 status: x.status,
-            } as UserReservation);
+            } as ProcessedUserReservation);
         })
     }
 
-    return result;
+    else {
+        ret = result.map(x => {
+            return ({
+                ...x,
+                reservation_price: Number(x.reservation_price),
+            } as ProcessedUserReservation);
+        });
+    }
+
+    return ret;
 }
 
 // list (all)
