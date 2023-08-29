@@ -33,11 +33,18 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
+    // check if it's to reserve a time slot
+    if(req.path.match(/\/reservation\/\d+/g)) {
+        next();
+        return;
+    }
+
     // we need to check the multipart in their respective paths
     if(req.is('multipart/form-data')) {
         next();
         return;
     }
+
     const { address, signature } = req.body;
     if(!signature || !address) {
         console.log('no signature or address')

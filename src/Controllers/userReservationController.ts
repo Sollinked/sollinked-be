@@ -46,12 +46,28 @@ export const find = async(whereParams: {[key: string]: any}) => {
     return result;
 }
 
-export const findForUser = async(user_id: number) => {
+export const findForUser = async(user_id: number, hideDetails: boolean = false) => {
     // ignore cancelled
     const query = `SELECT * FROM ${table} WHERE user_id = ${user_id} AND status >= ${RESERVATION_STATUS_BLOCKED} ORDER BY date asc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<UserReservation>(query);
+    let result = await db.executeQueryForResults<UserReservation>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    if(hideDetails) {
+        result = result.map(x => {
+            return ({
+                id: x.id,
+                date: x.date,
+                user_id: x.user_id,
+                reservation_price: x.reservation_price,
+                status: x.status,
+            } as UserReservation);
+        })
+    }
 
     return result;
 }
