@@ -1,10 +1,13 @@
 import { ProcessedMail } from "./mail";
+import { UserReservation } from "./userReservation";
+import { UserReservationSetting } from "./userReservationSetting";
 import { UserTier } from "./userTier";
 
 export type User = {
     id: number;
     address: string;
     username: string;
+    calendar_advance_days: number;
     display_name?: string;
     profile_picture?: string;
     email_address?: string;
@@ -16,6 +19,8 @@ export type User = {
     youtube?: string;
     tiers?: UserTier[];
     mails?: ProcessedMail[];
+    reservations?: UserReservation[];
+    reservationSettings?: UserReservationSetting[];
 }
 
 export const fillableColumns = [
@@ -30,4 +35,5 @@ export const fillableColumns = [
     'instagram',
     'tiktok',
     'youtube',
+    'calendar_advance_days',
 ];

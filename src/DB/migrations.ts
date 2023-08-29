@@ -1,3 +1,5 @@
+import { RESERVATION_STATUS_PENDING } from "../Constants";
+
 export default [
     {
         name: "initial_migration",
@@ -61,7 +63,8 @@ export default [
                 twitch text null,
                 instagram text null,
                 tiktok text null,
-                youtube text null
+                youtube text null,
+                calendar_advance_days int default(0) not null
             )
         `,
         rollback_query: `DROP TABLE users;`,
@@ -87,17 +90,56 @@ export default [
             DROP INDEX user_tier_user_id_idx;
         `,
     },
-    {
-        name: "create_payments_table",
-        query: `
-            CREATE TABLE payments (
-                id serial PRIMARY KEY,
-                mail_id int not null,
-                created_at timestamp default(current_timestamp) not null
-            )
-        `,
-        rollback_query: `DROP TABLE payments;`,
-    },
 
     // to do -- calendars
+    {
+        name: "create_user_reservations_table",
+        query: `
+            CREATE TABLE user_reservations (
+                id serial PRIMARY KEY,
+                date timestamp not null,
+                user_id int not null,
+                reservation_price decimal null, -- for custom reservation prices
+                reserve_email text null,
+                reserved_at timestamp null,
+                reserve_title text null,
+                tiplink_url text null,
+                tiplink_public_key text null,
+                value_usd decimal null,
+                status int default(${RESERVATION_STATUS_PENDING}) not null
+            )
+        `,
+        rollback_query: `DROP TABLE user_reservations;`,
+    },
+    {
+        name: "create_user_reservations_indexes",
+        query: `
+            CREATE INDEX user_reservations_user_id_idx ON user_reservations(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX user_reservations_user_id_idx;
+        `,
+    },
+    {
+        name: "create_user_reservation_settings_table",
+        query: `
+            CREATE TABLE user_reservation_settings (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                day int not null, -- monday to sunday
+                hour int not null, -- 0 to 23
+                reservation_price decimal not null -- price to reserve this hour
+            )
+        `,
+        rollback_query: `DROP TABLE user_reservation_settings;`,
+    },
+    {
+        name: "create_user_reservation_settings_indexes",
+        query: `
+            CREATE INDEX user_reservation_settings_user_id_idx ON user_reservation_settings(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX user_reservation_settings_user_id_idx;
+        `,
+    },
 ];

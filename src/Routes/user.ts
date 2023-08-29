@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import * as userController from '../Controllers/userController';
 import * as userTierController from '../Controllers/userTierController';
+import * as userReservationSettingController from '../Controllers/userReservationSettingController';
 import { contentUpload } from './Upload';
 import { checkAllowedMime, verifySignature } from '../../utils';
 import fs from 'fs-extra';
@@ -150,6 +151,70 @@ routes.post('/updateTiers/:user_id', async(req, res) => {
         return res.send({
             success: false,
             message: "Unable to update user tier",
+        });
+
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/updateReservationSettings/:user_id', async(req, res) => {
+    let data = req.body;
+    let {address, signature} = data;
+    let user_id = parseInt(req.params.user_id);
+
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!data.address || !data.reservationSettings) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let verified = verifySignature(address, signature, VERIFY_MESSAGE);
+    if(!verified) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    // cant save address
+    data = _.omit(data, ['address', 'signature']);
+
+    if(Object.keys(data).length === 0){
+        return res.send({
+            success: false,
+            message: "No new updates",
+        });
+    }
+
+    let user = await userController.view(user_id);
+    if(!user) {
+        return res.send({
+            success: false,
+            message: "Unable to find user",
+        });
+    }
+
+    // not the same address
+    if(user.address !== address) {
+        return res.status(401).send({
+            success: false,
+            message: "Unauthorized",
+        });
+    }
+    
+    try {
+        await userReservationSettingController.update(user_id, data.reservationSettings);
+    }
+
+    catch(e) {
+        console.log(e);
+
+        return res.send({
+            success: false,
+            message: "Unable to update user reservation settings",
         });
 
     }

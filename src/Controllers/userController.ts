@@ -4,6 +4,8 @@ import _ from "lodash";
 import { User, fillableColumns } from "../Models/user";
 import * as userTierController from './userTierController';
 import * as mailController from './mailController';
+import * as userReservationController from './userReservationController';
+import * as userReservationSettingController from './userReservationSettingController';
 import { changeEmailForwarder, createEmailForwarder } from "../Mail";
 
 const table = 'users';
@@ -43,7 +45,7 @@ export const view = async(id: number) => {
     return result;
 }
 
-// find (all match)
+// only allow user to find own profile
 export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params}`;
@@ -58,6 +60,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
     for(const [index, res] of result.entries()) {
         result[index].tiers =  await userTierController.find({'user_id': res.id});
         result[index].mails =  await mailController.find({'user_id': res.id});
+        result[index].reservations =  await userReservationController.find({'user_id': res.id});
+        result[index].reservationSettings =  await userReservationSettingController.find({'user_id': res.id});
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
     }
 
@@ -82,6 +86,7 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
         return;
     }
 
+    console.log(updateParams);
     const filtered = _.pick(updateParams, fillableColumns);
 
     //update email forwarders if username is different
