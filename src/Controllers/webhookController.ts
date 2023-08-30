@@ -1,6 +1,6 @@
 import DB from "../DB"
 import {
-    formatDBParamsToStr,
+    formatDBParamsToStr, toLocaleDecimal,
 } from '../../utils';
 import _ from "lodash";
 import * as userController from '../Controllers/userController';
@@ -134,7 +134,7 @@ export const executeByUserId = async(user_id: number, params: WebhookExecutePara
             continue;
         }
 
-        let message = webhook.template.replace(/{{payer}}/g, payer).replace(/{{amount}}/g, amount.toString());
+        let message = webhook.template.replace(/{{payer}}/g, payer).replace(/{{amount}}/g, toLocaleDecimal(amount, 2, 2) + " USDC");
     
         if(expiry_date && bcc_to) {
             message += `\nPlease reply to ${payer} and bcc the email to ${bcc_to} by ${expiry_date}.`

@@ -23,6 +23,7 @@
     "@metaplex-foundation/js": "^0.19.4",
     "@metaplex-foundation/mpl-bubblegum": "^0.7.0",
     "@metaplex-foundation/mpl-token-metadata": "^2.13.0",
+    "@socket.io/admin-ui": "^0.5.1",
     "@solana/spl-account-compression": "^0.1.10",
     "@solana/spl-token": "^0.3.8",
     "@solana/web3.js": "^1.78.4",
@@ -49,6 +50,7 @@
     "nodemailer": "^6.9.4",
     "pg": "^8.8.0",
     "socket.io": "^4.5.2",
+    "socket.io-client": "^4.7.2",
     "tweetnacl": "^1.0.3",
     "typescript": "^4.8.3",
     "uuid": "^9.0.0"

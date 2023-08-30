@@ -29,7 +29,8 @@ export function sleep(ms: number) {
  * @param minDecimal number
  * @param maxDecimal number
  */
- export function toLocaleDecimal(x: number, minDecimal: number, maxDecimal: number) {
+ export function toLocaleDecimal(x: string | number, minDecimal: number, maxDecimal: number) {
+    x = Number(x);
     return x.toLocaleString('en', {
         minimumFractionDigits: minDecimal,
         maximumFractionDigits: maxDecimal,

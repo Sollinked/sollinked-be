@@ -10,6 +10,7 @@ export type UserReservation= {
     tiplink_public_key?: string;
     value_usd?: string;
     status: number;
+    uuid?: string;
 }
 
 export type ProcessedUserReservation= {
@@ -24,6 +25,7 @@ export type ProcessedUserReservation= {
     tiplink_public_key?: string;
     value_usd?: number;
     status: number;
+    uuid?: string;
 }
 
 export const fillableColumns = [
@@ -37,4 +39,5 @@ export const fillableColumns = [
     'tiplink_public_key',
     'value_usd',
     'status',
+    'uuid',
 ];

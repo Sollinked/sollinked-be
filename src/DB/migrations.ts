@@ -206,4 +206,24 @@ export default [
             DROP INDEX stream_webhooks_user_id_idx;
         `
     },
+    {
+        name: "add_uuid_to_user_reservations",
+        query: `
+            ALTER TABLE user_reservations
+            ADD uuid text null;
+            `,
+        rollback_query: `
+            ALTER TABLE user_reservations
+            DROP COLUMN uuid;
+        `
+    },
+    {
+        name: "add_uuid_idx_to_user_reservations",
+        query: `
+            CREATE INDEX user_reservations_uuid_idx ON user_reservations(uuid);
+            `,
+        rollback_query: `
+            DROP INDEX user_reservations_uuid_idx;
+        `
+    },
 ];

@@ -7,6 +7,7 @@ import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_PENDING, VERIFY_MESSAG
 import { verifySignature } from '../../utils';
 import moment from 'moment';
 import { TipLink } from '@tiplink/api';
+import { v4 as uuidv4 } from 'uuid';
 
 export const routes = Router();
 
@@ -142,6 +143,7 @@ routes.post('/new/:user_id', async(req, res) => {
 
     let settings = await userReservationSettingController.find({ user_id, day, hour });
     let presetPrice = settings?.[0]?.reservation_price ?? 0;
+    let uuid = uuidv4();
 
     // if has custom reservation
     if(reservations && reservations.length > 0) {
@@ -153,18 +155,26 @@ routes.post('/new/:user_id', async(req, res) => {
         }
 
         let tiplink = await TipLink.create();
+        let value_usd = reservations[0].reservation_price ?? presetPrice;
         await userReservationController.update(reservations[0].id, { 
-            value_usd: reservations[0].reservation_price ?? presetPrice,
+            value_usd,
             tiplink_url: tiplink.url.toString(),
             tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
             reserved_at: moment().format('YYYY-MM-DDTHH:mm:ssZ'),
             reserve_email: email ?? "",
             reserve_title: title ?? "",
             status: RESERVATION_STATUS_PENDING,
+            uuid,
         });
+
         return res.send({
             success: true,
             message: "Success",
+            data: {
+                public_key: tiplink.keypair.publicKey.toBase58(),
+                value_usd,
+                uuid,
+            },
         });
     }
 
@@ -187,9 +197,15 @@ routes.post('/new/:user_id', async(req, res) => {
         reserve_email: email ?? "",
         reserve_title: title ?? "",
         status: RESERVATION_STATUS_PENDING,
+        uuid,
     });
     return res.send({
         success: true,
         message: "Success",
+        data: {
+            public_key: tiplink.keypair.publicKey.toBase58(),
+            value_usd: presetPrice,
+            uuid,
+        },
     });
 });

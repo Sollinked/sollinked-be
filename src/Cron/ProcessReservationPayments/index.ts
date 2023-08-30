@@ -1,11 +1,33 @@
 import * as userController from '../../Controllers/userController';
 import * as userReservationController from '../../Controllers/userReservationController';
 import * as webhookController from '../../Controllers/webhookController';
+import * as clientio from 'socket.io-client';
 import moment from 'moment';
 import { getAddressUSDCBalance } from '../../Token';
 import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_CANCELLED, RESERVATION_STATUS_CLAIMED, RESERVATION_STATUS_PAID, RESERVATION_STATUS_PENDING } from '../../Constants';
+import { getServerPort } from '../../../utils';
 
-export const processReservationPayments = async() => {
+const port = getServerPort();
+let socket = clientio.connect(`ws://localhost:${port}`);
+const notifyPayer = (status: number, uuid?: string) => {
+    // notify payer
+    if(!uuid) {
+        console.log('no uuid');
+    }
+
+    if(!socket.connected) {
+        console.log('socket not connected');
+    }
+
+    if(uuid && socket.connected) {
+        // socket connected
+        console.log('process', `emitting to ${uuid}, status = ${status}`);
+        socket.emit('update_reservation_payment_status', { uuid, status });
+    }
+}
+
+export 
+const processReservationPayments = async() => {
     let reservedAfter = moment().add(-18, 'm').format('YYYY-MM-DDTHH:mm:ssZ')
     let reservations = await userReservationController.findAfter({
         status: RESERVATION_STATUS_PENDING,
@@ -34,6 +56,11 @@ export const processReservationPayments = async() => {
         });
 
         let reserve_date = moment(reservation.date).utc().format('YYYY-MM-DD HH:mm');
+
+        // send notification to frontend
+        notifyPayer(RESERVATION_STATUS_PAID, reservation.uuid);
+
+        // notify recipient
         await webhookController.executeByUserId(reservation.user_id, {
             payer: reservation.reserve_email!,
             amount: tokenBalance,
@@ -52,6 +79,7 @@ export const processExpiredReservationPayments = async() => {
     // no mails
     if(!reservations) {
         console.log('process expired reservation payment', 'no unprocessed expired reservations');
+        socket.disconnect();
         return;
     }
 
@@ -60,10 +88,10 @@ export const processExpiredReservationPayments = async() => {
 
         // paid
         if(tokenBalance >= reservation.value_usd!) {
-            console.log({tokenBalance, reservation_price: reservation.reservation_price})
             await userReservationController.update(reservation.id, {
                 status: RESERVATION_STATUS_PAID,
             });
+            notifyPayer(RESERVATION_STATUS_PAID, reservation.uuid);
             continue;
         }
 
@@ -81,7 +109,9 @@ export const processExpiredReservationPayments = async() => {
                 date: moment(reservation.date).format('YYYY-MM-DDTHH:mm:ssZ'),
             });
         }
-    } 
+        
+        notifyPayer(RESERVATION_STATUS_CANCELLED, reservation.uuid);
+    }
 }
 
 

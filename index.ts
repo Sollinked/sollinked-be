@@ -2,6 +2,7 @@ import express, { NextFunction } from 'express';
 import bodyParser from 'body-parser';
 import { createServer } from 'http';
 import { Socket, Server } from 'socket.io';
+import { instrument } from '@socket.io/admin-ui';
 import cors from 'cors';import _ from 'lodash';
 import path from 'path';
 import dotenv from 'dotenv';
@@ -66,12 +67,33 @@ app.use('/webhooks', webhookRoutes);
 
 //connect app to websocket
 let http = createServer(app);
-/* let io = new Server(http, {
+
+let io = new Server(http, {
     cors: {
         origin: whitelists,
         credentials: true
     }
-}); */
+});
+
+//websocket functions
+io.on('connection', (socket: Socket) => {
+    // from local server connection
+    socket.on('update_reservation_payment_status', ({uuid, status}: { uuid: string; status: number }) => {
+        // console.log('server', `update received`);
+        // console.log(`emitting to ${uuid}, status = ${status}`);
+        io.emit(uuid, { status });
+    });
+    
+});
+
+instrument(io, {
+    auth: false
+    // {
+    //   type: "basic",
+    //   username: "admin",
+    //   password: "$2b$10$heqvAkYMez.Va6Et2uXInOnkCT6/uQj1brkrbyG3LpopDklcq7ZOS" // "changeit" encrypted with bcrypt
+    // },
+});
 
 //websocket functions
 /* io.on('connection', (socket: Socket) => {
