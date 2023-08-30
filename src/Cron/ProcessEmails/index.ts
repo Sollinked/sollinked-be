@@ -130,7 +130,7 @@ export const processEmails = () => {
                         const f = imap.fetch(results, { bodies: '' });
                         f.on('message', msg => {
                             msg.on('body', stream => {
-                                simpleParser(stream, async(err, parsed) => {
+                                simpleParser(stream as any, async(err, parsed) => {
                                     /* console.log(parsed); */
                                     const { from, to, subject, textAsHtml, text, messageId, bcc } = parsed;
     

@@ -73,7 +73,7 @@ export const getEmailByMessageId = (messageId: string) => {
                             const f = imap.fetch(results, { bodies: '' });
                             f.on('message', msg => {
                                 return msg.on('body', stream => {
-                                    return simpleParser(stream, async(err, parsed) => {
+                                    return simpleParser(stream as any, async(err, parsed) => {
                                         const { from, to, subject, textAsHtml, text, messageId, attachments } = parsed;
 
                                         let fromEmail = from? from.text.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g) : "";
