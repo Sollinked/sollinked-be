@@ -78,7 +78,7 @@ routes.post('/update', async(req, res) => {
     }
 
     let user_id = users[0].id;
-    let reservations = await userReservationController.find({ date });
+    let reservations = await userReservationController.find({ date: moment(data.date).utc().format('YYYY-MM-DD HH:mm:ss') });
 
     if(!reservations || reservations.length === 0) {
         await userReservationController.create({
