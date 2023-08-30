@@ -135,7 +135,7 @@ routes.post('/new/:user_id', async(req, res) => {
 
     let reservations = await userReservationController.find({
         user_id: id,
-        date,
+        date: moment(date).utc().format('YYYY-MM-DD HH:mm:ss'),
     });
 
     let day = moment(date).utc().day();
