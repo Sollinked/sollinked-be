@@ -24,7 +24,6 @@ export const processPayments = async() => {
     for(const [index, mail] of mails.entries()) {
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
         if(tokenBalance === 0) {
-            console.log('no balance yet');
             continue;
         }
 

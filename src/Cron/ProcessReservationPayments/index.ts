@@ -12,16 +12,15 @@ let socket = clientio.connect(`ws://localhost:${port}`);
 const notifyPayer = (status: number, uuid?: string) => {
     // notify payer
     if(!uuid) {
-        console.log('no uuid');
+        return;
     }
 
     if(!socket.connected) {
-        console.log('socket not connected');
+        return;
     }
 
     if(uuid && socket.connected) {
         // socket connected
-        console.log('process', `emitting to ${uuid}, status = ${status}`);
         socket.emit('update_reservation_payment_status', { uuid, status });
     }
 }
@@ -42,12 +41,10 @@ const processReservationPayments = async() => {
     for(const [index, reservation] of reservations.entries()) {
         let tokenBalance = await getAddressUSDCBalance(reservation.tiplink_public_key!);
         if(tokenBalance === 0) {
-            console.log('no balance yet');
             continue;
         }
 
         if(tokenBalance < reservation.value_usd!) {
-            console.log('need more deposits');
             continue;
         }
 

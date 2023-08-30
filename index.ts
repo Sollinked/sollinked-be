@@ -49,7 +49,6 @@ app.use((req, res, next) => {
 
     const { address, signature } = req.body;
     if(!signature || !address) {
-        console.log('no signature or address')
         return res.status(400).send('Invalid params');
     }
 
@@ -107,7 +106,7 @@ app.get('/', function(req, res) {
 
 // start the server
 http.listen(port, () => {
-    console.log("I'm alive!");
+    console.log(`I'm alive! Port: ${port}`);
 });
 
 

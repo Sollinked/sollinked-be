@@ -52,8 +52,6 @@ export const sendEmail = async ({ to, subject, text, inReplyTo, references, text
         references,
         attachments,
     });
-
-    console.log(info.messageId);
 }
 
 export const getEmailByMessageId = (messageId: string) => {
@@ -90,8 +88,8 @@ export const getEmailByMessageId = (messageId: string) => {
                             });
         
                             f.once('error', e => {
-                                console.log('error encountered 3')
-                                console.log(e); 
+                                console.log('ME1: '); 
+                                console.log(e);
                                 return reject();
                             });
         
@@ -104,8 +102,8 @@ export const getEmailByMessageId = (messageId: string) => {
                         catch(e: any) {
 
                             if(!e.message.includes("Nothing to fetch")) {
-                                console.log('error encountered 4');
-                                console.log(e.message);
+                                console.log('ME2: '); 
+                                console.log(e);
                             }
                             imap.end();
                         }
@@ -114,7 +112,7 @@ export const getEmailByMessageId = (messageId: string) => {
             });
     
             imap.once('error', (err: any) => {
-                console.log('error encountered 1')
+                console.log('ME3: '); 
                 console.log(err);
                 return reject();
             });
@@ -127,7 +125,7 @@ export const getEmailByMessageId = (messageId: string) => {
         }
     
         catch (e: any){
-            console.log('error encountered 2')
+            console.log('ME4: '); 
             console.log(e);
             return reject();
         }
@@ -147,11 +145,9 @@ export const createEmailForwarder = async(username: string) => {
     });
 
     if(res.data.errors && res.data.errors.length > 0) {
-        console.log('Unable to create forwarder: ');
-        console.log(res.data.errors.join(", "));
+        console.log('Unable to create forwarder: ', res.data.errors.join(", "));
         return;
     }
-    console.log(`Created new forwarder: ${username}@${domain}`);
     return;
 }
 
@@ -167,12 +163,10 @@ export const deleteEmailForwarder = async(username: string) => {
     });
 
     if(res.data.errors && res.data.errors.length > 0) {
-        console.log('Unable to delete forwarder: ');
-        console.log(res.data.errors.join(", "));
+        console.log('Unable to delete forwarder: ', res.data.errors.join(", "));
         return;
     }
 
-    console.log(`Deleted forwarder: ${username}@${domain}`);
     return;
 }
 
@@ -183,7 +177,7 @@ export const changeEmailForwarder = async(newUsername: string, oldUsername: stri
     }
 
     catch (e){
-        console.log(e);
+        console.log('cant change forwarder: ', e);
         return false;
     }
 
@@ -197,10 +191,6 @@ export const mapAttachments = (parserAttachments: ParserAttachment[]) => {
     }
     let attachments: Attachment[] = [];
     parserAttachments.forEach(pAttachment => {
-        console.log({ 
-            filename: pAttachment.filename,
-            contentType: pAttachment.contentType,
-        });
         // make sure no duplicate files
         let folder = `./attachments/${uuidv4()}`;
         fs.mkdirSync(folder);
@@ -235,8 +225,7 @@ export const deleteAttachments = (attachments: Attachment[]) => {
         }
 
         catch(e) {
-            console.log(e);
-            console.log('cant remove folder: ' + folder);
+            console.log('cant remove folder: ', folder);
         }
     });
 

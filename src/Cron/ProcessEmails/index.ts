@@ -23,7 +23,6 @@ const processEmailToUser = async({
     // only get emails to this domain
     let toEmails = toEmailMatch.filter(x => x.includes(domain));
     if(toEmails.length === 0) {
-        console.log('cant find email to this domain');
         return;
     }
     let toEmail = toEmails[0];
@@ -31,7 +30,7 @@ const processEmailToUser = async({
                                     
     let users = await userController.find({ username });
     if(!users || users.length === 0){
-        console.log('cant find user');
+        console.log('processEmailToUser: ', 'cant find user');
         return;
     }
 
@@ -55,7 +54,6 @@ const processEmailToUser = async({
         returnText += "\n\nThey will reply in:";
 
         userTiers.forEach((tier, index) => {
-            console.log(tier);
             returnText += `\n${index + 1}. ${tier.respond_days} days for ${parseFloat(tier.value_usd).toFixed(2)} USDC`;
         });
 
@@ -84,7 +82,6 @@ const processEmailResponse = async({
     // only get emails to this domain
     let bccEmails = bccEmailMatch.filter(x => x.includes(domain));
     if(bccEmails.length === 0) {
-        console.log('cant find email bcc to this domain');
         return;
     }
 
@@ -92,7 +89,7 @@ const processEmailResponse = async({
     let bccToEmail = bccEmails[0];
     let mails = await controller.find({ bcc_to_email: bccToEmail });
     if(!mails || mails.length === 0){
-        console.log('cant find bcc email');
+        console.log('processEmailResponse: ', 'cant find bcc email');
         return;
     }
 
@@ -102,7 +99,7 @@ const processEmailResponse = async({
     // check if the responder actually responded to the original sender
     let toEmails = toEmailMatch.filter(x => x.toLowerCase() === originalSender);
     if(toEmails.length === 0) {
-        console.log('cant find email original sender, aborting');
+        console.log('processEmailResponse: ', 'cant find email original sender, aborting');
         return;
     }
 
@@ -138,23 +135,19 @@ export const processEmails = () => {
                                     const { from, to, subject, textAsHtml, text, messageId, bcc } = parsed;
     
                                     if(!from) {
-                                        console.log('cant find from address');
                                         return;
                                     }
     
                                     if(!to) {
-                                        console.log('cant find to address');
                                         return;
                                     }
     
                                     if(!messageId) {
-                                        console.log('cant find message id');
                                         return;
                                     }
     
                                     let fromEmailMatch = from.text.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
                                     if(!fromEmailMatch || fromEmailMatch.length === 0){
-                                        console.log('cant find from email');
                                         return;
                                     }
     
@@ -162,7 +155,6 @@ export const processEmails = () => {
     
                                     let toEmailMatch = toText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
                                     if(!toEmailMatch || toEmailMatch.length === 0){
-                                        console.log('cant find to email');
                                         return;
                                     }
     
@@ -177,7 +169,6 @@ export const processEmails = () => {
                                     });
 
                                     if(!bcc) {
-                                        console.log('No bcc, aborting');
                                         return;
                                     }
     
@@ -185,7 +176,6 @@ export const processEmails = () => {
     
                                     let bccEmailMatch = bccText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
                                     if(!bccEmailMatch || bccEmailMatch.length === 0){
-                                        console.log('cant find bcc email');
                                         return;
                                     }
                                     
@@ -205,7 +195,7 @@ export const processEmails = () => {
                         });
     
                         f.once('error', e => {
-                            console.log('error encountered 3')
+                            console.log('PE1: ')
                             console.log(e); 
                         });
     
@@ -217,7 +207,7 @@ export const processEmails = () => {
 
                     catch(e: any) {
                         if(!e.message.includes("Nothing to fetch")) {
-                            console.log('error encountered 4');
+                            console.log('PE2: ')
                             console.log(e.message);
                         }
                         imap.end();
@@ -227,7 +217,7 @@ export const processEmails = () => {
         });
 
         imap.once('error', (err: any) => {
-            console.log('error encountered 1')
+            console.log('PE3: ')
             console.log(err);
         });
 
@@ -239,7 +229,7 @@ export const processEmails = () => {
     }
 
     catch (e: any){
-        console.log('error encountered 2')
+        console.log('PE4: ')
         console.log(e);
     }
 }

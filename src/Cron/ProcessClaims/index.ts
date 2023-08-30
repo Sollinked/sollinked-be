@@ -10,14 +10,12 @@ export const processClaims = async() => {
 
     // no mails
     if(!mails) {
-        console.log('process claims', 'no unclaimed mails');
         return;
     }
 
     for(const [index, mail] of mails.entries()) {
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
         if(tokenBalance > 0) {
-            console.log('not claimed yet');
             continue;
         }
 
