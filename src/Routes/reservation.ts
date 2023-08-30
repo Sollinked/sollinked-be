@@ -83,7 +83,7 @@ routes.post('/update', async(req, res) => {
     if(!reservations || reservations.length === 0) {
         await userReservationController.create({
             user_id,
-            date: data.date,
+            date: moment(data.date).utc().format('YYYY-MM-DD HH:mm:ss'),
             reservation_price: data.reservation_price ?? 0,
             status
         });
@@ -103,7 +103,7 @@ routes.post('/update', async(req, res) => {
     }
 
     await userReservationController.update(reservations[0].id, {
-        date: data.date,
+        date: moment(data.date).utc().format('YYYY-MM-DD HH:mm:ss'),
         reservation_price: data.reservation_price ?? 0,
         status
     });
