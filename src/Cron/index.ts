@@ -11,8 +11,11 @@ export const init = () => {
         processEmails();
         processPayments();
         processClaims();
-        processReservationPayments();
         processExpiredReservationPayments();
         processReservationClaims();
     });
+
+    setInterval(() => {
+        processReservationPayments();
+    }, 5000);
 }
