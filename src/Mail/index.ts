@@ -18,10 +18,11 @@ export type SendEmailParams = {
 }
 
 export const getImap = () => {
+    const { user, pass, host, } = getMailCredentials();
     const imapConfig: Imap.Config = {
-        user: 'test@kida.tech',
-        password: 'Y*w]Y!)gH{K7',
-        host: 'mail.kida.tech',
+        user,
+        password: pass,
+        host,
         port: 143,
         tls: false,
     }

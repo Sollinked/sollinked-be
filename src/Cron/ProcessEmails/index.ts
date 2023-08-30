@@ -112,7 +112,7 @@ const processEmailResponse = async({
     
 export const processEmails = () => {
     const imap = getImap();
-    const credentails = getMailCredentials();
+    const credentials = getMailCredentials();
 
     try {
         imap.once('ready', () => {
@@ -161,7 +161,7 @@ export const processEmails = () => {
                                     let returnToEmail = fromEmailMatch[0];
 
                                     await processEmailToUser({
-                                        domain: credentails.domain,
+                                        domain: credentials.domain,
                                         toEmailMatch,
                                         returnToEmail,
                                         messageId,
@@ -180,7 +180,7 @@ export const processEmails = () => {
                                     }
                                     
                                     await processEmailResponse({
-                                        domain: credentails.domain,
+                                        domain: credentials.domain,
                                         toEmailMatch,
                                         bccEmailMatch
                                     });
