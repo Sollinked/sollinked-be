@@ -602,7 +602,7 @@ export const getProfilePictureLink = (filename?: string) => {
     if(!filename) {
         return undefined;
     }
-    return getBeDomain() + "/public/content/" + filename;
+    return getBeDomain() + "/content/" + filename;
 }
 
 /*
