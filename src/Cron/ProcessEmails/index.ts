@@ -31,6 +31,7 @@ const processEmailToUser = async({
     let users = await userController.find({ username });
     if(!users || users.length === 0){
         console.log('processEmailToUser: ', 'cant find user');
+        console.log('processEmailToUser: ', `user: ${username}`);
         return;
     }
 
@@ -90,6 +91,7 @@ const processEmailResponse = async({
     let mails = await controller.find({ bcc_to_email: bccToEmail });
     if(!mails || mails.length === 0){
         console.log('processEmailResponse: ', 'cant find bcc email');
+        console.log('processEmailResponse: ', `bccEmail: ${bccToEmail}`);
         return;
     }
 
@@ -100,6 +102,7 @@ const processEmailResponse = async({
     let toEmails = toEmailMatch.filter(x => x.toLowerCase() === originalSender);
     if(toEmails.length === 0) {
         console.log('processEmailResponse: ', 'cant find email original sender, aborting');
+        console.log('processEmailResponse: ', `original sender: ${originalSender}`);
         return;
     }
 
