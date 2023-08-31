@@ -49,8 +49,8 @@ export const processPayments = async() => {
             await sendEmail({
                 to: user.email_address,
                 subject: subject ?? `Email from ${from}`,
-                text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${mail.bcc_to_email ?? ""}`,
-                textAsHtml,
+                text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${mail.bcc_to_email ?? ""}\n\nOR\n\nClick this link to reply: mailto:${mail.from_email}?bcc=${mail.bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}`,
+                textAsHtml: `${textAsHtml}\n\n\n<p>-------------------</p>\n<p>Sollinked BCC Email Address: ${mail.bcc_to_email ?? ""}</p>\n\n<p>OR</p>\n\n<p>Click this link to reply: <a href="mailto:${mail.from_email}?bcc=${mail.bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}">Reply</a></p>`,
                 attachments,
             });
             continue;
@@ -71,8 +71,8 @@ export const processPayments = async() => {
             await sendEmail({
                 to: user.email_address,
                 subject: `Received ${tokenBalance} USDC from ${from}: ${subject ?? "No Subject"}`,
-                text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${mail.bcc_to_email ?? ""}`,
-                textAsHtml,
+                text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${mail.bcc_to_email ?? ""}\n\nOR\n\nClick this link to reply: mailto:${mail.from_email}?bcc=${mail.bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}`,
+                textAsHtml: `${textAsHtml}\n\n\n<p>-------------------</p>\n<p>Sollinked BCC Email Address: ${mail.bcc_to_email ?? ""}</p>\n\n<p>OR</p>\n\n<p>Click this link to reply: <a href="mailto:${mail.from_email}?bcc=${mail.bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}">Reply</a></p>`,
                 attachments,
             });
 
