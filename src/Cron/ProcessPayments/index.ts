@@ -6,7 +6,7 @@ import moment from 'moment';
 import { createEmailForwarder, deleteAttachments, getEmailByMessageId, mapAttachments, sendEmail } from '../../Mail';
 import { getAddressUSDCBalance } from '../../Token';
 import { v4 as uuidv4 } from 'uuid';
-import { getMailCredentials } from '../../../utils';
+import { getMailCredentials, sendSOLTo } from '../../../utils';
 
 export const processPayments = async() => {
     let credentials = getMailCredentials();
@@ -52,6 +52,8 @@ export const processPayments = async() => {
             });
             continue;
         }
+
+        await sendSOLTo(true, mail.tiplink_public_key, 0.005);
 
         // process tiers
         // tiers are ordered by value_usd descending
