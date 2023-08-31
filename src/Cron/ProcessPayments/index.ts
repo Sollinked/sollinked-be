@@ -43,12 +43,15 @@ export const processPayments = async() => {
         if(!tiers) {
             console.log('process payment', 'no tier');
             // user didn't set tiers, all emails are eligible
-            let { from, subject, textAsHtml, text } = await getEmailByMessageId(mail.message_id) as any;
+            let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
+            let attachments = mapAttachments(parserAttachments);
 
             await sendEmail({
                 to: user.email_address,
                 subject: subject ?? `Email from ${from}`,
-                text,
+                text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${mail.bcc_to_email ?? ""}`,
+                textAsHtml,
+                attachments,
             });
             continue;
         }
@@ -68,7 +71,7 @@ export const processPayments = async() => {
             await sendEmail({
                 to: user.email_address,
                 subject: `Received ${tokenBalance} USDC from ${from}: ${subject ?? "No Subject"}`,
-                text,
+                text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${mail.bcc_to_email ?? ""}`,
                 textAsHtml,
                 attachments,
             });
