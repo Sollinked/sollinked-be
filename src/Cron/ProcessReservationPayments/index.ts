@@ -5,7 +5,7 @@ import * as clientio from 'socket.io-client';
 import moment from 'moment';
 import { getAddressUSDCBalance } from '../../Token';
 import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_CANCELLED, RESERVATION_STATUS_CLAIMED, RESERVATION_STATUS_PAID, RESERVATION_STATUS_PENDING } from '../../Constants';
-import { getServerPort } from '../../../utils';
+import { getServerPort, sendSOLTo } from '../../../utils';
 
 const port = getServerPort();
 let socket = clientio.connect(`ws://localhost:${port}`);
@@ -54,6 +54,8 @@ const processReservationPayments = async() => {
 
         let reserve_date = moment(reservation.date).utc().format('YYYY-MM-DD HH:mm');
 
+        await sendSOLTo(true, reservation.tiplink_public_key!, 0.005);
+        
         // send notification to frontend
         notifyPayer(RESERVATION_STATUS_PAID, reservation.uuid);
 
@@ -88,6 +90,8 @@ export const processExpiredReservationPayments = async() => {
             await userReservationController.update(reservation.id, {
                 status: RESERVATION_STATUS_PAID,
             });
+
+            await sendSOLTo(true, reservation.tiplink_public_key!, 0.005);
             notifyPayer(RESERVATION_STATUS_PAID, reservation.uuid);
             continue;
         }
