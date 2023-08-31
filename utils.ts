@@ -394,6 +394,15 @@ export const getPeriod = (period: 'monthly' | 'weekly' | 'daily') => {
 export const getServerPort = () => {
     return process.env.SERVER_PORT;
 }
+
+/**
+ * Get server port from env
+ * @param { string } url
+ */
+export const getBeDomain = () => {
+    return process.env.BE_DOMAIN;
+}
+
 /**
  * Get server port from env
  * @param { string } url

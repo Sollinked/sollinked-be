@@ -69,6 +69,10 @@ export const update = async(user_id: number, tiers: UserTier[]): Promise<void> =
         values.push([user_id, tier.value_usd, tier.respond_days]);
     });
 
+    if(values.length === 0){
+        return;
+    }
+
     let query = getInsertQuery(columns, values, table);
     await db.executeQueryForSingleResult(query);
 }

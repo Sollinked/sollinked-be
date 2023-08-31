@@ -77,6 +77,10 @@ export const update = async(user_id: number, settings: UserReservationSetting[])
         values.push([user_id, setting.day, setting.hour, setting.reservation_price]);
     });
 
+    if(values.length === 0) {
+        return;
+    }
+
     let query = getInsertQuery(columns, values, table);
     await db.executeQueryForSingleResult(query);
 }
