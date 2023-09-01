@@ -1,7 +1,7 @@
 import nodemailer from 'nodemailer';
 import { getMailCredentials } from '../../utils';
 import Imap from 'imap';
-import { Attachment as ParserAttachment, simpleParser } from 'mailparser';
+import { AddressObject, Attachment as ParserAttachment, simpleParser } from 'mailparser';
 import axios from 'axios';
 import { Attachment } from 'nodemailer/lib/mailer';
 import fs from 'fs';
@@ -57,7 +57,7 @@ export const sendEmail = async ({ to, subject, text, inReplyTo, references, text
 
 export const getEmailByMessageId = (messageId: string) => {
     const imap = getImap();
-    return new Promise<{ from: string, subject?: string, textAsHtml?: string, text?: string, messageId?: string, attachments: ParserAttachment[] }>((resolve, reject) => {
+    return new Promise<{ from: string, subject?: string, to: string[], cc?: AddressObject | AddressObject[], bcc?: AddressObject | AddressObject[], textAsHtml?: string, text?: string, messageId?: string, attachments: ParserAttachment[] }>((resolve, reject) => {
         try {
             imap.once('ready', () => {
                 // on ready
@@ -75,15 +75,24 @@ export const getEmailByMessageId = (messageId: string) => {
                             f.on('message', msg => {
                                 return msg.on('body', stream => {
                                     return simpleParser(stream as any, async(err, parsed) => {
-                                        const { from, to, subject, textAsHtml, text, messageId, attachments } = parsed;
+                                        const { from, to, subject, textAsHtml, text, messageId, attachments, bcc, cc } = parsed;
 
                                         let fromEmail = from? from.text.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g) : "";
                                         let fromEmailStr = "";
                                         if(Array.isArray(fromEmail) && fromEmail.length > 0) {
                                             fromEmailStr = fromEmail[0];
                                         }
+    
+                                        let toEmails: string[] = [];
+                                        if(to) {
+                                            let toText = Array.isArray(to)? to.map(x => x.text).join(", ") : to.text;
+                                            let toEmailMatch = toText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
+                                            if(Array.isArray(toEmailMatch) && toEmailMatch.length > 0) {
+                                                toEmails = toEmailMatch;
+                                            }
+                                        }
                                         
-                                        return resolve({ from: fromEmailStr, subject, textAsHtml, text, messageId, attachments});
+                                        return resolve({ from: fromEmailStr, to: toEmails, bcc, cc, subject, textAsHtml, text, messageId, attachments});
                                     })
                                 })
                             });
