@@ -39,7 +39,7 @@ export const processPayments = async() => {
         }
         
         if(!user.email_address) {
-            console.log('process payment', 'no email address');
+            console.log('process payment', `no email address: ${user.id}`);
             continue;
         }
 

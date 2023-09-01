@@ -32,6 +32,16 @@ const processEmailToUser = async({
     if(!users || users.length === 0){
         console.log('processEmailToUser: ', 'cant find user');
         console.log('processEmailToUser: ', `user: ${username}`);
+
+        if(username === "noreply") {
+            await sendEmail({
+                to: returnToEmail,
+                subject: 'Re: ' + subject,
+                inReplyTo: messageId,
+                references: messageId,
+                text: `This is an automated message.\n\nWe noticed that you have replied to the noreply bot. Please reply to the intended person and BCC to the specified BCC email address to claim your tip! You can also click the Reply link (it's just a mailto: link) to expedite the process.\n\nRegards, Sollinked.`,
+            });
+        }
         return;
     }
 

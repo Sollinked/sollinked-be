@@ -43,19 +43,34 @@ export const sendEmail = async ({ to, subject, text, inReplyTo, references, text
         }
     });
 
-    const info = await transporter.sendMail({
-        from: `"${name}" <${user}>`, // change to admin
-        to,
-        bcc,
-        subject,
-        text,
-        html: textAsHtml,
-        inReplyTo,
-        references,
-        attachments,
-    });
+    let retries = 0;
+    
+    while(retries < 3) {
+        try {
+            const info = await transporter.sendMail({
+                from: `"${name}" <${user}>`, // change to admin
+                to,
+                bcc,
+                subject,
+                text,
+                html: textAsHtml,
+                inReplyTo,
+                references,
+                attachments,
+            });
+    
+            console.log(`email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
+            break;
+        }
 
-    console.log(`email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
+        catch(e) {
+            console.log('Send Email Error');
+            console.log(e);
+            retries++;
+            console.log(`send mail retrying: ${retries}`);
+        }
+
+    }
 }
 
 export const getEmailByMessageId = (messageId: string) => {
