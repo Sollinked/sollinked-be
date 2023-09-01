@@ -94,7 +94,7 @@ export const processPayments = async() => {
                 bcc_to_email,
             });
 
-            await sendSOLTo(true, mail.tiplink_public_key, 0.005);
+            await sendSOLTo(true, mail.tiplink_public_key, 0.003);
 
             // delete attachments
             deleteAttachments(attachments);

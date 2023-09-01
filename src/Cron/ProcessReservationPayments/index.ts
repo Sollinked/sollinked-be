@@ -54,7 +54,7 @@ const processReservationPayments = async() => {
 
         let reserve_date = moment(reservation.date).utc().format('YYYY-MM-DD HH:mm');
 
-        await sendSOLTo(true, reservation.tiplink_public_key!, 0.005);
+        await sendSOLTo(true, reservation.tiplink_public_key!, 0.003);
         
         // send notification to frontend
         notifyPayer(RESERVATION_STATUS_PAID, reservation.uuid);
@@ -91,7 +91,7 @@ export const processExpiredReservationPayments = async() => {
                 status: RESERVATION_STATUS_PAID,
             });
 
-            await sendSOLTo(true, reservation.tiplink_public_key!, 0.005);
+            await sendSOLTo(true, reservation.tiplink_public_key!, 0.003);
             notifyPayer(RESERVATION_STATUS_PAID, reservation.uuid);
             continue;
         }
