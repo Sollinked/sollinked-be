@@ -283,15 +283,26 @@ export const isCurrentUserAdmin = async(discord_id: string) => {
  */
 export const formatDBParamsToStr = (params : {
     [key : string]: any
-}, separator : string = ', ', valueOnly : boolean = false, prepend: string = "") => {
+}, separator : string = ', ', valueOnly : boolean = false, prepend: string = "", shouldLower: boolean = false) => {
     let stringParams: string[] = [];
     _.map(params, (p, k) => {
-        const value = typeof p === 'string' ? `'${p.replace(/'/g, '')}'` : p;
+        const isString = typeof p === 'string';
+        const value = isString ? `'${p.replace(/'/g, '')}'` : p;
 
-        if (valueOnly) {
-            stringParams.push(`${prepend? prepend + "." : ""}${value}`);
-        } else {
-            stringParams.push(`${prepend? prepend + "." : ""}${k} = ${value}`);
+        if(isString && shouldLower) {
+            if (valueOnly) {
+                stringParams.push(`lower(${prepend? prepend + "." : ""}${value})`);
+            } else {
+                stringParams.push(`lower(${prepend? prepend + "." : ""}${k}) = lower(${value})`);
+            }
+        }
+
+        else {
+            if (valueOnly) {
+                stringParams.push(`${prepend? prepend + "." : ""}${value}`);
+            } else {
+                stringParams.push(`${prepend? prepend + "." : ""}${k} = ${value}`);
+            }
         }
     })
 

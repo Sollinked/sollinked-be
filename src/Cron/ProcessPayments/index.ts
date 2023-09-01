@@ -85,8 +85,6 @@ export const processPayments = async() => {
             // delete this forwarder once done
             await createEmailForwarder(uuid);
 
-            await sendSOLTo(true, mail.tiplink_public_key, 0.005);
-
             // update the mail to contain the necessary info
             await mailController.update(mail.key, { 
                 processed_at,
@@ -95,6 +93,8 @@ export const processPayments = async() => {
                 is_processed: true,
                 bcc_to_email,
             });
+
+            await sendSOLTo(true, mail.tiplink_public_key, 0.005);
 
             // delete attachments
             deleteAttachments(attachments);

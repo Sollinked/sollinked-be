@@ -51,7 +51,8 @@ export const view = async(id: number) => {
 
 // only allow user to find own profile
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, ' AND ', false, "", true);
+
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
