@@ -146,9 +146,9 @@ export default class DB {
             isSuccess = true;
         }
 
-        catch (e){
+        catch (e: any){
             console.log(query);
-            console.error(e);
+            console.error(e.message);
         }
 
         finally {
@@ -167,21 +167,22 @@ export default class DB {
         });
 
         let res = undefined;
+
         try {
             await client.connect();
             res = await client.query(query);
         }
 
-        catch (e){
+        catch (e: any){
             console.log(query);
-            console.error(e);
+            console.error(e.message);
+            await client.end();
+            return e.message;
         }
 
-        finally {
-            await client.end();
-            if(!res) return res;
-            else return res.rows;
-        }
+        await client.end();
+        if(!res) return res;
+        else return res.rows;
     }
 
     executeQueryForSingleResult = async<T = any>(query: string): Promise<T | undefined> => {

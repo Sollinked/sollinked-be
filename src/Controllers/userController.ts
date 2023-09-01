@@ -85,7 +85,7 @@ export const list = async() => {
 }
 
 // update
-export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
+export const update = async(id: number, updateParams: {[key: string]: any}) => {
     // filter
     const user = await view(id);
     if(!user) {
@@ -103,7 +103,7 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
     const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    return await db.executeQueryForResults(query);
 }
 
 // delete (soft delete?)

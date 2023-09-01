@@ -89,12 +89,19 @@ routes.post('/update/:id', contentUpload.single('profile_picture'), async(req, r
         });
     }
     
-    await userController.update(id, data);
-
+    let updateRes = await userController.update(id, data);
+    if(updateRes) {
+        return res.send({
+            success: false,
+            message: updateRes.includes("duplicate")? 'Username is claimed, please choose another!' : "Unknown Error",
+        })
+    }
+    
     return res.send({
         success: true,
         message: "Success",
     });
+
 });
 
 routes.post('/updateTiers/:user_id', async(req, res) => {
