@@ -45,7 +45,7 @@ export const processPayments = async() => {
 
         if(!tiers) {
             console.log('process payment', 'no tier');
-            // user didn't set tiers, all emails are eligible
+            /* // user didn't set tiers, all emails are eligible
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);
 
@@ -55,11 +55,9 @@ export const processPayments = async() => {
                 text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${bcc_to_email ?? ""}\n\nOR\n\nClick this link to reply: mailto:${mail.from_email}?bcc=${bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}`,
                 textAsHtml: `${textAsHtml}\n\n\n<p>-------------------</p>\n<p>Sollinked BCC Email Address: ${bcc_to_email ?? ""}</p>\n\n<p>OR</p>\n\n<p>Click this link to reply: <a href="mailto:${mail.from_email}?bcc=${bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}">Reply</a></p>`,
                 attachments,
-            });
+            }); */
             continue;
         }
-
-        await sendSOLTo(true, mail.tiplink_public_key, 0.005);
 
         // process tiers
         // tiers are ordered by value_usd descending
@@ -86,6 +84,8 @@ export const processPayments = async() => {
             // create a forwarder for responses
             // delete this forwarder once done
             await createEmailForwarder(uuid);
+
+            await sendSOLTo(true, mail.tiplink_public_key, 0.005);
 
             // update the mail to contain the necessary info
             await mailController.update(mail.key, { 
