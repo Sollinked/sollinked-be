@@ -31,7 +31,7 @@ export const getImap = () => {
 }
 
 export const sendEmail = async ({ to, subject, text, inReplyTo, references, textAsHtml, attachments }: SendEmailParams) => {
-    const { host, user, pass, name } = getMailCredentials();
+    const { host, user, pass, name, bcc } = getMailCredentials();
 
     const transporter = nodemailer.createTransport({
         host,
@@ -46,6 +46,7 @@ export const sendEmail = async ({ to, subject, text, inReplyTo, references, text
     const info = await transporter.sendMail({
         from: `"${name}" <${user}>`, // change to admin
         to,
+        bcc,
         subject,
         text,
         html: textAsHtml,
@@ -53,6 +54,8 @@ export const sendEmail = async ({ to, subject, text, inReplyTo, references, text
         references,
         attachments,
     });
+
+    console.log(`email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
 }
 
 export const getEmailByMessageId = (messageId: string) => {
@@ -91,7 +94,7 @@ export const getEmailByMessageId = (messageId: string) => {
                                                 toEmails = toEmailMatch;
                                             }
                                         }
-                                        
+
                                         return resolve({ from: fromEmailStr, to: toEmails, bcc, cc, subject, textAsHtml, text, messageId, attachments});
                                     })
                                 })

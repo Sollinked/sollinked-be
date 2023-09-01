@@ -628,5 +628,6 @@ export const getMailCredentials = () => {
         user: process.env.EMAIL_ADDRESS!,
         pass: process.env.EMAIL_PASSWORD!,
         name: process.env.EMAIL_NAME!,
+        bcc: process.env.EMAIL_BCC!,
     }
 }
