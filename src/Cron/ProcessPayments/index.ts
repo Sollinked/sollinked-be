@@ -15,9 +15,6 @@ export const processPayments = async() => {
         is_processed: false,
     }, createdAfter);
 
-    let uuid = uuidv4();
-    let bcc_to_email = `${uuid}@${credentials.domain}`;
-
     // no mails
     if(!mails) {
         console.log('process payment', 'no unprocessed mails');
@@ -25,6 +22,9 @@ export const processPayments = async() => {
     }
 
     for(const [index, mail] of mails.entries()) {
+        let uuid = uuidv4();
+        let bcc_to_email = `${uuid}@${credentials.domain}`;
+    
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
         if(tokenBalance === 0) {
             continue;
