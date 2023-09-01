@@ -25,6 +25,20 @@ export type User = {
     webhooks?: Webhook[];
 }
 
+export type PublicUser = {
+    username: string;
+    display_name: string;
+    profile_picture?: string;
+    facebook: string;
+    instagram: string;
+    twitter: string;
+    twitch: string;
+    tiktok: string;
+    youtube: string;
+    calendar_advance_days: number;
+    tiers?: UserTier[];
+}
+
 export const fillableColumns = [
     'address',
     'username',

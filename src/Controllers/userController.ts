@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getDappDomain, getProfilePictureLink, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { User, fillableColumns } from "../Models/user";
+import { PublicUser, User, fillableColumns } from "../Models/user";
 import * as userTierController from './userTierController';
 import * as mailController from './mailController';
 import * as userReservationController from './userReservationController';
@@ -46,6 +46,42 @@ export const view = async(id: number) => {
     
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.reservationSettings =  await userReservationSettingController.find({'user_id': id});
+    return result;
+}
+
+// view (single - id) for public profile
+export const publicView = async(id: number) => {
+    // username: string;
+    // display_name: string;
+    // profile_picture: string;
+    // facebook: string;
+    // instagram: string;
+    // twitter: string;
+    // twitch: string;
+    // tiktok: string;
+    // youtube: string;
+    // tiers?: UserTier[];
+    const query = `SELECT 
+                        username,
+                        display_name,
+                        profile_picture,
+                        facebook,
+                        instagram,
+                        twitter,
+                        twitch,
+                        tiktok,
+                        youtube
+                    FROM ${table} WHERE id = ${id} LIMIT 1`;
+
+    const db = new DB();
+    const result = await db.executeQueryForSingleResult<PublicUser>(query);
+
+    if(!result) {
+        return result;
+    }
+    
+    result.profile_picture = getProfilePictureLink(result.profile_picture);
+    result.tiers = await userTierController.find({ user_id: id });
     return result;
 }
 

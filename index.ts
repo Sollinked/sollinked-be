@@ -40,6 +40,12 @@ app.use((req, res, next) => {
         next();
         return;
     }
+    
+    // check if it's getting public profile
+    if(req.path.match(/\/user\/\d+/g) && req.method.toLowerCase() === "get") {
+        next();
+        return;
+    }
 
     // we need to check the multipart in their respective paths
     if(req.is('multipart/form-data')) {

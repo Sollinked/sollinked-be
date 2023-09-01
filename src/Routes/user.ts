@@ -5,7 +5,7 @@ import * as userReservationSettingController from '../Controllers/userReservatio
 import { contentUpload } from './Upload';
 import { checkAllowedMime, verifySignature } from '../../utils';
 import fs from 'fs-extra';
-import _ from 'lodash';
+import _, { update } from 'lodash';
 import { VERIFY_MESSAGE } from '../Constants';
 
 export const routes = Router();
@@ -90,10 +90,10 @@ routes.post('/update/:id', contentUpload.single('profile_picture'), async(req, r
     }
     
     let updateRes = await userController.update(id, data);
-    if(updateRes) {
+    if(updateRes && typeof updateRes === 'string') {
         return res.send({
             success: false,
-            message: updateRes.includes("duplicate")? 'Username is claimed, please choose another!' : "Unknown Error",
+            message: (updateRes as string).includes("duplicate")? 'Username is claimed, please choose another!' : "Unknown Error",
         })
     }
     
@@ -284,5 +284,27 @@ routes.get('/name/:user_id', async(req, res) => {
         success: true,
         message: "Success",
         data: user.display_name,
+    });
+});
+
+routes.get('/:user_id', async(req, res) => {
+    let {user_id} = req.params;
+
+    if(!user_id) {
+        return res.status(400).send("No user id");
+    }
+
+    let user = await userController.publicView(Number(user_id));
+    if(!user) {
+        return res.send({
+            success: false,
+            message: "Unable to find user",
+        });
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: user,
     });
 });
