@@ -6,8 +6,8 @@ import { processExpiredReservationPayments, processReservationClaims, processRes
 
 
 export const init = () => {
-    // run every 2 minutes
-    cron.schedule('*/2 * * * *', () => {
+    // run every 1 minute
+    cron.schedule('*/1 * * * *', () => {
         processEmails();
         processPayments();
         processClaims();
