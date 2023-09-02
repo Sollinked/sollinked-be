@@ -1,8 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { UserGithubIssueLog, fillableColumns } from "../Models/userGithubIssueLog";
-import { RESERVATION_STATUS_BLOCKED, RESERVATION_STATUS_CANCELLED } from "../Constants";
+import { ProcessedUserGithubIssueLog, UserGithubIssueLog, fillableColumns } from "../Models/userGithubIssueLog";
 
 const table = 'user_github_issue_logs';
 
@@ -32,7 +31,16 @@ export const view = async(id: number) => {
     const db = new DB();
     const result = await db.executeQueryForSingleResult<UserGithubIssueLog>(query);
 
-    return result ?? {};
+    if(!result) {
+        return result;
+    }
+
+    let ret: ProcessedUserGithubIssueLog = {
+        ...result,
+        value_usd: Number(result.value_usd),
+    }
+
+    return ret;
 }
 
 // find (all match)
@@ -43,7 +51,16 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const db = new DB();
     const result = await db.executeQueryForResults<UserGithubIssueLog>(query);
 
-    return result;
+    if(!result) {
+        return result;
+    }
+
+    let ret: ProcessedUserGithubIssueLog[] = result.map(x => ({
+        ...x,
+        value_usd: Number(x.value_usd),
+    }))
+
+    return ret;
 }
 
 // list (all)

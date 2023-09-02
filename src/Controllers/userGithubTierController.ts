@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { UserGithubTier, fillableColumns } from "../Models/userGithubTier";
+import { ProcessedUserGithubTier, UserGithubTier, fillableColumns } from "../Models/userGithubTier";
 
 const table = 'user_github_tiers';
 
@@ -31,7 +31,15 @@ export const view = async(id: number) => {
     const db = new DB();
     const result = await db.executeQueryForSingleResult<UserGithubTier>(query);
 
-    return result ?? {};
+    if(!result) {
+        return result;
+    }
+
+    let ret: ProcessedUserGithubTier = {
+        ...result,
+        value_usd: Number(result.value_usd),
+    }
+    return ret;
 }
 
 // find (all match)
@@ -40,9 +48,17 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY value_usd desc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<UserGithubTier>(query);
+    const results = await db.executeQueryForResults<UserGithubTier>(query);
+    if(!results) {
+        return results;
+    }
 
-    return result;
+    let ret: ProcessedUserGithubTier[] = results.map(x => ({
+        ...x,
+        value_usd: Number(x.value_usd),
+    }));
+
+    return ret;
 }
 
 // list (all)
