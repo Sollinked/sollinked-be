@@ -44,6 +44,7 @@ export const view = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
+    console.log(whereParams)
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY value_usd desc`;
 
@@ -72,14 +73,24 @@ export const list = async() => {
 }
 
 // update
-export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
+export const update = async(user_github_id: number, tiers: ProcessedUserGithubTier[]): Promise<void> => {
     // filter
-    const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
-
-    const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
-
     const db = new DB();
+
+    const deleteQuery = `DELETE FROM ${table} WHERE user_github_id = ${user_github_id}`;
+    await db.executeQuery(deleteQuery);
+
+    let columns = ['user_github_id', 'value_usd', 'label', 'color'];
+    let values: any[] = []; // change test to admin later
+    tiers.forEach(tier => {
+        values.push([user_github_id, tier.value_usd, tier.label, tier.color]);
+    });
+
+    if(values.length === 0){
+        return;
+    }
+
+    let query = getInsertQuery(columns, values, table);
     await db.executeQueryForSingleResult(query);
 }
 

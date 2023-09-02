@@ -57,14 +57,24 @@ export const list = async() => {
 }
 
 // update
-export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
+export const update = async(user_github_id: number, whitelists: string[]): Promise<void> => {
     // filter
-    const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
-
-    const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
-
     const db = new DB();
+
+    const deleteQuery = `DELETE FROM ${table} WHERE user_github_id = ${user_github_id}`;
+    await db.executeQuery(deleteQuery);
+
+    let columns = ['user_github_id', 'username'];
+    let values: any[] = []; // change test to admin later
+    whitelists.forEach(whitelist => {
+        values.push([user_github_id, whitelist]);
+    });
+
+    if(values.length === 0){
+        return;
+    }
+
+    let query = getInsertQuery(columns, values, table);
     await db.executeQueryForSingleResult(query);
 }
 

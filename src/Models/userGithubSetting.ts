@@ -12,7 +12,8 @@ export type UserGithubSetting = {
 }
 
 export const fillableColumns = [
+    'id',
     'user_id',
     'repo_link',
-    'synced_at',
+    'start_monitoring_at',
 ];

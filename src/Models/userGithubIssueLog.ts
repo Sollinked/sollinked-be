@@ -21,6 +21,7 @@ export type ProcessedUserGithubIssueLog = {
 }
 
 export const fillableColumns = [
+    'id',
     'user_github_id',
     'value_usd',
     'tx_hash',

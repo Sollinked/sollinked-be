@@ -5,6 +5,7 @@ export type UserGithubWhitelist = {
 }
 
 export const fillableColumns = [
+    'id',
     'user_github_id',
     'username',
 ];

@@ -15,6 +15,7 @@ export type ProcessedUserGithubTier = {
 }
 
 export const fillableColumns = [
+    'id',
     'user_github_id',
     'value_usd',
     'label',
