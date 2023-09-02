@@ -33,20 +33,20 @@ export const getImap = () => {
 export const sendEmail = async ({ to, subject, text, inReplyTo, references, textAsHtml, attachments }: SendEmailParams) => {
     const { host, user, pass, name, bcc } = getMailCredentials();
 
-    const transporter = nodemailer.createTransport({
-        host,
-        port: 465,
-        secure: true,
-        auth: {
-            user,
-            pass,
-        }
-    });
-
     let retries = 0;
     
     while(retries < 3) {
         try {
+            const transporter = nodemailer.createTransport({
+                host,
+                port: 465,
+                secure: true,
+                auth: {
+                    user,
+                    pass,
+                }
+            });
+
             const info = await transporter.sendMail({
                 from: `"${name}" <${user}>`, // change to admin
                 to,
