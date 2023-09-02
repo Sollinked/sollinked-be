@@ -7,6 +7,7 @@ import * as mailController from './mailController';
 import * as userReservationController from './userReservationController';
 import * as userReservationSettingController from './userReservationSettingController';
 import * as webhookController from './webhookController';
+import * as userGithubSettingController from './userGithubSettingController';
 import { changeEmailForwarder, createEmailForwarder } from "../Mail";
 
 const table = 'users';
@@ -103,6 +104,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].mails =  await mailController.find({'user_id': res.id});
         result[index].reservations =  await userReservationController.findForUser(res.id);
         result[index].reservationSettings =  await userReservationSettingController.find({'user_id': res.id});
+        result[index].githubSettings = await userGithubSettingController.find({'user_id': res.id});
         result[index].webhooks = await webhookController.find({ user_id: res.id })
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
     }

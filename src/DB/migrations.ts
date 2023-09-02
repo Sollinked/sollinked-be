@@ -226,4 +226,97 @@ export default [
             DROP INDEX user_reservations_uuid_idx;
         `
     },
+
+    // github
+    {
+        name: "create_user_github_settings_table",
+        query: `
+            CREATE TABLE user_github_settings (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                repo_link text not null,
+                start_monitoring_at timestamp null
+            )
+        `,
+        rollback_query: `DROP TABLE user_github_settings;`,
+    },
+    {
+        name: "create_user_github_settings_indexes",
+        query: `
+            CREATE INDEX user_github_settings_user_id_idx ON user_github_settings(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX user_github_settings_user_id_idx;
+        `,
+    },
+
+    {
+        name: "create_user_github_tiers_table",
+        query: `
+            CREATE TABLE user_github_tiers (
+                id serial PRIMARY KEY,
+                user_github_id int not null,
+                value_usd decimal not null,
+                label text not null,
+                color text not null
+            )
+        `,
+        rollback_query: `DROP TABLE user_github_tiers;`,
+    },
+    {
+        name: "create_user_github_tiers_indexes",
+        query: `
+            CREATE INDEX user_github_tiers_user_github_id_idx ON user_github_tiers(user_github_id);
+        `,
+        rollback_query: `
+            DROP INDEX user_github_tiers_user_github_id_idx;
+        `,
+    },
+
+    {
+        name: "create_user_github_issue_logs_table",
+        query: `
+            CREATE TABLE user_github_issue_logs (
+                id serial PRIMARY KEY,
+                user_github_id int not null,
+                value_usd decimal not null,
+                tx_hash text not null,
+                from_user text null,
+                from_email text not null,
+                title text not null,
+                body text not null
+            )
+        `,
+        rollback_query: `DROP TABLE user_github_issue_logs;`,
+    },
+    {
+        name: "create_user_github_issue_logs_indexes",
+        query: `
+            CREATE INDEX user_github_issue_logs_user_github_id_idx ON user_github_issue_logs(user_github_id);
+        `,
+        rollback_query: `
+            DROP INDEX user_github_issue_logs_user_github_id_idx;
+        `,
+    },
+
+    {
+        name: "create_user_github_whitelists_table",
+        query: `
+            CREATE TABLE user_github_whitelists (
+                id serial PRIMARY KEY,
+                user_github_id int not null,
+                username text not null
+            )
+        `,
+        rollback_query: `DROP TABLE user_github_whitelists;`,
+    },
+    {
+        name: "create_user_github_whitelists_indexes",
+        query: `
+            CREATE INDEX user_github_whitelists_user_github_id_idx ON user_github_whitelists(user_github_id);
+        `,
+        rollback_query: `
+            DROP INDEX user_github_whitelists_user_github_id_idx;
+        `,
+    },
 ];

@@ -631,3 +631,8 @@ export const getMailCredentials = () => {
         bcc: process.env.EMAIL_BCC!,
     }
 }
+
+// Github
+export const getGithubCredentials = () => {
+    return process.env.GITHUB_KEY!;
+}

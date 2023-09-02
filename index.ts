@@ -10,6 +10,7 @@ import { getServerPort, verifySignature } from './utils';
 import { routes as userRoutes } from './src/Routes/user';
 import { routes as reservationRoutes } from './src/Routes/reservation';
 import { routes as webhookRoutes } from './src/Routes/webhook';
+import { routes as gitgudRoutes } from './src/Routes/gitgud';
 import * as cron from './src/Cron';
 import { VERIFY_MESSAGE } from './src/Constants';
 
@@ -69,6 +70,7 @@ app.use((req, res, next) => {
 app.use('/user', userRoutes);
 app.use('/reservation', reservationRoutes);
 app.use('/webhooks', webhookRoutes);
+app.use('/gitgud', gitgudRoutes);
 
 //connect app to websocket
 let http = createServer(app);

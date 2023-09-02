@@ -1,4 +1,5 @@
 import { ProcessedMail } from "./mail";
+import { UserGithubSetting } from "./userGithubSetting";
 import { ProcessedUserReservation, UserReservation } from "./userReservation";
 import { ProcessedUserReservationSetting, UserReservationSetting } from "./userReservationSetting";
 import { UserTier } from "./userTier";
@@ -23,6 +24,7 @@ export type User = {
     reservations?: ProcessedUserReservation[];
     reservationSettings?: ProcessedUserReservationSetting[];
     webhooks?: Webhook[];
+    githubSettings?: UserGithubSetting[];
 }
 
 export type PublicUser = {
