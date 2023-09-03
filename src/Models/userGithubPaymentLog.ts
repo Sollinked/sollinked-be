@@ -1,4 +1,4 @@
-export type UserGithubIssueLog = {
+export type UserGithubPaymentLog = {
     id: number;
     user_github_id: number;
     value_usd: string;
@@ -9,7 +9,7 @@ export type UserGithubIssueLog = {
     body: string;
 }
 
-export type ProcessedUserGithubIssueLog = {
+export type ProcessedUserGithubPaymentLog = {
     id: number;
     user_github_id: number;
     value_usd: number;

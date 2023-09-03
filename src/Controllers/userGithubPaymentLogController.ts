@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { ProcessedUserGithubIssueLog, UserGithubIssueLog, fillableColumns } from "../Models/userGithubIssueLog";
+import { ProcessedUserGithubPaymentLog, UserGithubPaymentLog, fillableColumns } from "../Models/userGithubPaymentLog";
 
 const table = 'user_github_issue_logs';
 
@@ -29,13 +29,13 @@ export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult<UserGithubIssueLog>(query);
+    const result = await db.executeQueryForSingleResult<UserGithubPaymentLog>(query);
 
     if(!result) {
         return result;
     }
 
-    let ret: ProcessedUserGithubIssueLog = {
+    let ret: ProcessedUserGithubPaymentLog = {
         ...result,
         value_usd: Number(result.value_usd),
     }
@@ -49,13 +49,13 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<UserGithubIssueLog>(query);
+    const result = await db.executeQueryForResults<UserGithubPaymentLog>(query);
 
     if(!result) {
         return result;
     }
 
-    let ret: ProcessedUserGithubIssueLog[] = result.map(x => ({
+    let ret: ProcessedUserGithubPaymentLog[] = result.map(x => ({
         ...x,
         value_usd: Number(x.value_usd),
     }))
@@ -68,7 +68,7 @@ export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<UserGithubIssueLog>(query);
+    const result = await db.executeQueryForResults<UserGithubPaymentLog>(query);
 
     return result ?? [];
 }

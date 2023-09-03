@@ -1,4 +1,4 @@
-import { ProcessedUserGithubIssueLog, UserGithubIssueLog } from "./userGithubIssueLog";
+import { ProcessedUserGithubPaymentLog, UserGithubPaymentLog } from "./userGithubPaymentLog";
 import { ProcessedUserGithubTier, UserGithubTier } from "./userGithubTier";
 
 export type UserGithubSetting = {
@@ -8,7 +8,7 @@ export type UserGithubSetting = {
     start_monitoring_at?: string;
     whitelists: string[];
     tiers: ProcessedUserGithubTier[];
-    logs: ProcessedUserGithubIssueLog[];
+    logs: ProcessedUserGithubPaymentLog[];
 }
 
 export const fillableColumns = [

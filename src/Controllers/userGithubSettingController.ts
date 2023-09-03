@@ -3,7 +3,7 @@ import DB from "../DB"
 import _ from "lodash";
 import * as userGithubWhitelistController from './userGithubWhitelistController';
 import * as userGithubTierController from './userGithubTierController';
-import * as userGithubIssueLogController from './userGithubIssueLogController';
+import * as userGithubPaymentLogController from './userGithubPaymentLogController';
 import { UserGithubSetting, fillableColumns } from "../Models/userGithubSetting";
 
 const table = 'user_github_settings';
@@ -41,7 +41,7 @@ export const view = async(id: number) => {
     // result.whitelists = whitelistRes? whitelistRes.map(x => x.username) : [];
     let tierRes = await userGithubTierController.find({ user_github_id: result.id });
     result.tiers = tierRes? tierRes : [];
-    // let logRes = await userGithubIssueLogController.find({ user_github_id: result.id });
+    // let logRes = await userGithubPaymentLogController.find({ user_github_id: result.id });
     // result.logs = logRes? logRes : [];
 
     return result ?? {};
@@ -64,7 +64,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
         results[index].whitelists = whitelistRes? whitelistRes.map(x => x.username) : [];
         let tierRes = await userGithubTierController.find({ user_github_id: result.id });
         results[index].tiers = tierRes? tierRes : [];
-        let logRes = await userGithubIssueLogController.find({ user_github_id: result.id });
+        let logRes = await userGithubPaymentLogController.find({ user_github_id: result.id });
         results[index].logs = logRes? logRes : [];
     }
 
