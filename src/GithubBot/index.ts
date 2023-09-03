@@ -202,9 +202,9 @@ export class GithubBot {
             }
 
             await this.octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
-                owner: 'OWNER',
-                repo: 'REPO',
-                issue_number: issue.id,
+                owner: this.owner,
+                repo: this.repo,
+                issue_number: issue.number,
                 state: 'closed',
                 headers: {
                   'X-GitHub-Api-Version': '2022-11-28'
@@ -226,20 +226,27 @@ export class GithubBot {
             return;
         }
         for(const [index, issue] of issues.entries()) {
-            let issuer = issue.user?.email ?? "";
+            if(!issue.user) {
+                console.log('Github bot', 'user is empty');
+                continue;
+            }
+
+            let issuer = issue.user.login;
+            let issuerEmail = issue.user.email ?? "";
             if(!issuer) {
                 console.log('Github bot', 'issuer is empty');
                 continue;
             }
-            if(this.whitelists.includes(issuer)) {
+            
+            if(this.whitelists.includes(issuer) || this.whitelists.includes(issuerEmail)) {
                 console.log('Github bot', 'issuer in whitelist');
                 continue;
             }
             
             await this.octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
-                owner: 'OWNER',
-                repo: 'REPO',
-                issue_number: issue.id,
+                owner: this.owner,
+                repo: this.repo,
+                issue_number: issue.number,
                 labels: ['Unpaid'],
                 headers: {
                   'X-GitHub-Api-Version': '2022-11-28'
@@ -280,6 +287,7 @@ export class GithubBot {
         })).data;
     }
 
+    // accept invitations from everyone
     acceptAllInvitations = async() => {
         let invitations = await this.getAllInvitations();
         for(const [index, invitation] of invitations.entries()) {
@@ -314,6 +322,7 @@ export class GithubBot {
         }
     }
 
+    // syncs repo based on uuid
     trySyncRepo = async() => {
         try {
             let issues = (await this.octokit.request('GET /issues', {
@@ -337,7 +346,6 @@ export class GithubBot {
                 }
 
                 let [owner, repo] = issue.repository.full_name.split('/');
-
                 // close the repo
                 await this.octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
                     owner,
@@ -348,6 +356,11 @@ export class GithubBot {
                       'X-GitHub-Api-Version': '2022-11-28'
                     }
                 });
+
+                this.owner = owner;
+                this.repo = repo;
+
+                await this.createLabel({ label: "Unpaid", color: 'f375b6' });
 
                 let repoLink = `/${issue.repository.full_name}`.trim();
                 let settings = await userGithubSettingController.find({ uuid, repo_link: repoLink });

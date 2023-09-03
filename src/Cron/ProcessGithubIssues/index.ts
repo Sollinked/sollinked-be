@@ -9,11 +9,6 @@ export const processGithubIssues = async() => {
     }
 
     for(const [index, setting] of userGithubSettings.entries()) {
-        if(!setting.tiers) {
-            console.log('process github issues', 'no tiers');
-            return;
-        }
-
         let bot = new GithubBot(setting);
         try {
             await bot.processUnwantedIssues();

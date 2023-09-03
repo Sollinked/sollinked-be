@@ -76,7 +76,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
 // list (all)
 export const list = async() => {
-    const query = `SELECT * FROM ${table} ORDER BY value_usd desc`;
+    const query = `SELECT * FROM ${table} WHERE is_active = true`;
 
     const db = new DB();
     const result = await db.executeQueryForResults<UserGithubSetting>(query);
@@ -113,6 +113,16 @@ export const deleteDuplicate = async() => {
                 SELECT repo_link from ${table} WHERE last_synced_at is not null
             ) 
             AND last_synced_at is null;
+        `;
+
+    const db = new DB();
+    await db.executeQueryForSingleResult(query);
+}
+
+export const deleteSettingById = async(id: number) => {
+    const query = `
+        DELETE FROM ${table} 
+        WHERE id = ${id}
         `;
 
     const db = new DB();
