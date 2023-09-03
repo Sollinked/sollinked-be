@@ -1,6 +1,6 @@
 import migrations from './migrations';
 import pg, { Client } from 'pg';
-import { getDbConfig, getUTCMoment } from '../../utils';
+import { getDbConfig, getUTCMoment, isProduction } from '../../utils';
 
 /** Fix big int returning as string */
 pg.types.setTypeParser(20, BigInt); // Type Id 20 = BIGINT | BIGSERIAL
@@ -28,6 +28,11 @@ export default class DB {
             SELECT name, migration_group FROM migrations ORDER BY migration_group DESC;
         `;
         let groupRes = await this.executeQueryForResults<{ name: string, migration_group: number }>(groupQuery);
+
+        // initial migration has error
+        if(typeof groupRes === 'string') {
+            groupRes = undefined;
+        }
 
         //if is init and group is not null then it's initialized before
         if(isInit && groupRes) {
@@ -63,6 +68,10 @@ export default class DB {
     }
 
     droptable = async() => {
+        if(isProduction()) {
+            console.log('Production environment detected, not dropping..');
+            return;
+        }
         const dropQuery = `
             DROP schema public CASCADE;
             CREATE schema public;

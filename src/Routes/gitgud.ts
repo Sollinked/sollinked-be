@@ -77,8 +77,53 @@ routes.post('/update/:user_github_id', async(req, res) => {
     }
     
     await userGithubSettingController.update(id, { repo_link: data.repo_link, user_id: user.id });
-    await userGithubTierController.update(id, data.tiers);
+    await userGithubTierController.update(setting, data.tiers);
     await userGithubWhitelistController.update(id, data.whitelists);
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+
+});
+
+routes.post('/toggle/:user_github_id', async(req, res) => {
+    let data = req.body;
+    let {address, signature} = data;
+    let { user_github_id } = req.params;
+
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!user_github_id) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let id = Number(user_github_id);
+    let users = await userController.find({ address });
+
+    if(!users) {
+        return res.send({
+            success: false,
+            message: "Unable to find user",
+        });
+    }
+
+    let user = users[0];
+    let setting = await userGithubSettingController.view(id);
+    if(!setting) {
+        return res.send({
+            success: false,
+            message: "Unable to find setting",
+        });
+    }
+
+    if(setting.user_id !== user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+    
+    await userGithubSettingController.update(id, { is_active: !setting.is_active });
 
     return res.send({
         success: true,

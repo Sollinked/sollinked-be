@@ -5,6 +5,7 @@ import * as userGithubWhitelistController from './userGithubWhitelistController'
 import * as userGithubTierController from './userGithubTierController';
 import * as userGithubPaymentLogController from './userGithubPaymentLogController';
 import { UserGithubSetting, fillableColumns } from "../Models/userGithubSetting";
+import { v4 as uuidv4 } from 'uuid';
 
 const table = 'user_github_settings';
 
@@ -13,6 +14,8 @@ export const init = async() => { }
 
 // create
 export const create = async(insertParams: any) => {
+    let uuid = uuidv4();
+    insertParams.uuid = uuid;
     const filtered = _.pick(insertParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, ', ', true);
 
@@ -49,7 +52,7 @@ export const view = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, ' AND ', false, "", true);
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
@@ -93,12 +96,25 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
     await db.executeQueryForSingleResult(query);
 }
 
+export const updateLastSynced = async(id: number): Promise<void> => {
+    // filter
+    const query = `UPDATE ${table} SET last_synced_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+
+    const db = new DB();
+    await db.executeQueryForSingleResult(query);
+}
+
 // delete (soft delete?)
-// export const delete = async(userId: number) => {
-//     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
+export const deleteDuplicate = async() => {
+    const query = `
+        DELETE FROM ${table} 
+        WHERE 
+            repo_link in (
+                SELECT repo_link from ${table} WHERE last_synced_at is not null
+            ) 
+            AND last_synced_at is null;
+        `;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
-
-//     return result;
-// }
+    const db = new DB();
+    await db.executeQueryForSingleResult(query);
+}

@@ -182,6 +182,8 @@ export default [
             );`,
         rollback_query: `
             DROP TABLE stream_webhooks;
+            DROP TYPE webhook_status;
+            DROP TYPE webhook_type;
         `
     },
     {
@@ -231,14 +233,21 @@ export default [
     {
         name: "create_user_github_settings_table",
         query: `
+            CREATE TYPE behavior_type AS ENUM ('mark', 'close');
             CREATE TABLE user_github_settings (
                 id serial PRIMARY KEY,
                 user_id int not null,
                 repo_link text not null,
-                start_monitoring_at timestamp null
+                uuid text not null,
+                last_synced_at timestamp null,
+                behavior behavior_type default 'mark' not null,
+                is_active bool default false not null
             )
         `,
-        rollback_query: `DROP TABLE user_github_settings;`,
+        rollback_query: `
+            DROP TABLE user_github_settings;
+            DROP TYPE behavior_type;
+        `,
     },
     {
         name: "create_user_github_settings_indexes",

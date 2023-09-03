@@ -128,6 +128,10 @@ export const getUTCDate = () => {
     return getUTCMoment().format('YYYY-MM-DD');
 }
 
+export const isProduction = () => {
+    return process.env.ENVIRONMENT === "production" || !process.env.ENVIRONMENT;
+}
+
 export const getDbConfig = () => {
     const DB_USER = process.env.DB_USER ?? "";
     const DB_PASSWORD = process.env.DB_PASSWORD ?? "";
@@ -634,5 +638,8 @@ export const getMailCredentials = () => {
 
 // Github
 export const getGithubCredentials = () => {
-    return process.env.GITHUB_KEY!;
+    return {
+        key: process.env.GITHUB_KEY!,
+        email: process.env.GITHUB_EMAIL!,
+    };
 }
