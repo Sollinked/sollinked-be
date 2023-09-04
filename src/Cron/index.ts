@@ -10,7 +10,7 @@ import { processGithubIssues } from "./ProcessGithubIssues";
 export const init = () => {
     // run every 1 minute
     cron.schedule('*/1 * * * *', () => {
-        processEmails();
+        // processEmails();
         processPayments();
         processClaims();
         processExpiredReservationPayments();
@@ -23,4 +23,9 @@ export const init = () => {
     setInterval(() => {
         processReservationPayments();
     }, 5000);
+
+    // process emails every 30s
+    setInterval(() => {
+        processEmails();
+    }, 30000);
 }
