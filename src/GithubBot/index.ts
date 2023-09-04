@@ -224,6 +224,10 @@ export class GithubBot {
                 continue;
             }
 
+            if(moment(issue.created_at).isBefore(this.last_synced_at)) {
+                return;
+            }
+
             await this.octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
                 owner: this.owner,
                 repo: this.repo,
@@ -264,6 +268,10 @@ export class GithubBot {
             if(this.whitelists.includes(issuer) || this.whitelists.includes(issuerEmail)) {
                 console.log('Github bot', 'issuer in whitelist');
                 continue;
+            }
+
+            if(moment(issue.created_at).isBefore(this.last_synced_at)) {
+                return;
             }
             
             await this.octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
