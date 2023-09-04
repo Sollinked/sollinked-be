@@ -229,7 +229,6 @@ routes.post('/newIssue', async(req, res) => {
             console.log({ retries })
             try {
                 let txDetails = await getTx(txHash);
-                console.log(txDetails);
                 if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
                     throw new Error("No Tx Details");
                 }
@@ -253,20 +252,11 @@ routes.post('/newIssue', async(req, res) => {
                 }
 
                 const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
-                console.log('pre')
-                console.log(preTokenBalances)
                 let preUSDCBalanceArray = preTokenBalances.filter(x => x.mint === USDC_ADDRESS && x.owner === user!.address);
                 let preUSDCBalance = preUSDCBalanceArray?.[0].uiTokenAmount.uiAmount ?? 0;
 
-                console.log('post')
-                console.log(postTokenBalances)
                 let postUSDCBalanceArray = postTokenBalances.filter(x => x.mint === USDC_ADDRESS && x.owner === user!.address);
                 let postUSDCBalance = postUSDCBalanceArray?.[0].uiTokenAmount.uiAmount ?? 0;
-
-                console.log({
-                    preUSDCBalance,
-                    postUSDCBalance,
-                })
 
                 let valueUsd = postUSDCBalance - preUSDCBalance;
                 await userGithubPaymentLogController.update(payment.id, { value_usd: valueUsd });
@@ -278,7 +268,6 @@ routes.post('/newIssue', async(req, res) => {
                         currentChosenValueUsd = tier.value_usd;
                         label = tier.label;
                     }
-                    console.log({ label, valueUsd, currentChosenValueUsd })
                 });
 
                 if(!label) {
@@ -288,6 +277,11 @@ routes.post('/newIssue', async(req, res) => {
                 
                 // dont need await
                 let bot = new GithubBot(settings[0]);
+                if(fromEmail || fromUser) {
+                    body += '\n\n\nReported By';
+                    body += fromUser? `\n\n${fromUser}` : "";
+                    body += fromEmail? `\n\n${fromEmail}` : "";
+                }
                 bot.createIssue({
                     title,
                     body,
