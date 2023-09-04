@@ -282,6 +282,10 @@ routes.post('/newIssue', async(req, res) => {
                     body += fromUser? `\n\n${fromUser}` : "";
                     body += fromEmail? `\n\n${fromEmail}` : "";
                 }
+
+                body += '\n\n\n';
+                body += `[Proof of Payment](https://solana.fm/tx/${txHash}?cluster=mainnet-qn1)`;
+
                 bot.createIssue({
                     title,
                     body,
