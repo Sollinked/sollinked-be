@@ -28,7 +28,7 @@ export class GithubBot {
             this.repo = repo;
             this.owner = owner;
             this.last_synced_at = setting.last_synced_at;
-            this.whitelists = [...(setting.whitelists ?? []), email, name];
+            this.whitelists = [...(setting.whitelists ?? []), email, name, owner];
             this.behavior = setting.behavior;
             this.id = setting.id;
         }
