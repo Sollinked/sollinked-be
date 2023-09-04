@@ -6,6 +6,7 @@ import * as userGithubTierController from './userGithubTierController';
 import * as userGithubPaymentLogController from './userGithubPaymentLogController';
 import { UserGithubSetting, fillableColumns } from "../Models/userGithubSetting";
 import { v4 as uuidv4 } from 'uuid';
+import moment from 'moment';
 
 const table = 'user_github_settings';
 
@@ -122,7 +123,7 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
 export const updateLastSynced = async(id: number): Promise<void> => {
     // filter
-    const query = `UPDATE ${table} SET last_synced_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+    const query = `UPDATE ${table} SET last_synced_at = '${moment().format('YYYY-MM-DDTHH:mm:ssZ')}' WHERE id = ${id}`;
 
     const db = new DB();
     await db.executeQueryForSingleResult(query);
