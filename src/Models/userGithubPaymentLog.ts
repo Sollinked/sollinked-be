@@ -7,6 +7,7 @@ export type UserGithubPaymentLog = {
     from_email: string;
     title: string;
     body: string;
+    created_at: string;
 }
 
 export type ProcessedUserGithubPaymentLog = {
@@ -18,6 +19,7 @@ export type ProcessedUserGithubPaymentLog = {
     from_email: string;
     title: string;
     body: string;
+    created_at: string;
 }
 
 export const fillableColumns = [
@@ -29,4 +31,5 @@ export const fillableColumns = [
     'from_email',
     'title',
     'body',
+    'created_at'
 ];

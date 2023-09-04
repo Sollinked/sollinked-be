@@ -3,7 +3,7 @@ import DB from "../DB"
 import _ from "lodash";
 import { ProcessedUserGithubPaymentLog, UserGithubPaymentLog, fillableColumns } from "../Models/userGithubPaymentLog";
 
-const table = 'user_github_issue_logs';
+const table = 'user_github_payment_logs';
 
 // init entry for user
 export const init = async() => { }

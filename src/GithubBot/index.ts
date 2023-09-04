@@ -14,9 +14,10 @@ export class GithubBot {
     private last_synced_at: string | undefined = undefined;
     private whitelists: string[] = [];
     private behavior = 'mark';
+    private id = 0;
 
     constructor (setting?: UserGithubSetting) {
-        let { key, email } = getGithubCredentials();
+        let { key, email, name } = getGithubCredentials();
         this.octokit = new Octokit({
             auth: key,
             request: { fetch }
@@ -27,8 +28,9 @@ export class GithubBot {
             this.repo = repo;
             this.owner = owner;
             this.last_synced_at = setting.last_synced_at;
-            this.whitelists = [...(setting.whitelists ?? []), email];
+            this.whitelists = [...(setting.whitelists ?? []), email, name];
             this.behavior = setting.behavior;
+            this.id = setting.id;
         }
     }
 
@@ -66,16 +68,23 @@ export class GithubBot {
         }
 
         color = color.replace("#", "");
-        await this.octokit.request('POST /repos/{owner}/{repo}/labels', {
-            owner: this.owner,
-            repo: this.repo,
-            name: label,
-            description: DESCRIPTION,
-            color,
-            headers: {
-                'X-GitHub-Api-Version': '2022-11-28'
-            }
-        });
+        try {
+            console.log(color);
+            await this.octokit.request('POST /repos/{owner}/{repo}/labels', {
+                owner: this.owner,
+                repo: this.repo,
+                name: label,
+                description: DESCRIPTION,
+                color: color? color : '000000',
+                headers: {
+                    'X-GitHub-Api-Version': '2022-11-28'
+                }
+            });
+        }
+
+        catch(e: any) {
+            console.log(e.message);
+        }
 
         console.log('GithubBot createLabel', 'created label');
     }
@@ -97,7 +106,7 @@ export class GithubBot {
             owner: this.owner,
             repo: this.repo,
             name: label,
-            color: color,
+            color: color? color : '000000',
             headers: {
               'X-GitHub-Api-Version': '2022-11-28'
             }
@@ -164,7 +173,7 @@ export class GithubBot {
         console.log('GithubBot create', 'created issue');
     }
 
-    readIssues = async() => {
+    readIssues = async(state: 'open' | 'closed' | 'all' = "all") => {
         if(!this.repo) {
             console.log('Github readIssues', 'no repo');
             return;
@@ -181,6 +190,7 @@ export class GithubBot {
             headers: {
               'X-GitHub-Api-Version': '2022-11-28'
             },
+            state,
             since: moment(this.last_synced_at).format('YYYY-MM-DDTHH:mm:ssZ')
         })).data;
     }
@@ -191,36 +201,7 @@ export class GithubBot {
             return;
         }
 
-        let issues = await this.readIssues();
-        if(!issues) {
-            console.log('No issues');
-            return;
-        }
-        for(const [index, issue] of issues.entries()) {
-            if(this.whitelists.includes(issue.user?.email ?? "")) {
-                continue;
-            }
-
-            await this.octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
-                owner: this.owner,
-                repo: this.repo,
-                issue_number: issue.number,
-                state: 'closed',
-                headers: {
-                  'X-GitHub-Api-Version': '2022-11-28'
-                }
-            });
-        }
-        console.log('GithubBot close', 'finishing closing');
-    }
-
-    markIssues = async() => {
-        if(!this.repo) {
-            console.log('Github markIssues', 'no repo');
-            return;
-        }
-
-        let issues = await this.readIssues();
+        let issues = await this.readIssues("open");
         if(!issues) {
             console.log('No issues');
             return;
@@ -237,7 +218,49 @@ export class GithubBot {
                 console.log('Github bot', 'issuer is empty');
                 continue;
             }
-            
+
+            if(this.whitelists.includes(issuer) || this.whitelists.includes(issuerEmail)) {
+                console.log('Github bot', 'issuer in whitelist');
+                continue;
+            }
+
+            await this.octokit.request('PATCH /repos/{owner}/{repo}/issues/{issue_number}', {
+                owner: this.owner,
+                repo: this.repo,
+                issue_number: issue.number,
+                state: 'closed',
+                headers: {
+                  'X-GitHub-Api-Version': '2022-11-28'
+                }
+            });
+            console.log(`GithubBot`, `Closed /${this.owner}/${this.repo} issue no ${issue.number}`);
+        }
+    }
+
+    markIssues = async() => {
+        if(!this.repo) {
+            console.log('Github markIssues', 'no repo');
+            return;
+        }
+
+        let issues = await this.readIssues("open");
+        if(!issues) {
+            console.log('No issues');
+            return;
+        }
+        for(const [index, issue] of issues.entries()) {
+            if(!issue.user) {
+                console.log('Github bot', 'user is empty');
+                continue;
+            }
+
+            let issuer = issue.user.login;
+            let issuerEmail = issue.user.email ?? "";
+            if(!issuer) {
+                console.log('Github bot', 'issuer is empty');
+                continue;
+            }
+
             if(this.whitelists.includes(issuer) || this.whitelists.includes(issuerEmail)) {
                 console.log('Github bot', 'issuer in whitelist');
                 continue;
@@ -252,8 +275,8 @@ export class GithubBot {
                   'X-GitHub-Api-Version': '2022-11-28'
                 }
             });
+            console.log(`GithubBot`, `Marked /${this.owner}/${this.repo} issue no ${issue.number}`);
         }
-        console.log('GithubBot mark', 'finishing marking');
     }
 
     processUnwantedIssues = async() => {
@@ -267,6 +290,7 @@ export class GithubBot {
             default:
                 break;
         }
+        await userGithubSettingController.updateLastSynced(this.id);
     }
 
     // invitations

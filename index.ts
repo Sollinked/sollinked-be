@@ -42,8 +42,21 @@ app.use((req, res, next) => {
         return;
     }
     
-    // check if it's getting public profile
+    // check if it's to post new issue
+    if(req.path.match(/\/gitgud\/newIssue/g)) {
+        next();
+        return;
+    }
+
+    
+    // check if it's getting public methods
     if(req.path.match(/\/user\/\d+/g) && req.method.toLowerCase() === "get") {
+        next();
+        return;
+    }
+    
+    // check if it's getting public methods
+    if(req.path.match(/\/gitgud\//g) && req.method.toLowerCase() === "get") {
         next();
         return;
     }

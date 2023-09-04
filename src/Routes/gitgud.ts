@@ -3,7 +3,11 @@ import * as userController from '../Controllers/userController';
 import * as userGithubSettingController from '../Controllers/userGithubSettingController';
 import * as userGithubTierController from '../Controllers/userGithubTierController';
 import * as userGithubWhitelistController from '../Controllers/userGithubWhitelistController';
+import * as userGithubPaymentLogController from '../Controllers/userGithubPaymentLogController';
 import _ from 'lodash';
+import { getTx, sleep } from '../../utils';
+import moment from 'moment';
+import { GithubBot } from '../GithubBot';
 
 export const routes = Router();
 
@@ -176,4 +180,168 @@ routes.delete('/:user_github_id', async(req, res) => {
         message: "Success",
     });
 
+});
+
+// create new issue
+routes.post('/newIssue', async(req, res) => {
+    try {
+        let data = req.body;
+        let { owner, repo, title, body, txHash, fromUser, fromEmail } = data;
+    
+        if(!data) {
+            return res.status(400).send("No data");
+        }
+
+        if(!owner || !repo || !txHash || !title || !body) {
+            return res.status(400).send("Invalid Params");
+        }
+
+        let settings = await userGithubSettingController.findActiveSynced({ repo_link: `/${owner}/${repo}`});
+        if(!settings || settings.length === 0) {
+            return res.status(404).send("Cant find settings");
+        }
+
+        let payment = await userGithubPaymentLogController.create({
+            user_github_id: settings[0].id,
+            tx_hash: txHash,
+            from_user: fromUser,
+            from_email: fromEmail,
+            title,
+            body,
+        });
+
+        if(!payment) {
+            return res.status(500).send("Server Error");
+        }
+
+        // check status
+        let retries = 0;
+
+        // with some minor adjustment
+        let now = moment().add(-2, 'minute');
+        let user = await userController.view(settings[0].user_id);
+
+        if(!user) {
+            return res.status(404).send("Cant find user");
+        }
+
+        while(retries < 10) {
+            console.log({ retries })
+            try {
+                let txDetails = await getTx(txHash);
+                console.log(txDetails);
+                if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
+                    throw new Error("No Tx Details");
+                }
+
+                let {
+                    blockTime,
+                    meta: {
+                        preTokenBalances,
+                        postTokenBalances,
+                    }
+                } = txDetails;
+
+                if(!preTokenBalances || !postTokenBalances) {
+                    throw new Error("Cant find token balance");
+                }
+
+                let txMoment = moment(blockTime * 1000);
+                if(txMoment.isBefore(now)) {
+                    console.log('Old Tx detected');
+                    break;
+                }
+
+                const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
+                console.log('pre')
+                console.log(preTokenBalances)
+                let preUSDCBalanceArray = preTokenBalances.filter(x => x.mint === USDC_ADDRESS && x.owner === user!.address);
+                let preUSDCBalance = preUSDCBalanceArray?.[0].uiTokenAmount.uiAmount ?? 0;
+
+                console.log('post')
+                console.log(postTokenBalances)
+                let postUSDCBalanceArray = postTokenBalances.filter(x => x.mint === USDC_ADDRESS && x.owner === user!.address);
+                let postUSDCBalance = postUSDCBalanceArray?.[0].uiTokenAmount.uiAmount ?? 0;
+
+                console.log({
+                    preUSDCBalance,
+                    postUSDCBalance,
+                })
+
+                let valueUsd = postUSDCBalance - preUSDCBalance;
+                await userGithubPaymentLogController.update(payment.id, { value_usd: valueUsd });
+
+                let currentChosenValueUsd = 0;
+                let label = "";
+                settings[0].tiers.forEach(tier => {
+                    if(valueUsd >= tier.value_usd && tier.value_usd >= currentChosenValueUsd) {
+                        currentChosenValueUsd = tier.value_usd;
+                        label = tier.label;
+                    }
+                    console.log({ label, valueUsd, currentChosenValueUsd })
+                });
+
+                if(!label) {
+                    console.log('GithubBot New Issue', 'no labels');
+                    break;
+                }
+                
+                // dont need await
+                let bot = new GithubBot(settings[0]);
+                bot.createIssue({
+                    title,
+                    body,
+                    label
+                });
+                break;
+            }
+
+            catch {
+                retries++;
+                await sleep(2000); //sleep 2s
+                continue;
+            }
+        }
+
+        return res.send({
+            success: true,
+            message: "Success",
+        });
+    }
+
+    catch(e) {
+        return res.status(500).send("Server error");
+    }
+});
+
+routes.get('/tiers/:owner/:repo', async(req, res) => {
+    try {
+        let { owner, repo } = req.params;
+        if(!owner || !repo) {
+            return res.status(400).send("Invalid Params");
+        }
+
+        let settings = await userGithubSettingController.findActiveSynced({ repo_link: `/${owner}/${repo}`});
+        if(!settings || settings.length === 0) {
+            return res.status(404).send("Cant find settings");
+        }
+
+        let user = await userController.view(settings[0].user_id);
+        if(!user) {
+            return res.status(404).send("Cant find user");
+        }
+
+        return res.send({
+            success: true,
+            message: "Success",
+            data: {
+                tiers: settings[0].tiers,
+                address: user.address,
+            }
+        });
+    }
+
+    catch(e) {
+        return res.status(500).send("Server error");
+    }
 });

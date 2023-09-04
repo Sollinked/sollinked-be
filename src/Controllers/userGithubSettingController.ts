@@ -74,6 +74,30 @@ export const find = async(whereParams: {[key: string]: any}) => {
     return results;
 }
 
+// find (all match)
+export const findActiveSynced = async(whereParams: {[key: string]: any}) => {
+    const params = formatDBParamsToStr(whereParams, ' AND ', false, "", true);
+    const query = `SELECT * FROM ${table} WHERE ${params} AND is_active = true AND last_synced_at is not null;`;
+
+    const db = new DB();
+    const results = await db.executeQueryForResults<UserGithubSetting>(query);
+
+    if(!results) {
+        return results;
+    }
+
+    for(const [index, result] of results.entries()) {
+        let whitelistRes = await userGithubWhitelistController.find({ user_github_id: result.id });
+        results[index].whitelists = whitelistRes? whitelistRes.map(x => x.username) : [];
+        let tierRes = await userGithubTierController.find({ user_github_id: result.id });
+        results[index].tiers = tierRes? tierRes : [];
+        let logRes = await userGithubPaymentLogController.find({ user_github_id: result.id });
+        results[index].logs = logRes? logRes : [];
+    }
+
+    return results;
+}
+
 // list (all)
 export const list = async() => {
     const query = `SELECT * FROM ${table} WHERE is_active = true`;

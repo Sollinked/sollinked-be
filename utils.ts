@@ -602,6 +602,15 @@ export const transferCNfts = async(nft_ids: string[], nonPublicKeyAccount: strin
     return true;
 }
 
+export const getTx = async(txHash: string) => {
+    const endpoint = getRPCEndpoint(); //Replace with your RPC Endpoint
+    const connection = new WrapperConnection(endpoint);
+
+    let tx = await connection.getTransaction(txHash);
+
+    return tx;
+}
+
 export const verifySignature = (address: string, signature: string, message: string) => { 
     return nacl
             .sign
@@ -641,5 +650,6 @@ export const getGithubCredentials = () => {
     return {
         key: process.env.GITHUB_KEY!,
         email: process.env.GITHUB_EMAIL!,
+        name: process.env.GITHUB_NAME!,
     };
 }

@@ -283,28 +283,29 @@ export default [
     },
 
     {
-        name: "create_user_github_issue_logs_table",
+        name: "create_user_github_payment_logs_table",
         query: `
-            CREATE TABLE user_github_issue_logs (
+            CREATE TABLE user_github_payment_logs (
                 id serial PRIMARY KEY,
                 user_github_id int not null,
-                value_usd decimal not null,
+                value_usd decimal null,
                 tx_hash text not null,
                 from_user text null,
                 from_email text not null,
                 title text not null,
-                body text not null
+                body text not null,
+                created_at timestamp default current_timestamp not null
             )
         `,
-        rollback_query: `DROP TABLE user_github_issue_logs;`,
+        rollback_query: `DROP TABLE user_github_payment_logs;`,
     },
     {
-        name: "create_user_github_issue_logs_indexes",
+        name: "create_user_github_payment_logs_indexes",
         query: `
-            CREATE INDEX user_github_issue_logs_user_github_id_idx ON user_github_issue_logs(user_github_id);
+            CREATE INDEX user_github_payment_logs_user_github_id_idx ON user_github_payment_logs(user_github_id);
         `,
         rollback_query: `
-            DROP INDEX user_github_issue_logs_user_github_id_idx;
+            DROP INDEX user_github_payment_logs_user_github_id_idx;
         `,
     },
 
