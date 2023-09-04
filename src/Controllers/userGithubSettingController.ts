@@ -104,9 +104,22 @@ export const list = async() => {
     const query = `SELECT * FROM ${table} WHERE is_active = true`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<UserGithubSetting>(query);
+    const results = await db.executeQueryForResults<UserGithubSetting>(query);
 
-    return result ?? [];
+    if(!results) {
+        return results;
+    }
+
+    for(const [index, result] of results.entries()) {
+        let whitelistRes = await userGithubWhitelistController.find({ user_github_id: result.id });
+        results[index].whitelists = whitelistRes? whitelistRes.map(x => x.username) : [];
+        let tierRes = await userGithubTierController.find({ user_github_id: result.id });
+        results[index].tiers = tierRes? tierRes : [];
+        let logRes = await userGithubPaymentLogController.find({ user_github_id: result.id });
+        results[index].logs = logRes? logRes : [];
+    }
+
+    return results;
 }
 
 // update
