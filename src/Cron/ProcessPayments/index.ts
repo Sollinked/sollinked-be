@@ -124,6 +124,7 @@ export const processMailsWithNoResponse = async() => {
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
 
         if(usdcBalance > 0) {
+            console.log({tiplink_url, usdcBalance});
             console.log(`
             ${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.
 
