@@ -129,13 +129,7 @@ export const processMailsWithNoResponse = async() => {
                 subject: "USDC Refund",
                 inReplyTo: message_id,
                 references: message_id,
-                text: `
-                    ${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.
-
-                    Please make sure it's a Tiplink URL, you will not be asked to deposit any funds.
-
-                    Regards,
-                    Sollinked.
+                text: `${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.\n\nPlease make sure it's a Tiplink URL, you will not be asked to deposit any funds.\n\nRegards,\nSollinked.
                 `,
             });
         }
