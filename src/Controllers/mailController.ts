@@ -109,7 +109,7 @@ export const getExpired = async() => {
                         value_usd > 0 
                         AND value_usd is not null
                         AND has_responded = false
-                        AND expiry_date < ${moment().format('YYYY-MM-DDTHH:mm:ssZ')}`;
+                        AND expiry_date < '${moment().format('YYYY-MM-DDTHH:mm:ssZ')}'`;
 
     const db = new DB();
     let results = await db.executeQueryForResults<Mail>(query);
