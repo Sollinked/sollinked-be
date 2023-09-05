@@ -1,6 +1,6 @@
 import { processEmails } from "./ProcessEmails";
 import cron from 'node-cron';
-import { processPayments } from "./ProcessPayments";
+import { processMailsWithNoResponse, processPayments } from "./ProcessPayments";
 import { processClaims } from "./ProcessClaims";
 import { processExpiredReservationPayments, processReservationClaims, processReservationPayments } from "./ProcessReservationPayments";
 import { processGithubInvitations, syncRepo } from "./ProcessGithubInvitations";
@@ -18,6 +18,7 @@ export const init = () => {
         processGithubInvitations();
         syncRepo();
         processGithubIssues();
+        processMailsWithNoResponse();
     });
 
     setInterval(() => {

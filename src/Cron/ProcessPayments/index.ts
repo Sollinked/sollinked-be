@@ -111,3 +111,44 @@ export const processPayments = async() => {
         }
     } 
 }
+
+export const processMailsWithNoResponse = async() => {
+    let mails = await mailController.getExpired();
+    if(!mails) {
+        console.log('No expired mails')
+        return;
+    }
+
+    for(const [index, mail] of mails.entries()) {
+        const { from_email, to_email, tiplink_url, tiplink_public_key, message_id } = mail;
+        let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
+
+        if(usdcBalance > 0) {
+            console.log(`
+            ${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.
+
+            Please make sure it's a Tiplink URL, you will not be asked to deposit any funds.
+
+            Regards,
+            Sollinked.
+        `);
+            
+            /* await sendEmail({
+                to: from_email,
+                subject: "USDC Refund",
+                inReplyTo: message_id,
+                references: message_id,
+                text: `
+                    ${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.
+
+                    Please make sure it's a Tiplink URL, you will not be asked to deposit any funds.
+
+                    Regards,
+                    Sollinked.
+                `,
+            }); */
+        }
+
+        // await mailController.update(mail.key, { value_usd: 0 });
+    }
+}

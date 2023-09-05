@@ -2,6 +2,7 @@ import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, sendSOLTo, 
 import DB from "../DB"
 import _ from "lodash";
 import { Mail, ProcessedMail, fillableColumns } from "../Models/mail";
+import moment from 'moment';
 
 const table = 'mails';
 
@@ -65,6 +66,50 @@ export const find = async(whereParams: {[key: string]: any}, createdAfter?: stri
                     FROM ${table} 
                     WHERE ${params}
                     ${createdAfter? `AND created_at >= '${createdAfter}'` : ""}`;
+
+    const db = new DB();
+    let results = await db.executeQueryForResults<Mail>(query);
+
+    if(!results) {
+        return results;
+    }
+
+    let processedResults: ProcessedMail[] = [];
+    for(const [index, result] of results.entries()) {
+        processedResults.push({
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        })
+    }
+
+    return processedResults;
+}
+// find (all match)
+export const getExpired = async() => {
+    const query = `SELECT 
+                        id as key,
+                        user_id,
+                        from_email,
+                        to_email,
+                        bcc_to_email,
+                        message_id,
+                        case 
+                        when is_processed then tiplink_url
+                        else '' end as tiplink_url,
+                        tiplink_public_key,
+                        is_processed,
+                        has_responded,
+                        is_claimed,
+                        coalesce(value_usd, 0) as value_usd,
+                        created_at,
+                        processed_at,
+                        expiry_date
+                    FROM ${table} 
+                    WHERE 
+                        value_usd > 0 
+                        AND value_usd is not null
+                        AND has_responded = false
+                        AND expiry_date < ${moment().format('YYYY-MM-DDTHH:mm:ssZ')}`;
 
     const db = new DB();
     let results = await db.executeQueryForResults<Mail>(query);
