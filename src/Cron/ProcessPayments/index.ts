@@ -124,17 +124,7 @@ export const processMailsWithNoResponse = async() => {
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
 
         if(usdcBalance > 0) {
-            console.log({tiplink_url, usdcBalance});
-            console.log(`
-            ${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.
-
-            Please make sure it's a Tiplink URL, you will not be asked to deposit any funds.
-
-            Regards,
-            Sollinked.
-        `);
-            
-            /* await sendEmail({
+            await sendEmail({
                 to: from_email,
                 subject: "USDC Refund",
                 inReplyTo: message_id,
@@ -147,9 +137,9 @@ export const processMailsWithNoResponse = async() => {
                     Regards,
                     Sollinked.
                 `,
-            }); */
+            });
         }
 
-        // await mailController.update(mail.key, { value_usd: 0 });
+        await mailController.update(mail.key, { value_usd: 0 });
     }
 }
