@@ -20,8 +20,8 @@ const processEmailToUser = async({
     messageId: string;
     subject?: string;
 }) => {              
-    // only get emails to this domain
-    let toEmails = toEmailMatch.filter(x => x.includes(domain));
+    // only get emails to this domain and ignore noreply
+    let toEmails = toEmailMatch.filter(x => x.includes(domain) && !x.includes("noreply"));
     if(toEmails.length === 0) {
         return;
     }
@@ -30,18 +30,42 @@ const processEmailToUser = async({
                                     
     let users = await userController.find({ username });
     if(!users || users.length === 0){
-        console.log('processEmailToUser: ', 'cant find user');
-        console.log('processEmailToUser: ', `user: ${username}`);
 
-        if(username === "noreply") {
-            await sendEmail({
+        // check for email uuid
+        let uuidEmail = toEmail;
+        let uuid = uuidEmail.replace(`@${domain}`, "");
+        let mails = await controller.find({ bcc_to_email: uuidEmail });
+        if(mails && mails.length > 0) {
+            /* await sendEmail({
                 to: returnToEmail,
                 subject: 'Re: ' + subject,
                 inReplyTo: messageId,
                 references: messageId,
                 text: `This is an automated message.\n\nWe noticed that you have replied to the noreply bot. Please reply to the intended person and BCC to the specified BCC email address to claim your tip! You can also click the Reply link (it's just a mailto: link) to expedite the process.\n\nRegards, Sollinked.`,
-            });
+            }); */
+
+            let mail = mails[0];
+            let originalSender = mail.from_email.toLowerCase();
+        
+            // check if the responder actually responded to the original sender
+            let toEmails = toEmailMatch.filter(x => x.toLowerCase() === originalSender);
+            if(toEmails.length === 0) {
+                console.log('processEmailResponse: ', 'cant find email original sender, aborting');
+                console.log('processEmailResponse: ', `original sender: ${originalSender}`);
+                return;
+            }
+
+            // mark the mail as responded
+            await controller.update(mail.key, { has_responded: true });
+        
+            // process completed, dont need the bcc forwarder anymore
+            await deleteEmailForwarder(uuid);
+            return;
         }
+
+        console.log('processEmailToUser: ', 'cant find user');
+        console.log('processEmailToUser: ', `user: ${username}`);
+        
         return;
     }
 

@@ -6,7 +6,7 @@ import moment from 'moment';
 import { createEmailForwarder, deleteAttachments, getEmailByMessageId, mapAttachments, sendEmail } from '../../Mail';
 import { getAddressUSDCBalance } from '../../Token';
 import { v4 as uuidv4 } from 'uuid';
-import { getMailCredentials, sendSOLTo } from '../../../utils';
+import { getDappDomain, getMailCredentials, sendSOLTo } from '../../../utils';
 
 export const processPayments = async() => {
     let credentials = getMailCredentials();
@@ -71,10 +71,11 @@ export const processPayments = async() => {
 
             await sendEmail({
                 to: user.email_address,
-                subject: `Received ${tokenBalance} USDC from ${from}: ${subject ?? "No Subject"}`,
-                text: `${text}\n\n\n-------------------\nSollinked BCC Email Address: ${bcc_to_email ?? ""}\n\nOR\n\nClick this link to reply: mailto:${mail.from_email}?bcc=${bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}&body=${text}`,
-                textAsHtml: `${textAsHtml}\n\n\n<p>-------------------</p>\n<p>Sollinked BCC Email Address: ${bcc_to_email ?? ""}</p>\n\n<p>OR</p>\n\n<p>Click this link to reply: <a href="mailto:${mail.from_email}?bcc=${bcc_to_email ?? ""}&subject=${subject ?? "No Subject"}&body=${text.replace(/"/g, "\\\"")}">Reply</a></p>`,
+                subject: `${subject ?? "No Subject"} (${tokenBalance} USDC)`,
+                text: `${text}`,
+                textAsHtml: `${textAsHtml}`,
                 attachments,
+                replyTo: `${from}, ${uuid}@${credentials.domain}`
             });
 
             let processed_at = moment().format('YYYY-MM-DD HH:mm:ss');

@@ -27,6 +27,7 @@ export const init = () => {
 
     // process emails every 30s
     setInterval(() => {
+        // might have to check if it's checking emails
         processEmails();
     }, 30000);
 }

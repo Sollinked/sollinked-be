@@ -15,6 +15,8 @@ export type SendEmailParams = {
     inReplyTo?: string;
     references?: string;
     attachments?: Attachment[];
+    replyTo?: string;
+    from?: string;
 }
 
 export const getImap = () => {
@@ -30,7 +32,17 @@ export const getImap = () => {
     return new Imap(imapConfig);
 }
 
-export const sendEmail = async ({ to, subject, text, inReplyTo, references, textAsHtml, attachments }: SendEmailParams) => {
+export const sendEmail = async ({ 
+    to, 
+    subject, 
+    text, 
+    inReplyTo, 
+    references, 
+    textAsHtml, 
+    attachments,
+    replyTo,
+    from,
+}: SendEmailParams) => {
     const { host, user, pass, name, bcc } = getMailCredentials();
 
     let retries = 0;
@@ -48,7 +60,7 @@ export const sendEmail = async ({ to, subject, text, inReplyTo, references, text
             });
 
             const info = await transporter.sendMail({
-                from: `"${name}" <${user}>`, // change to admin
+                from: from ?? `"${name}" <${user}>`,
                 to,
                 bcc,
                 subject,
@@ -57,6 +69,7 @@ export const sendEmail = async ({ to, subject, text, inReplyTo, references, text
                 inReplyTo,
                 references,
                 attachments,
+                replyTo
             });
     
             console.log(`email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
