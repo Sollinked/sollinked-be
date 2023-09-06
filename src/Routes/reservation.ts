@@ -63,18 +63,12 @@ routes.post('/update', async(req, res) => {
     data = _.omit(data, ['address', 'signature']);
 
     if(Object.keys(data).length === 0){
-        return res.send({
-            success: false,
-            message: "No new updates",
-        });
+        return res.status(400).send("No new updates");
     }
 
     let users = await userController.find({ address });
     if(!users || users.length === 0) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     let user_id = users[0].id;
@@ -96,10 +90,7 @@ routes.post('/update', async(req, res) => {
 
     // date is currently being booked / booked
     if(reservations[0].status > RESERVATION_STATUS_AVAILABLE) { 
-        return res.send({
-            success: false,
-            message: "Slot is uneditable",
-        });
+        return res.status(400).send("Slot is uneditable");
     }
 
     await userReservationController.update(reservations[0].id, {
@@ -148,10 +139,7 @@ routes.post('/new/:user_id', async(req, res) => {
     // if has custom reservation
     if(reservations && reservations.length > 0) {
         if(reservations[0].status !== RESERVATION_STATUS_AVAILABLE) {
-            return res.send({
-                success: false,
-                message: "Date is unavailable.",
-            });
+            return res.status(400).send("Date is unavailable");
         }
 
         let tiplink = await TipLink.create();
@@ -180,10 +168,7 @@ routes.post('/new/:user_id', async(req, res) => {
 
     // use preset
     if(!settings || settings.length === 0) {
-        return res.status(404).send({
-            success: false,
-            message: "Unable to find preset date",
-        });
+        return res.status(404).send("Unable to find preset date");
     }
 
     let tiplink = await TipLink.create();

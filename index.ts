@@ -50,7 +50,7 @@ app.use((req, res, next) => {
 
     
     // check if it's getting public methods
-    if(req.path.match(/\/user\/\d+/g) && req.method.toLowerCase() === "get") {
+    if(req.path.match(/\/user\//g) && req.method.toLowerCase() === "get") {
         next();
         return;
     }

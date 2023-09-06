@@ -25,10 +25,7 @@ routes.post('/new', async(req, res) => {
 
     let users = await userController.find({ address });
     if(!users) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     let user = users[0];
@@ -61,19 +58,13 @@ routes.post('/update/:user_github_id', async(req, res) => {
     let users = await userController.find({ address });
 
     if(!users) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     let user = users[0];
     let setting = await userGithubSettingController.view(id);
     if(!setting) {
-        return res.send({
-            success: false,
-            message: "Unable to find setting",
-        });
+        return res.status(404).send("Unable to find setting");
     }
 
     if(setting.user_id !== user.id) {
@@ -108,19 +99,13 @@ routes.post('/toggle/:user_github_id', async(req, res) => {
     let users = await userController.find({ address });
 
     if(!users) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     let user = users[0];
     let setting = await userGithubSettingController.view(id);
     if(!setting) {
-        return res.send({
-            success: false,
-            message: "Unable to find setting",
-        });
+        return res.status(404).send("Unable to find setting");
     }
 
     if(setting.user_id !== user.id) {
@@ -154,19 +139,13 @@ routes.delete('/:user_github_id', async(req, res) => {
     let users = await userController.find({ address });
 
     if(!users) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     let user = users[0];
     let setting = await userGithubSettingController.view(id);
     if(!setting) {
-        return res.send({
-            success: false,
-            message: "Unable to find setting",
-        });
+        return res.status(404).send("Unable to find setting");
     }
 
     if(setting.user_id !== user.id) {

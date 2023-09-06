@@ -28,6 +28,7 @@ export type User = {
 }
 
 export type PublicUser = {
+    id: number;
     username: string;
     display_name: string;
     profile_picture?: string;

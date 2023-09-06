@@ -67,34 +67,22 @@ routes.post('/update/:id', contentUpload.single('profile_picture'), async(req, r
     data = _.omit(data, ['address', 'signature']);
 
     if(Object.keys(data).length === 0){
-        return res.send({
-            success: false,
-            message: "No new updates",
-        });
+        return res.status(400).send("No new updates");
     }
 
     let user = await userController.view(id);
     if(!user) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     // not the same address
     if(user.address !== address) {
-        return res.status(401).send({
-            success: false,
-            message: "Unauthorized",
-        });
+        return res.status(401).send("Unauthorized");
     }
     
     let updateRes = await userController.update(id, data);
     if(updateRes && typeof updateRes === 'string') {
-        return res.send({
-            success: false,
-            message: (updateRes as string).includes("duplicate")? 'Username is claimed, please choose another!' : "Unknown Error",
-        })
+        return res.status(400).send((updateRes as string).includes("duplicate")? 'Username is claimed, please choose another!' : "Unknown Error");
     }
     
     return res.send({
@@ -126,26 +114,17 @@ routes.post('/updateTiers/:user_id', async(req, res) => {
     data = _.omit(data, ['address', 'signature']);
 
     if(Object.keys(data).length === 0){
-        return res.send({
-            success: false,
-            message: "No new updates",
-        });
+        return res.status(400).send("No new updates");
     }
 
     let user = await userController.view(user_id);
     if(!user) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     // not the same address
     if(user.address !== address) {
-        return res.status(401).send({
-            success: false,
-            message: "Unauthorized",
-        });
+        return res.status(401).send("Unauthorized");
     }
     
     try {
@@ -155,10 +134,7 @@ routes.post('/updateTiers/:user_id', async(req, res) => {
     catch(e) {
         console.log(e);
 
-        return res.send({
-            success: false,
-            message: "Unable to update user tier",
-        });
+        return res.status(500).send("Unable to update tier");
 
     }
 
@@ -194,26 +170,17 @@ routes.post('/updateReservationSettings/:user_id', async(req, res) => {
     data = _.omit(data, ['address', 'signature']);
 
     if(Object.keys(data).length === 0){
-        return res.send({
-            success: false,
-            message: "No new updates",
-        });
+        return res.status(400).send("No new updates");
     }
 
     let user = await userController.view(user_id);
     if(!user) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     // not the same address
     if(user.address !== address) {
-        return res.status(401).send({
-            success: false,
-            message: "Unauthorized",
-        });
+        return res.status(401).send("Unauthorized");
     }
     
     try {
@@ -223,10 +190,7 @@ routes.post('/updateReservationSettings/:user_id', async(req, res) => {
     catch(e) {
         console.log(e);
 
-        return res.send({
-            success: false,
-            message: "Unable to update user reservation settings",
-        });
+        return res.status(500).send("Unable to update user reservation settings");
 
     }
 
@@ -252,10 +216,7 @@ routes.post('/me', async(req, res) => {
     });
 
     if(!users || users.length === 0) {
-        return res.send({
-            success: false,
-            message: "No user found!",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     return res.send({
@@ -274,10 +235,7 @@ routes.get('/name/:user_id', async(req, res) => {
 
     let user = await userController.view(Number(user_id));
     if(!user) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     return res.send({
@@ -296,10 +254,26 @@ routes.get('/:user_id', async(req, res) => {
 
     let user = await userController.publicView(Number(user_id));
     if(!user) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: user,
+    });
+});
+
+routes.get('/username/:username', async(req, res) => {
+    let {username} = req.params;
+
+    if(!username) {
+        return res.status(400).send("No user id");
+    }
+
+    let user = await userController.publicViewByUsername(username);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
     }
 
     return res.send({

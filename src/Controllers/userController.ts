@@ -63,6 +63,7 @@ export const publicView = async(id: number) => {
     // youtube: string;
     // tiers?: UserTier[];
     const query = `SELECT 
+                        id,
                         username,
                         display_name,
                         profile_picture,
@@ -83,6 +84,43 @@ export const publicView = async(id: number) => {
     
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.tiers = await userTierController.find({ user_id: id });
+    return result;
+}
+
+// view (single - id) for public profile
+export const publicViewByUsername = async(username: string) => {
+    // username: string;
+    // display_name: string;
+    // profile_picture: string;
+    // facebook: string;
+    // instagram: string;
+    // twitter: string;
+    // twitch: string;
+    // tiktok: string;
+    // youtube: string;
+    // tiers?: UserTier[];
+    const query = `SELECT 
+                        id,
+                        username,
+                        display_name,
+                        profile_picture,
+                        facebook,
+                        instagram,
+                        twitter,
+                        twitch,
+                        tiktok,
+                        youtube
+                    FROM ${table} WHERE username = '${username}' LIMIT 1`;
+
+    const db = new DB();
+    const result = await db.executeQueryForSingleResult<PublicUser>(query);
+
+    if(!result) {
+        return result;
+    }
+    
+    result.profile_picture = getProfilePictureLink(result.profile_picture);
+    result.tiers = await userTierController.find({ user_id: result.id });
     return result;
 }
 

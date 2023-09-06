@@ -21,10 +21,7 @@ routes.post('/', async(req, res) => {
 
     let users = await userController.find({ address });
     if(!users || users.length === 0) {
-        return res.send({
-            success: false,
-            message: "Unable to find user",
-        });
+        return res.status(404).send("Unable to find user");
     }
 
     const result = convertBigIntToString(await controller.create({...data, user_id: users[0].id}));
