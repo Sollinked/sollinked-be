@@ -29,11 +29,12 @@ routes.post('/new', async(req, res) => {
     }
 
     let user = users[0];
-    await userGithubSettingController.create({ repo_link: data.repo_link, user_id: user.id });
+    let uuid = await userGithubSettingController.create({ repo_link: data.repo_link, user_id: user.id });
 
     return res.send({
         success: true,
         message: "Success",
+        data: uuid,
     });
 });
 
@@ -165,8 +166,14 @@ routes.delete('/:user_github_id', async(req, res) => {
 routes.post('/newIssue', async(req, res) => {
     try {
         let data = req.body;
-        let { owner, repo, title, body, txHash, fromUser, fromEmail } = data;
+        let { owner, repo, title, body, txHash, fromUser, fromEmail, repo_link } = data;
     
+        if(repo_link) {
+            let split = repo_link.split("/");
+            owner = split[1];
+            repo = split[2];
+        }
+        
         if(!data) {
             return res.status(400).send("No data");
         }

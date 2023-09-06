@@ -28,7 +28,7 @@ export const create = async(insertParams: any) => {
     const db = new DB();
     const result = await db.executeQueryForSingleResult<{ id: number }>(query);
 
-    return result;
+    return uuid;
 }
 
 // view (single - id)

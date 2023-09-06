@@ -243,7 +243,7 @@ export class GithubBot {
 
     markIssues = async() => {
         if(!this.repo) {
-            console.log('Github markIssues', 'no repo');
+            // console.log('Github markIssues', 'no repo');
             return;
         }
 
