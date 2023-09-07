@@ -4,6 +4,9 @@ import { getDbConfig, getUTCMoment, isProduction } from '../../utils';
 
 /** Fix big int returning as string */
 pg.types.setTypeParser(20, BigInt); // Type Id 20 = BIGINT | BIGSERIAL
+pg.types.setTypeParser(1114, function(stringValue) {
+    return new Date(stringValue + "+0000");
+});
 
 export default class DB {
 

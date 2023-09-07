@@ -78,7 +78,7 @@ export const processPayments = async() => {
                 replyTo: `${from}, ${uuid}@${credentials.domain}`
             });
 
-            let processed_at = moment().format('YYYY-MM-DD HH:mm:ss');
+            let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
             let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
             let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
 

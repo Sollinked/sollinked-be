@@ -72,12 +72,12 @@ routes.post('/update', async(req, res) => {
     }
 
     let user_id = users[0].id;
-    let reservations = await userReservationController.find({ date: moment(data.date).utc().format('YYYY-MM-DD HH:mm:ss') });
+    let reservations = await userReservationController.find({ date: moment(data.date).utc().format('YYYY-MM-DDTHH:mm:ssZ') });
 
     if(!reservations || reservations.length === 0) {
         await userReservationController.create({
             user_id,
-            date: moment(data.date).utc().format('YYYY-MM-DD HH:mm:ss'),
+            date: moment(data.date).utc().format('YYYY-MM-DDTHH:mm:ssZ'),
             reservation_price: data.reservation_price ?? 0,
             status
         });
@@ -94,7 +94,7 @@ routes.post('/update', async(req, res) => {
     }
 
     await userReservationController.update(reservations[0].id, {
-        date: moment(data.date).utc().format('YYYY-MM-DD HH:mm:ss'),
+        date: moment(data.date).utc().format('YYYY-MM-DDTHH:mm:ssZ'),
         reservation_price: data.reservation_price ?? 0,
         status
     });
@@ -126,7 +126,7 @@ routes.post('/new/:user_id', async(req, res) => {
 
     let reservations = await userReservationController.find({
         user_id: id,
-        date: moment(date).utc().format('YYYY-MM-DD HH:mm:ss'),
+        date: moment(date).utc().format('YYYY-MM-DDTHH:mm:ssZ'),
     });
 
     let day = moment(date).utc().day();

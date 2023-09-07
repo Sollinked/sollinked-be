@@ -107,7 +107,7 @@ export const processExpiredReservationPayments = async() => {
                 user_id: reservation.user_id,
                 status: RESERVATION_STATUS_AVAILABLE,
                 reservation_price: reservation.reservation_price,
-                date: moment(reservation.date).utc().format('YYYY-MM-DD HH:mm:ss'),
+                date: moment(reservation.date).utc().format('YYYY-MM-DDTHH:mm:ssZ'),
             });
         }
         
