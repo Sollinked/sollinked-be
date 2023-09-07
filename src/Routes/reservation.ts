@@ -44,7 +44,7 @@ routes.get('/:user_id', async(req, res) => {
 // update reservation
 routes.post('/update', async(req, res) => {
     let data = req.body;
-    let {address, signature, date, status} = data;
+    let {address, signature, message, date, status} = data;
 
     if(!data) {
         return res.status(400).send("No data");
@@ -54,7 +54,7 @@ routes.post('/update', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let verified = verifySignature(address, signature, VERIFY_MESSAGE);
+    let verified = verifySignature(address, signature, message ?? VERIFY_MESSAGE);
     if(!verified) {
         return res.status(401).send("Unauthorized");
     }

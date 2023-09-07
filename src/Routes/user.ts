@@ -35,7 +35,7 @@ routes.post('/', async(req, res) => {
 
 routes.post('/update/:id', contentUpload.single('profile_picture'), async(req, res) => {
     let data = req.body;
-    let {address, signature} = data;
+    let {address, signature, message} = data;
     let id = parseInt(req.params.id);
 
     if(!data) {
@@ -46,7 +46,7 @@ routes.post('/update/:id', contentUpload.single('profile_picture'), async(req, r
         return res.status(400).send("Invalid params");
     }
 
-    let verified = verifySignature(address, signature, VERIFY_MESSAGE);
+    let verified = verifySignature(address, signature, message ?? VERIFY_MESSAGE);
     if(!verified) {
         return res.status(401).send("Unauthorized");
     }
@@ -94,7 +94,7 @@ routes.post('/update/:id', contentUpload.single('profile_picture'), async(req, r
 
 routes.post('/updateTiers/:user_id', async(req, res) => {
     let data = req.body;
-    let {address, signature} = data;
+    let {address, signature, message} = data;
     let user_id = parseInt(req.params.user_id);
 
     if(!data) {
@@ -105,7 +105,7 @@ routes.post('/updateTiers/:user_id', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let verified = verifySignature(address, signature, VERIFY_MESSAGE);
+    let verified = verifySignature(address, signature, message ?? VERIFY_MESSAGE);
     if(!verified) {
         return res.status(401).send("Unauthorized");
     }
@@ -146,7 +146,7 @@ routes.post('/updateTiers/:user_id', async(req, res) => {
 
 routes.post('/updateReservationSettings/:user_id', async(req, res) => {
     let data = req.body;
-    let {address, signature} = data;
+    let {address, signature, message} = data;
     let user_id = parseInt(req.params.user_id);
 
     if(!data) {
@@ -161,7 +161,7 @@ routes.post('/updateReservationSettings/:user_id', async(req, res) => {
         return res.status(400).send("No user id");
     }
 
-    let verified = verifySignature(address, signature, VERIFY_MESSAGE);
+    let verified = verifySignature(address, signature, message ?? VERIFY_MESSAGE);
     if(!verified) {
         return res.status(401).send("Unauthorized");
     }

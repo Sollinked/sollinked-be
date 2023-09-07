@@ -7,7 +7,7 @@ import { convertBigIntToString } from '../../utils';
 export const routes = Router();
 
 // create
-routes.post('/', async(req, res) => {
+/* routes.post('/', async(req, res) => {
     let data = req.body;
     let {address, signature} = data;
 
@@ -27,7 +27,7 @@ routes.post('/', async(req, res) => {
     const result = convertBigIntToString(await controller.create({...data, user_id: users[0].id}));
 
     return res.json({ success: true, data: result });
-});
+}); */
 
 // update
 // have to use POST to update (because multer does not support PUT)

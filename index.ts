@@ -67,12 +67,12 @@ app.use((req, res, next) => {
         return;
     }
 
-    const { address, signature } = req.body;
+    const { address, signature, message } = req.body;
     if(!signature || !address) {
         return res.status(400).send('Invalid params');
     }
 
-    let verified = verifySignature(address, signature, VERIFY_MESSAGE);
+    let verified = verifySignature(address, signature, message ?? VERIFY_MESSAGE);
     if(!verified) {
         return res.status(401).send("Unauthorized");
     }
