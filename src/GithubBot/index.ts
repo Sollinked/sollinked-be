@@ -197,7 +197,7 @@ export class GithubBot {
 
     closeIssues = async() => {
         if(!this.repo) {
-            console.log('Github closeIssues', 'no repo');
+            // console.log('Github closeIssues', 'no repo');
             return;
         }
 
