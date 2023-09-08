@@ -22,14 +22,25 @@ routes.post('/', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
     
-    await userController.create({
+    let result = await userController.create({
         address: data.address,
         username: data.username,
     });
 
+    if(!result) {
+        return res.status(500).send("Server Error");
+    }
+
+    let users = await userController.find({ id: result.id });
+
+    if(!users || users.length === 0) {
+        return res.status(500).send("Server Error");
+    }
+
     return res.send({
         success: true,
         message: "Success",
+        data: users[0],
     });
 });
 
