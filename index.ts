@@ -31,7 +31,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 app.use(cors({
-    origin: whitelists,
+    origin: "*",
     credentials: true
 }));
 
@@ -90,7 +90,7 @@ let http = createServer(app);
 
 let io = new Server(http, {
     cors: {
-        origin: whitelists,
+        origin: "*",
         credentials: true
     }
 });
