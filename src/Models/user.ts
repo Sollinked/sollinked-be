@@ -43,6 +43,7 @@ export type PublicUser = {
 }
 
 export const fillableColumns = [
+    'id',
     'address',
     'username',
     'display_name',

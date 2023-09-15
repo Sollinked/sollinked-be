@@ -25,8 +25,7 @@ const notifyPayer = (status: number, uuid?: string) => {
     }
 }
 
-export 
-const processReservationPayments = async() => {
+export const processReservationPayments = async() => {
     let reservedAfter = moment().add(-18, 'm').format('YYYY-MM-DDTHH:mm:ssZ')
     let reservations = await userReservationController.findAfter({
         status: RESERVATION_STATUS_PENDING,
@@ -116,9 +115,9 @@ export const processExpiredReservationPayments = async() => {
 }
 
 
-export const processReservationClaims= async() => {
+export const processReservationClaims = async() => {
     let reservations = await userReservationController.find({
-        status: RESERVATION_STATUS_CLAIMED,
+        status: RESERVATION_STATUS_PAID,
     });
 
     // no mails

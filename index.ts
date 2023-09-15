@@ -37,7 +37,7 @@ app.use(cors({
 
 app.use((req, res, next) => {
     // check if it's to reserve a time slot
-    if(req.path.match(/\/reservation\/\d+/g) || req.path.match(/\/reservation\/new\/\d+/g)) {
+    if((req.path.match(/\/reservation\//g) && req.method.toLowerCase() === "get")|| req.path.match(/\/reservation\/new\/.*/g)) {
         next();
         return;
     }

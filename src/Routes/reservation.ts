@@ -3,7 +3,7 @@ import * as userController from '../Controllers/userController';
 import * as userReservationController from '../Controllers/userReservationController';
 import * as userReservationSettingController from '../Controllers/userReservationSettingController';
 import _ from 'lodash';
-import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_PENDING, VERIFY_MESSAGE } from '../Constants';
+import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_CLAIMED, RESERVATION_STATUS_PAID, RESERVATION_STATUS_PENDING, VERIFY_MESSAGE } from '../Constants';
 import { verifySignature } from '../../utils';
 import moment from 'moment';
 import { TipLink } from '@tiplink/api';
@@ -12,22 +12,21 @@ import { v4 as uuidv4 } from 'uuid';
 export const routes = Router();
 
 // get reservations
-routes.get('/:user_id', async(req, res) => {
-    let { user_id } = req.params;
+routes.get('/:username', async(req, res) => {
+    let { username } = req.params;
 
-    if(!user_id) {
+    if(!username) {
         return res.status(400).send("No data");
     }
 
-    let id = parseInt(user_id);
-    let user = await userController.view(id);
+    let user = await userController.viewByUsername(username);
     if(!user) {
         return res.status(404).send("Unable to find user");
     }
 
 
-    let reservations = await userReservationController.findForUser(id, true);
-    let settings = await userReservationSettingController.find({ user_id });
+    let reservations = await userReservationController.findForUser(user.id, true);
+    let settings = await userReservationSettingController.find({ user_id: user.id });
 
     return res.send({
         success: true,
@@ -106,11 +105,11 @@ routes.post('/update', async(req, res) => {
 });
 
 // create reservation
-routes.post('/new/:user_id', async(req, res) => {
+routes.post('/new/:username', async(req, res) => {
     let { date, title, email } = req.body;
-    let { user_id } = req.params;
+    let { username } = req.params;
 
-    if(!user_id) {
+    if(!username) {
         return res.status(400).send("No data");
     }
 
@@ -118,21 +117,22 @@ routes.post('/new/:user_id', async(req, res) => {
         return res.status(400).send("Invalid Params");
     }
 
-    let id = parseInt(user_id);
-    let user = await userController.view(id);
+    let user = await userController.viewByUsername(username);
     if(!user) {
         return res.status(404).send("Unable to find user");
     }
 
+    let utcDateStr = moment(date).utc().format('YYYY-MM-DDTHH:mm:ssZ');
+
     let reservations = await userReservationController.find({
-        user_id: id,
-        date: moment(date).utc().format('YYYY-MM-DDTHH:mm:ssZ'),
+        user_id: user.id,
+        date: utcDateStr,
     });
 
     let day = moment(date).utc().day();
     let hour = moment(date).utc().hour();
 
-    let settings = await userReservationSettingController.find({ user_id, day, hour });
+    let settings = await userReservationSettingController.find({ user_id: user.id, day, hour });
     let presetPrice = settings?.[0]?.reservation_price ?? 0;
     let uuid = uuidv4();
 
@@ -141,17 +141,23 @@ routes.post('/new/:user_id', async(req, res) => {
         if(reservations[0].status !== RESERVATION_STATUS_AVAILABLE) {
             return res.status(400).send("Date is unavailable");
         }
+        let value_usd = Number(reservations[0].reservation_price ?? presetPrice);
+        let tiplinkUrl = "";
+        let tiplinkKey = "";
 
-        let tiplink = await TipLink.create();
-        let value_usd = reservations[0].reservation_price ?? presetPrice;
+        if(value_usd > 0) {
+            let tiplink = await TipLink.create();
+            tiplinkUrl = tiplink.url.toString();
+            tiplinkKey = tiplink.keypair.publicKey.toBase58();
+        }
         await userReservationController.update(reservations[0].id, { 
             value_usd,
-            tiplink_url: tiplink.url.toString(),
-            tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
+            tiplink_url: tiplinkUrl,
+            tiplink_public_key: tiplinkKey,
             reserved_at: moment().format('YYYY-MM-DDTHH:mm:ssZ'),
             reserve_email: email ?? "",
             reserve_title: title ?? "",
-            status: RESERVATION_STATUS_PENDING,
+            status: value_usd === 0? RESERVATION_STATUS_CLAIMED : RESERVATION_STATUS_PENDING,
             uuid,
         });
 
@@ -159,7 +165,7 @@ routes.post('/new/:user_id', async(req, res) => {
             success: true,
             message: "Success",
             data: {
-                public_key: tiplink.keypair.publicKey.toBase58(),
+                public_key: tiplinkKey,
                 value_usd,
                 uuid,
             },
@@ -171,24 +177,31 @@ routes.post('/new/:user_id', async(req, res) => {
         return res.status(404).send("Unable to find preset date");
     }
 
-    let tiplink = await TipLink.create();
+    let tiplinkUrl = "";
+    let tiplinkKey = "";
+
+    if(presetPrice > 0) {
+        let tiplink = await TipLink.create();
+        tiplinkUrl = tiplink.url.toString();
+        tiplinkKey = tiplink.keypair.publicKey.toBase58();
+    }
     await userReservationController.create({ 
-        user_id, 
-        date, 
+        user_id: user.id, 
+        date: utcDateStr, 
         value_usd: presetPrice,
-        tiplink_url: tiplink.url.toString(),
-        tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
+        tiplink_url: tiplinkUrl,
+        tiplink_public_key: tiplinkKey,
         reserved_at: moment().format('YYYY-MM-DDTHH:mm:ssZ'),
         reserve_email: email ?? "",
         reserve_title: title ?? "",
-        status: RESERVATION_STATUS_PENDING,
+        status: presetPrice > 0? RESERVATION_STATUS_PENDING : RESERVATION_STATUS_CLAIMED,
         uuid,
     });
     return res.send({
         success: true,
         message: "Success",
         data: {
-            public_key: tiplink.keypair.publicKey.toBase58(),
+            public_key: tiplinkKey,
             value_usd: presetPrice,
             uuid,
         },

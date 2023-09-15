@@ -50,6 +50,21 @@ export const view = async(id: number) => {
     return result;
 }
 
+export const viewByUsername = async(username: string) => {
+    const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE lower(username) = lower('${username}') LIMIT 1`;
+
+    const db = new DB();
+    const result = await db.executeQueryForSingleResult<User>(query);
+
+    if(!result) {
+        return result;
+    }
+    
+    result.profile_picture = getProfilePictureLink(result.profile_picture);
+    result.reservationSettings =  await userReservationSettingController.find({ user_id: result.id });
+    return result;
+}
+
 // view (single - id) for public profile
 export const publicView = async(id: number) => {
     // username: string;
@@ -110,7 +125,7 @@ export const publicViewByUsername = async(username: string) => {
                         twitch,
                         tiktok,
                         youtube
-                    FROM ${table} WHERE username = '${username}' LIMIT 1`;
+                    FROM ${table} WHERE lower(username) = loweR('${username}') LIMIT 1`;
 
     const db = new DB();
     const result = await db.executeQueryForSingleResult<PublicUser>(query);

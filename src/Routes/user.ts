@@ -25,6 +25,7 @@ routes.post('/', async(req, res) => {
     let result = await userController.create({
         address: data.address,
         username: data.username,
+        calendar_advance_days: 100
     });
 
     if(!result) {
