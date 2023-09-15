@@ -257,22 +257,16 @@ routes.get('/name/:user_id', async(req, res) => {
     });
 });
 
-routes.get('/:user_id', async(req, res) => {
-    let {user_id} = req.params;
-
-    if(!user_id) {
-        return res.status(400).send("No user id");
-    }
-
-    let user = await userController.publicView(Number(user_id));
-    if(!user) {
-        return res.status(404).send("Unable to find user");
+routes.get('/homepageUsers', async(req, res) => {
+    let users = await userController.getHomepageUsers();
+    if(!users) {
+        return res.status(404).send("Unable to find users");
     }
 
     return res.send({
         success: true,
         message: "Success",
-        data: user,
+        data: users,
     });
 });
 
@@ -284,6 +278,44 @@ routes.get('/username/:username', async(req, res) => {
     }
 
     let user = await userController.publicViewByUsername(username);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: user,
+    });
+});
+
+routes.get('/search/:username', async(req, res) => {
+    let {username} = req.params;
+
+    if(!username) {
+        return res.status(400).send("No user id");
+    }
+
+    let user = await userController.search(username);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: user,
+    });
+});
+
+routes.get('/:user_id', async(req, res) => {
+    let {user_id} = req.params;
+
+    if(!user_id) {
+        return res.status(400).send("No user id");
+    }
+
+    let user = await userController.publicView(Number(user_id));
     if(!user) {
         return res.status(404).send("Unable to find user");
     }

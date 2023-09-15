@@ -291,7 +291,7 @@ export const formatDBParamsToStr = (params : {
     let stringParams: string[] = [];
     _.map(params, (p, k) => {
         const isString = typeof p === 'string';
-        const value = isString ? `'${p.replace(/'/g, '')}'` : p;
+        const value = isString ? `'${p.replace(/'/g, "''")}'` : p;
 
         if(isString && shouldLower) {
             if (valueOnly) {

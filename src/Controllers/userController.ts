@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getDappDomain, getProfilePictureLink, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { PublicUser, User, fillableColumns } from "../Models/user";
+import { HomepageUser, PublicUser, User, fillableColumns } from "../Models/user";
 import * as userTierController from './userTierController';
 import * as mailController from './mailController';
 import * as userReservationController from './userReservationController';
@@ -87,7 +87,8 @@ export const publicView = async(id: number) => {
                         twitter,
                         twitch,
                         tiktok,
-                        youtube
+                        youtube,
+                        is_verified
                     FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
@@ -124,7 +125,8 @@ export const publicViewByUsername = async(username: string) => {
                         twitter,
                         twitch,
                         tiktok,
-                        youtube
+                        youtube,
+                        is_verified
                     FROM ${table} WHERE lower(username) = loweR('${username}') LIMIT 1`;
 
     const db = new DB();
@@ -206,3 +208,63 @@ export const update = async(id: number, updateParams: {[key: string]: any}) => {
 
 //     return result;
 // }
+
+// public views
+export const getHomepageUsers = async() => {
+    let query = `select 
+                        username,
+                        display_name,
+                        profile_picture,
+                        is_verified,
+                        sum(coalesce(m.value_usd, 0)) + sum(coalesce(r.value_usd, 0)) as value_usd
+                    from users u
+                    left join mails m
+                    on m.user_id = u.id
+                    left join user_reservations r
+                    on r.user_id = u.id
+                    group by 1,2,3,4
+                    having sum(coalesce(m.value_usd, 0)) + sum(coalesce(r.value_usd, 0)) > 0 or profile_picture is not null or is_verified
+                    order by value_usd desc nulls last, profile_picture desc nulls last
+                    limit 50`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<HomepageUser>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    for(const [index, res] of result.entries()) {
+        result[index].value_usd = 0; // dont display
+        result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
+    }
+
+    return result;
+}
+
+// dont confuse with find, search is for public use
+export const search = async(username: string) => {
+    username = username.replace(/'/g, "''");
+    let query = `select 
+                        username,
+                        display_name,
+                        profile_picture,
+                        is_verified
+                    from users u
+                    where username ilike '%${username}%' or display_name ilike '%${username}%'
+                    limit 50`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<HomepageUser>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    for(const [index, res] of result.entries()) {
+        result[index].value_usd = 0; // dont display
+        result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
+    }
+
+    return result;
+}

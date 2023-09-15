@@ -329,4 +329,13 @@ export default [
             DROP INDEX user_github_whitelists_user_github_id_idx;
         `,
     },
+    {
+        name: "add_is_verified_to_users",
+        query: `
+            ALTER TABLE users ADD is_verified boolean default(false) not null;
+        `,
+        rollback_query: `
+            ALTER TABLE users DROP COLUMN is_verified;
+        `,
+    },
 ];

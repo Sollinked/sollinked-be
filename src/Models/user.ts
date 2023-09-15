@@ -25,6 +25,7 @@ export type User = {
     reservationSettings?: ProcessedUserReservationSetting[];
     webhooks?: Webhook[];
     githubSettings?: UserGithubSetting[];
+    is_verified: boolean;
 }
 
 export type PublicUser = {
@@ -40,6 +41,15 @@ export type PublicUser = {
     youtube: string;
     calendar_advance_days: number;
     tiers?: UserTier[];
+    is_verified: boolean;
+}
+
+export type HomepageUser = {
+    username: string;
+    display_name: string;
+    profile_picture?: string;
+    value_usd: number;
+    is_verified: boolean;
 }
 
 export const fillableColumns = [
@@ -56,4 +66,5 @@ export const fillableColumns = [
     'tiktok',
     'youtube',
     'calendar_advance_days',
+    'is_verified',
 ];

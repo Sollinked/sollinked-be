@@ -72,8 +72,7 @@ export default class DB {
 
     droptable = async() => {
         if(isProduction()) {
-            console.log('Production environment detected, not dropping..');
-            return;
+            throw Error('Production environment detected, not dropping..');
         }
         const dropQuery = `
             DROP schema public CASCADE;
