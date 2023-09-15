@@ -1,8 +1,14 @@
 import DB from './src/DB';
+import prompt from 'prompt-sync';
 
-new DB()
-  .droptable()
-  .then(() => {
-    console.log('Dropped all table')
-    return;
-  });
+(() => {
+  const yn = prompt({sigint: true})('Do you want to drop all tables? y/n\n');
+  if(yn === 'y') {
+    new DB()
+      .droptable()
+      .then(() => {
+        console.log('Dropped all table')
+        return;
+      });
+  }
+})();

@@ -1,9 +1,15 @@
 import DB from './src/DB';
+import prompt from 'prompt-sync';
 
-new DB()
-  .migrate()
-  .then(() => {
-    console.log('Migration Ended, press Ctrl + C to exit!')
-    return;
-  });
+(() => {
+  const yn = prompt({sigint: true})('Do you want to migrate? y/n\n');
+  if(yn === 'y') {
+    new DB()
+      .migrate()
+      .then(() => {
+        console.log('Migration Ended, press Ctrl + C to exit!')
+        return;
+      });
+  }
+})();
   

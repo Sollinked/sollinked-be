@@ -1,6 +1,6 @@
 {
   "name": "sollinked-be",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "main": "index.js",
   "scripts": {
     "test": "tsc && node test.js",
@@ -50,6 +50,7 @@
     "nodemailer": "^6.9.4",
     "octokit": "^3.1.0",
     "pg": "^8.8.0",
+    "prompt-sync": "^4.2.0",
     "socket.io": "^4.5.2",
     "socket.io-client": "^4.7.2",
     "tweetnacl": "^1.0.3",
@@ -69,6 +70,7 @@
     "@types/node-fetch": "^2.6.4",
     "@types/nodemailer": "^6.4.9",
     "@types/pg": "^8.6.5",
+    "@types/prompt-sync": "^4.2.0",
     "@types/uuid": "^9.0.2"
   }
 }
