@@ -42,7 +42,7 @@ export const view = async(id: number) => {
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}, createdAfter?: string) => {
+export const find = async(whereParams: {[key: string]: any}, createdAfter?: string, onlyFromSMTP?: boolean) => {
     const filtered = _.pick(whereParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, ' AND ');
     const query = `SELECT 
@@ -65,7 +65,8 @@ export const find = async(whereParams: {[key: string]: any}, createdAfter?: stri
                         expiry_date
                     FROM ${table} 
                     WHERE ${params}
-                    ${createdAfter? `AND created_at >= '${createdAfter}'` : ""}`;
+                    ${createdAfter? `AND created_at >= '${createdAfter}'` : ""}
+                    ${onlyFromSMTP? `AND message_id <> 'from site'` : ""}`;
 
     const db = new DB();
     let results = await db.executeQueryForResults<Mail>(query);

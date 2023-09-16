@@ -187,6 +187,7 @@ export const createEmailForwarder = async(username: string) => {
 
     if(res.data.errors && res.data.errors.length > 0) {
         console.log('Unable to create forwarder: ', res.data.errors.join(", "));
+        console.log(`Forwarder: ${username}`);
         return;
     }
     return;

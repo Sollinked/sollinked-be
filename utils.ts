@@ -611,6 +611,41 @@ export const getTx = async(txHash: string) => {
     return tx;
 }
 
+export const getTokensTransferredToUser = async(txHash: string, toAddress: string, token: string) => {
+    let now = moment().add(-2, 'minute');
+    let txDetails = await getTx(txHash);
+    if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
+        throw new Error("No Tx Details");
+    }
+
+    let {
+        blockTime,
+        meta: {
+            preTokenBalances,
+            postTokenBalances,
+        }
+    } = txDetails;
+
+    if(!preTokenBalances || !postTokenBalances) {
+        throw new Error("Cant find token balance");
+    }
+
+    let txMoment = moment(blockTime * 1000);
+    if(txMoment.isBefore(now)) {
+        console.log('Old Tx detected');
+        throw Error("Old Tx");
+    }
+
+    let preBalanceArray = preTokenBalances.filter(x => x.mint === token && x.owner === toAddress);
+    let preBalance = preBalanceArray[0]?.uiTokenAmount.uiAmount ?? 0;
+
+    let postBalanceArray = postTokenBalances.filter(x => x.mint === token && x.owner === toAddress);
+    let postBalance = postBalanceArray[0]?.uiTokenAmount.uiAmount ?? 0;
+
+    let valueUsd = postBalance - preBalance;
+    return valueUsd;
+}
+
 export const verifySignature = (address: string, signature: string, message: string) => { 
     return nacl
             .sign

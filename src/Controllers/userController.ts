@@ -51,6 +51,7 @@ export const view = async(id: number) => {
 }
 
 export const viewByUsername = async(username: string) => {
+    username = username.replace(/'/g, "''");
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE lower(username) = lower('${username}') LIMIT 1`;
 
     const db = new DB();
@@ -62,6 +63,7 @@ export const viewByUsername = async(username: string) => {
     
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.reservationSettings =  await userReservationSettingController.find({ user_id: result.id });
+    result.tiers = await userTierController.find({ user_id: result.id });
     return result;
 }
 

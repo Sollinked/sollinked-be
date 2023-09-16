@@ -6,14 +6,14 @@ import moment from 'moment';
 import { createEmailForwarder, deleteAttachments, getEmailByMessageId, mapAttachments, sendEmail } from '../../Mail';
 import { getAddressUSDCBalance } from '../../Token';
 import { v4 as uuidv4 } from 'uuid';
-import { getDappDomain, getMailCredentials, sendSOLTo } from '../../../utils';
+import { getMailCredentials, sendSOLTo } from '../../../utils';
 
 export const processPayments = async() => {
     let credentials = getMailCredentials();
     let createdAfter = moment().add(-2, 'd').format('YYYY-MM-DD')
     let mails = await mailController.find({
         is_processed: false,
-    }, createdAfter);
+    }, createdAfter, true);
 
     // no mails
     if(!mails) {

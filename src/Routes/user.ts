@@ -5,7 +5,7 @@ import * as userReservationSettingController from '../Controllers/userReservatio
 import { contentUpload } from './Upload';
 import { checkAllowedMime, verifySignature } from '../../utils';
 import fs from 'fs-extra';
-import _, { update } from 'lodash';
+import _ from 'lodash';
 import { VERIFY_MESSAGE } from '../Constants';
 
 export const routes = Router();
@@ -238,6 +238,7 @@ routes.post('/me', async(req, res) => {
     });
 });
 
+// public routes
 routes.get('/name/:user_id', async(req, res) => {
     let {user_id} = req.params;
 

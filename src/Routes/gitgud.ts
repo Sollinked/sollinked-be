@@ -5,7 +5,7 @@ import * as userGithubTierController from '../Controllers/userGithubTierControll
 import * as userGithubWhitelistController from '../Controllers/userGithubWhitelistController';
 import * as userGithubPaymentLogController from '../Controllers/userGithubPaymentLogController';
 import _ from 'lodash';
-import { getTx, sleep } from '../../utils';
+import { getTokensTransferredToUser, getTx, sleep } from '../../utils';
 import moment from 'moment';
 import { GithubBot } from '../GithubBot';
 
@@ -204,7 +204,6 @@ routes.post('/newIssue', async(req, res) => {
         let retries = 0;
 
         // with some minor adjustment
-        let now = moment().add(-2, 'minute');
         let user = await userController.view(settings[0].user_id);
 
         if(!user) {
@@ -212,39 +211,9 @@ routes.post('/newIssue', async(req, res) => {
         }
 
         while(retries < 10) {
-            console.log({ retries })
             try {
-                let txDetails = await getTx(txHash);
-                if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
-                    throw new Error("No Tx Details");
-                }
-
-                let {
-                    blockTime,
-                    meta: {
-                        preTokenBalances,
-                        postTokenBalances,
-                    }
-                } = txDetails;
-
-                if(!preTokenBalances || !postTokenBalances) {
-                    throw new Error("Cant find token balance");
-                }
-
-                let txMoment = moment(blockTime * 1000);
-                if(txMoment.isBefore(now)) {
-                    console.log('Old Tx detected');
-                    break;
-                }
-
                 const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
-                let preUSDCBalanceArray = preTokenBalances.filter(x => x.mint === USDC_ADDRESS && x.owner === user!.address);
-                let preUSDCBalance = preUSDCBalanceArray?.[0].uiTokenAmount.uiAmount ?? 0;
-
-                let postUSDCBalanceArray = postTokenBalances.filter(x => x.mint === USDC_ADDRESS && x.owner === user!.address);
-                let postUSDCBalance = postUSDCBalanceArray?.[0].uiTokenAmount.uiAmount ?? 0;
-
-                let valueUsd = postUSDCBalance - preUSDCBalance;
+                let valueUsd = await getTokensTransferredToUser(txHash, user!.address, USDC_ADDRESS);
                 await userGithubPaymentLogController.update(payment.id, { value_usd: valueUsd });
 
                 let currentChosenValueUsd = 0;
