@@ -12,6 +12,7 @@ export const routes = Router();
 routes.post('/new/:username', async(req, res) => {
     let data = req.body;
     let {replyToEmail} = data;
+    let { domain } = getMailCredentials();
 
     if(!data || !replyToEmail) {
         return res.status(400).send("Invalid Params");
@@ -33,7 +34,7 @@ routes.post('/new/:username', async(req, res) => {
     let result = await mailController.create({
         user_id: user.id,
         from_email: replyToEmail,
-        to_email: user.email_address,
+        to_email: `${username}@${domain}`,
         message_id: "from site",
         tiplink_url: tiplink.url.toString(),
         tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
