@@ -1,7 +1,7 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { MailingListPriceTier, fillableColumns } from "../Models/mailingListPriceTier";
+import { MailingListPriceTier, ProcessedMailingListPriceTier, fillableColumns } from "../Models/mailingListPriceTier";
 
 const table = 'mailing_list_price_tiers';
 
@@ -40,9 +40,20 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<MailingListPriceTier>(query);
+    const results = await db.executeQueryForResults<MailingListPriceTier>(query);
+    if(!results) {
+        return [];
+    }
 
-    return result;
+    let processedResults: ProcessedMailingListPriceTier[] = [];
+    for(const [index, result] of results.entries()) {
+        processedResults.push({
+            ...result,
+            amount: parseFloat(result.amount ?? '0'),
+        })
+    }
+    
+    return processedResults;
 }
 
 // list (all)

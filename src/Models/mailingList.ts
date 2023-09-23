@@ -1,7 +1,10 @@
+import { ProcessedMailingListPriceTier } from "./mailingListPriceTier";
+
 export type MailingList = {
     id: number;
     user_id: number;
     product_id: string;
+    tiers: ProcessedMailingListPriceTier[];
 }
 
 export const fillableColumns = [

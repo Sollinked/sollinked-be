@@ -1,5 +1,6 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
+import * as mailingListPriceTierController from './mailingListPriceTierController';
 import _ from "lodash";
 import { MailingList, fillableColumns } from "../Models/mailingList";
 
@@ -32,6 +33,19 @@ export const view = async(id: number) => {
     const result = await db.executeQueryForSingleResult<MailingList>(query);
 
     return result ?? {};
+}
+
+export const getUserMailingList = async(user_id: number) => {
+    const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE user_id = ${user_id} LIMIT 1`;
+
+    const db = new DB();
+    const result = await db.executeQueryForSingleResult<MailingList>(query);
+    if(!result) {
+        return result;
+    }
+
+    result.tiers = (await mailingListPriceTierController.find({ mailing_list_id: result.id })) ?? [];
+    return result;
 }
 
 // find (all match)

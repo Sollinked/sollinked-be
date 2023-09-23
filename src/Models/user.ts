@@ -1,4 +1,5 @@
 import { ProcessedMail } from "./mail";
+import { MailingList } from "./mailingList";
 import { UserGithubSetting } from "./userGithubSetting";
 import { ProcessedUserReservation, UserReservation } from "./userReservation";
 import { ProcessedUserReservationSetting, UserReservationSetting } from "./userReservationSetting";
@@ -21,6 +22,7 @@ export type User = {
     youtube?: string;
     tiers?: UserTier[];
     mails?: ProcessedMail[];
+    mailingList?: MailingList;
     reservations?: ProcessedUserReservation[];
     reservationSettings?: ProcessedUserReservationSetting[];
     webhooks?: Webhook[];

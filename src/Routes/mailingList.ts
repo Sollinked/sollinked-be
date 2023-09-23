@@ -4,6 +4,7 @@ import * as mailingListController from '../Controllers/mailingListController';
 import * as mailingListPriceTierController from '../Controllers/mailingListPriceTierController';
 import * as mailingListSubscriberController from '../Controllers/mailingListSubscriberController';
 import axios from 'axios';
+import { getSphereKey } from '../../utils';
 
 export const routes = Router();
 routes.post('/', async(req, res) => {
@@ -27,10 +28,15 @@ routes.post('/', async(req, res) => {
     let product = null;
 
     try {
-        let productRes = await axios.post('https://api.spaherepay.co/v1/product', {
-            name: `${user.display_name ?? user.username}'s Mail Subscription`,
-            description: `Receive emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
-        });
+        let productRes = await axios.post('https://api.spherepay.co/v1/product', {
+                name: `${user.display_name ?? user.username}'s Mail Subscription`,
+                description: `Receive emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
+            },
+            {
+                headers: {
+                'Authorization': `Bearer ${getSphereKey()}` 
+                }
+            });
     
         if(!productRes.data.ok || !productRes.data.data || !productRes.data.data.product) {
             return res.status(500).send("Unable to create product");
@@ -39,7 +45,8 @@ routes.post('/', async(req, res) => {
         product = productRes.data.data.product;
     }
 
-    catch {
+    catch (e){
+        console.log(e);
         return res.status(500).send("Unable to create product");
     }
     
@@ -87,14 +94,13 @@ routes.post('/priceList', async(req, res) => {
         return res.status(404).send("Missing mailing list");
     }
 
-    let product = null;
     let list = lists[0];
     const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
     // const USDC_DECIMALS = 1000000;
 
     await Promise.all(
         data.prices.map(async(price: any) => {
-            // dont need to update
+            // update only
             if(price.id) {
                 await mailingListPriceTierController.update(price.id, { 
                     name: price.name, 
@@ -107,29 +113,35 @@ routes.post('/priceList', async(req, res) => {
             let priceRet = null;
     
             try {
-                let priceRes = await axios.post('https://api.spaherepay.co/v1/price', {
-                    name: `${user.display_name ?? user.username}'s Mail Subscription`,
-                    description: `Receive emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
-                    product: list.product_id,
-                    type: "recurring",
-                    currency: USDC_ADDRESS,
-                    network: "sol",
-                    taxBehavior: "exclusive",
-                    billingSchema: "perUnit",
-                    //unitAmount: (price.amount * USDC_DECIMALS).toString(), // 500000000
-                    unitAmountDecimal: price.amount.toString(), // 5
-                    //tierType: null,
-                    //tiers: null,
-                    recurring: {
-                        type: "delegate",
-                        interval: "month",
-                        intervalCount: price.charge_every, // per month
-                        usageAggregation: "sum",
-                        usageType: "licensed",
-                        defaultLength: price.prepay_month,
-                        // usageDefaultQuantity: "",
+                let priceRes = await axios.post('https://api.spherepay.co/v1/price', {
+                        name: `${user.display_name ?? user.username}'s Mail Subscription`,
+                        description: `Receive emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
+                        product: list.product_id,
+                        type: "recurring",
+                        currency: USDC_ADDRESS,
+                        network: "sol",
+                        taxBehavior: "exclusive",
+                        billingSchema: "perUnit",
+                        //unitAmount: (price.amount * USDC_DECIMALS).toString(), // 500000000
+                        unitAmountDecimal: price.amount.toString(), // 5
+                        //tierType: null,
+                        //tiers: null,
+                        recurring: {
+                            type: "delegate",
+                            interval: "month",
+                            intervalCount: price.charge_every, // per month
+                            usageAggregation: "sum",
+                            usageType: "licensed",
+                            defaultLength: price.prepay_month,
+                            // usageDefaultQuantity: "",
+                        }
+                    }, 
+                    {
+                        headers: {
+                          'Authorization': `Bearer ${getSphereKey()}` 
+                        }
                     }
-                });
+                );
             
                 if(!priceRes.data.ok || !priceRes.data.data || !priceRes.data.data.price) {
                     console.log('unable to create price');

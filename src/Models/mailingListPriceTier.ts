@@ -1,6 +1,9 @@
 export type MailingListPriceTier = {
     id: number;
     mailing_list_id: number;
+    price_id: string;
+    name: string;
+    description?: string;
     amount: string;
     currency: string;
     charge_every: number;
@@ -24,6 +27,9 @@ export type ProcessedMailingListPriceTier = {
 export const fillableColumns = [
     'id',
     'mailing_list_id',
+    'price_id',
+    'name',
+    'description',
     'amount',
     'currency',
     'charge_every',

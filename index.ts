@@ -12,6 +12,7 @@ import { routes as reservationRoutes } from './src/Routes/reservation';
 import { routes as webhookRoutes } from './src/Routes/webhook';
 import { routes as gitgudRoutes } from './src/Routes/gitgud';
 import { routes as mailRoutes } from './src/Routes/mail';
+import { routes as mailingListRoutes } from './src/Routes/mailingList';
 import * as cron from './src/Cron';
 import { VERIFY_MESSAGE } from './src/Constants';
 
@@ -91,6 +92,7 @@ app.use('/reservation', reservationRoutes);
 app.use('/webhooks', webhookRoutes);
 app.use('/gitgud', gitgudRoutes);
 app.use('/mail', mailRoutes);
+app.use('/mailingList', mailingListRoutes);
 
 //connect app to websocket
 let http = createServer(app);

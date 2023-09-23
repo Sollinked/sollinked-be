@@ -4,6 +4,7 @@ import _ from "lodash";
 import { HomepageUser, PublicUser, User, fillableColumns } from "../Models/user";
 import * as userTierController from './userTierController';
 import * as mailController from './mailController';
+import * as mailingListController from './mailingListController';
 import * as userReservationController from './userReservationController';
 import * as userReservationSettingController from './userReservationSettingController';
 import * as webhookController from './webhookController';
@@ -159,6 +160,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
     for(const [index, res] of result.entries()) {
         result[index].tiers =  await userTierController.find({'user_id': res.id});
         result[index].mails =  await mailController.find({'user_id': res.id});
+        result[index].mailingList =  await mailingListController.getUserMailingList(res.id);
         result[index].reservations =  await userReservationController.findForUser(res.id);
         result[index].reservationSettings =  await userReservationSettingController.find({'user_id': res.id});
         result[index].githubSettings = await userGithubSettingController.find({'user_id': res.id});
