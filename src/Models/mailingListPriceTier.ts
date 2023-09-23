@@ -1,0 +1,32 @@
+export type MailingListPriceTier = {
+    id: number;
+    mailing_list_id: number;
+    amount: string;
+    currency: string;
+    charge_every: number;
+    prepay_month: number;
+    is_active: boolean;
+}
+
+export type ProcessedMailingListPriceTier = {
+    id: number;
+    mailing_list_id: number;
+    price_id: string;
+    name: string;
+    description?: string;
+    amount: number;
+    currency: string;
+    charge_every: number;
+    prepay_month: number;
+    is_active: boolean;
+}
+
+export const fillableColumns = [
+    'id',
+    'mailing_list_id',
+    'amount',
+    'currency',
+    'charge_every',
+    'prepay_month',
+    'is_active',
+];

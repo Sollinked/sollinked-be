@@ -688,3 +688,8 @@ export const getGithubCredentials = () => {
         name: process.env.GITHUB_NAME!,
     };
 }
+
+// Sphere
+export const getSphereKey = () => {
+    return process.env.SPHERE_SECRET!;
+}

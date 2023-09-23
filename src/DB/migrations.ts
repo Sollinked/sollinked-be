@@ -338,4 +338,122 @@ export default [
             ALTER TABLE users DROP COLUMN is_verified;
         `,
     },
+
+    // mailing lists
+
+    {
+        name: "create_mailing_lists_table",
+        query: `
+            CREATE TABLE mailing_lists (
+                id serial PRIMARY KEY,
+                user_id int UNIQUE not null, -- only one mailing list per person, tiers will differentiate the product
+                product_id text not null -- product id from sphere, to display in frontend
+            )
+        `,
+        rollback_query: `DROP TABLE mailing_lists;`,
+    },
+    {
+        name: "create_mailing_lists_indexes",
+        query: `
+            CREATE INDEX mailing_lists_user_id_idx ON mailing_lists(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX mailing_lists_user_id_idx;
+        `,
+    },
+    {
+        name: "create_mailing_list_subscribers_table",
+        query: `
+            CREATE TABLE mailing_list_subscribers (
+                id serial PRIMARY KEY,
+                mailing_list_id int not null,
+                user_id int not null,
+                subscription_id text UNIQUE not null, -- subscription id from sphere
+                expiry_date timestamp not null,
+                is_cancelled boolean not null default(false)
+            )
+        `,
+        rollback_query: `DROP TABLE mailing_list_subscribers;`,
+    },
+    {
+        name: "create_mailing_list_subscribers_indexes",
+        query: `
+            CREATE INDEX mailing_list_subscribers_mailing_list_id_idx ON mailing_list_subscribers(mailing_list_id);
+            CREATE INDEX mailing_list_subscribers_all_idx ON mailing_list_subscribers(mailing_list_id, is_cancelled, expiry_date);
+        `,
+        rollback_query: `
+            DROP INDEX mailing_list_subscribers_mailing_list_id_idx;
+            DROP INDEX mailing_list_subscribers_all_idx;
+        `,
+    },
+    {
+        name: "create_mailing_list_broadcasts_table",
+        query: `
+            CREATE TABLE mailing_list_broadcasts (
+                id serial PRIMARY KEY,
+                mailing_list_id int not null,
+                created_at timestamp default(current_timestamp) not null,
+                execute_at timestamp default(current_timestamp) not null,
+                is_executing boolean not null
+            )
+        `,
+        rollback_query: `DROP TABLE mailing_list_broadcasts;`,
+    },
+    {
+        name: "create_mailing_list_broadcasts_indexes",
+        query: `
+            CREATE INDEX mailing_list_broadcasts_mailing_list_id_idx ON mailing_list_broadcasts(mailing_list_id);
+        `,
+        rollback_query: `
+            DROP INDEX mailing_list_broadcasts_mailing_list_id_idx;
+        `,
+    },
+    {
+        name: "create_mailing_list_broadcast_logs_table",
+        query: `
+            CREATE TABLE mailing_list_broadcast_logs (
+                id serial PRIMARY KEY,
+                mailing_list_broadcast_id int not null,
+                is_success boolean not null,
+                log_text text not null
+            )
+        `,
+        rollback_query: `DROP TABLE mailing_list_broadcast_logs;`,
+    },
+    {
+        name: "create_mailing_list_broadcast_logs_indexes",
+        query: `
+            CREATE INDEX mailing_list_broadcast_logs_mailing_list_broadcast_id_idx ON mailing_list_broadcast_logs(mailing_list_broadcast_id);
+        `,
+        rollback_query: `
+            DROP INDEX mailing_list_broadcast_logs_mailing_list_broadcast_id_idx;
+        `,
+    },
+    {
+        name: "create_mailing_list_price_tiers_table",
+        query: `
+            CREATE TABLE mailing_list_price_tiers (
+                id serial PRIMARY KEY,
+                mailing_list_id int not null,
+                price_id text not null, -- price id from sphere
+                name text not null,
+                description text null,
+                amount decimal not null,
+                currency text not null,
+                charge_every int not null,
+                prepay_month int not null,
+                is_active boolean not null default(true)
+            )
+        `,
+        rollback_query: `DROP TABLE mailing_list_price_tiers;`,
+    },
+    {
+        name: "create_mailing_list_price_tiers_indexes",
+        query: `
+            CREATE INDEX mailing_list_price_tiers_mailing_list_id_idx ON mailing_list_price_tiers(mailing_list_id);
+        `,
+        rollback_query: `
+            DROP INDEX mailing_list_price_tiers_mailing_list_id_idx;
+        `,
+    },
 ];
