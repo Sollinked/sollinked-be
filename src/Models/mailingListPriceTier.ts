@@ -2,6 +2,7 @@ export type MailingListPriceTier = {
     id: number;
     mailing_list_id: number;
     price_id: string;
+    paymentlink_id: string;
     name: string;
     description?: string;
     amount: string;
@@ -15,6 +16,7 @@ export type ProcessedMailingListPriceTier = {
     id: number;
     mailing_list_id: number;
     price_id: string;
+    paymentlink_id: string;
     name: string;
     description?: string;
     amount: number;

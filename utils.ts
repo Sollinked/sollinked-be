@@ -693,3 +693,6 @@ export const getGithubCredentials = () => {
 export const getSphereKey = () => {
     return process.env.SPHERE_SECRET!;
 }
+export const getSphereWalletId = () => {
+    return process.env.SPHERE_WALLET_ID!;
+}

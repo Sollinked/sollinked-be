@@ -347,7 +347,8 @@ export default [
             CREATE TABLE mailing_lists (
                 id serial PRIMARY KEY,
                 user_id int UNIQUE not null, -- only one mailing list per person, tiers will differentiate the product
-                product_id text not null -- product id from sphere, to display in frontend
+                product_id text not null, -- product id from sphere, to display in frontend
+                wallet_id text not null -- wallet id from sphere, to assign to price list
             )
         `,
         rollback_query: `DROP TABLE mailing_lists;`,
@@ -366,9 +367,9 @@ export default [
         query: `
             CREATE TABLE mailing_list_subscribers (
                 id serial PRIMARY KEY,
-                mailing_list_id int not null,
+                mailing_list_price_tier_id int not null,
                 user_id int not null,
-                subscription_id text UNIQUE not null, -- subscription id from sphere
+                price_id text UNIQUE not null, -- subscription id from sphere
                 expiry_date timestamp not null,
                 is_cancelled boolean not null default(false)
             )
@@ -378,8 +379,8 @@ export default [
     {
         name: "create_mailing_list_subscribers_indexes",
         query: `
-            CREATE INDEX mailing_list_subscribers_mailing_list_id_idx ON mailing_list_subscribers(mailing_list_id);
-            CREATE INDEX mailing_list_subscribers_all_idx ON mailing_list_subscribers(mailing_list_id, is_cancelled, expiry_date);
+            CREATE INDEX mailing_list_subscribers_mailing_list_id_idx ON mailing_list_subscribers(mailing_list_price_tier_id);
+            CREATE INDEX mailing_list_subscribers_all_idx ON mailing_list_subscribers(mailing_list_price_tier_id, is_cancelled, expiry_date);
         `,
         rollback_query: `
             DROP INDEX mailing_list_subscribers_mailing_list_id_idx;
@@ -436,6 +437,7 @@ export default [
                 id serial PRIMARY KEY,
                 mailing_list_id int not null,
                 price_id text not null, -- price id from sphere
+                paymentlink_id text not null, -- payment link id from sphere for payments
                 name text not null,
                 description text null,
                 amount decimal not null,
