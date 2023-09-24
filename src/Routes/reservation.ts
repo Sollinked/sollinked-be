@@ -25,7 +25,7 @@ routes.get('/:username', async(req, res) => {
     }
 
 
-    let reservations = await userReservationController.findForUser(user.id, true);
+    let reservations = await userReservationController.findByUsername(user.id, true);
     let settings = await userReservationSettingController.find({ user_id: user.id });
 
     return res.send({

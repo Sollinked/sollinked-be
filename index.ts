@@ -43,6 +43,11 @@ app.use((req, res, next) => {
         next();
         return;
     }
+    // check if it's to subscribe to mailing list
+    if((req.path.match(/\/mailingList\//g) && req.method.toLowerCase() === "get")|| req.path.match(/\/mailingList\/subscribe/g)) {
+        next();
+        return;
+    }
     
     // check if it's to post new issue
     if(req.path.match(/\/gitgud\/newIssue/g)) {

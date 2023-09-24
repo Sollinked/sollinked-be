@@ -161,7 +161,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].tiers =  await userTierController.find({'user_id': res.id});
         result[index].mails =  await mailController.find({'user_id': res.id});
         result[index].mailingList =  await mailingListController.getUserMailingList(res.id);
-        result[index].reservations =  await userReservationController.findForUser(res.id);
+        result[index].reservations =  await userReservationController.findByUsername(res.id);
         result[index].reservationSettings =  await userReservationSettingController.find({'user_id': res.id});
         result[index].githubSettings = await userGithubSettingController.find({'user_id': res.id});
         result[index].webhooks = await webhookController.find({ user_id: res.id })

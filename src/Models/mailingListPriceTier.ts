@@ -30,6 +30,7 @@ export const fillableColumns = [
     'id',
     'mailing_list_id',
     'price_id',
+    'paymentlink_id',
     'name',
     'description',
     'amount',

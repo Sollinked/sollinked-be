@@ -146,11 +146,11 @@ routes.post('/priceList', async(req, res) => {
                         taxBehavior: "exclusive",
                         billingSchema: "perUnit",
                         //unitAmount: (price.amount * USDC_DECIMALS).toString(), // 500000000
-                        unitAmountDecimal: price.amount.toString(), // 5
+                        unitAmountDecimal: (price.amount * 1.05).toFixed(5), // 5, * 1.05 cause of 5% service charge
                         //tierType: null,
                         //tiers: null,
                         recurring: {
-                            type: "delegate",
+                            type: "delegated",
                             interval: "month",
                             intervalCount: price.charge_every, // per month
                             usageAggregation: "sum",
@@ -174,11 +174,11 @@ routes.post('/priceList', async(req, res) => {
                 
                 // create sphere payment link
                 let paymentLinkRes = await axios.post('https://api.spherepay.co/v1/paymentLink', {
-                        lineItems: {
+                        lineItems: [{
                             price: priceRet.id,
                             quantity: 1,
                             quantityMutable: false,
-                        },
+                        }],
                         wallets: [
                             {
                                 id: list.wallet_id,
@@ -189,7 +189,7 @@ routes.post('/priceList', async(req, res) => {
                                 shareBps: 10000 - 9524, // 5%
                             }
                         ],
-                        // requiresEmail: true, // might have to add this in
+                        requiresEmail: true,
                     }, 
                     {
                         headers: {
@@ -203,10 +203,10 @@ routes.post('/priceList', async(req, res) => {
                     return;
                 }
         
-                paymentLinkRet = paymentLinkRes.data.data.paymentLink
+                paymentLinkRet = paymentLinkRes.data.data.paymentLink;
             }
         
-            catch {
+            catch (e: any){
                 console.log('unable to create price');
                 return;
             }
@@ -306,10 +306,16 @@ routes.post('/subscribe', async(req, res) => {
 
         let priceTier = priceTiers[0];
 
+        if(!paymentRet.personalInfo || !paymentRet.personalInfo.email) {
+            console.log(`Unable to find email: ${payment.id}`);
+            return res.status(500).send("Unable to find email");;
+        }
+
+        let email = paymentRet.personalInfo.email;
         let users = await userController.find({ address: customer.solanaPubKey });
         let user_id = 0;
         if(!users || users.length === 0) {
-            if(!paymentRet.personalInfo || !paymentRet.personalInfo.email) {
+            if(!paymentRet.personalInfo) {
                 console.log(`Unable to create cause there is no email: ${payment.id}`);
                 return res.status(500).send("Unable to create user");;
             }
@@ -317,7 +323,7 @@ routes.post('/subscribe', async(req, res) => {
                 address: data.address,
                 username: data.username,
                 calendar_advance_days: 100,
-                email_address: paymentRet.personalInfo.email,
+                email_address: email,
             });
             if(!result) {
                 console.log(`Unable to create user: ${payment.id}`);
@@ -335,6 +341,7 @@ routes.post('/subscribe', async(req, res) => {
             user_id,
             price_id: price.id,
             expiry_date: moment().add(priceTier.charge_every, 'M').format('YYYY-MM-DDTHH:mm:ssZ'),
+            email_address: email,
         });
     }
 
@@ -344,4 +351,30 @@ routes.post('/subscribe', async(req, res) => {
     }
 
     return res.send("Success");
+});
+
+// public function
+routes.get('/:username', async function(req, res) {
+    let { username } = req.params;
+
+    if(!username) {
+        return res.status(400).send("No data");
+    }
+
+    let user = await userController.viewByUsername(username);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+
+    let list = await mailingListController.findByUsername(user.id, true);
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: {
+            list,
+            display_name: user.display_name ?? "",
+        },
+    });
 });

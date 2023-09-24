@@ -92,7 +92,7 @@ export const findBefore = async(whereParams: {[key: string]: any}, reservedBefor
     return ret;
 }
 
-export const findForUser = async(user_id: number, hideDetails: boolean = false) => {
+export const findByUsername = async(user_id: number, hideDetails: boolean = false) => {
     // ignore cancelled
     const query = `SELECT * FROM ${table} WHERE user_id = ${user_id} AND status >= ${RESERVATION_STATUS_BLOCKED} ORDER BY date asc`;
 

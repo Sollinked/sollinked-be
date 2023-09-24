@@ -59,6 +59,27 @@ export const find = async(whereParams: {[key: string]: any}) => {
     return result;
 }
 
+export const findByUsername = async(user_id: number, onlyActive: boolean = true) => {
+    // ignore cancelled
+    const query = `SELECT * FROM ${table} WHERE user_id = ${user_id}`;
+
+    const db = new DB();
+    let result = await db.executeQueryForSingleResult<MailingList>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    let params: any = { mailing_list_id: result.id };
+    if(onlyActive) {
+        params.is_active = true;
+    }
+
+    result.tiers = await mailingListPriceTierController.find(params);
+    return result;
+}
+
+
 // list (all)
 export const list = async() => {
     const query = `SELECT * FROM ${table}`;
