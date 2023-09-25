@@ -26,6 +26,9 @@ export type ProcessedMailingListPriceTier = {
     prepay_month: number;
     subscriber_count: number;
     is_active: boolean;
+
+    // generated
+    username?: string;
 }
 
 export const fillableColumns = [

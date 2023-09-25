@@ -1,6 +1,8 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
+import * as userController from './userController';
+import * as mailingListController from './mailingListController';
 import * as mailingListSubscriberController from './mailingListSubscriberController';
 import { MailingListPriceTier, ProcessedMailingListPriceTier, fillableColumns } from "../Models/mailingListPriceTier";
 
@@ -26,7 +28,7 @@ export const create = async(insertParams: any) => {
 }
 
 // view (single - id)
-export const view = async(id: number) => {
+export const view = async(id: number, hideSubcriberCount: boolean = false) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
@@ -35,8 +37,40 @@ export const view = async(id: number) => {
         return result;
     }
 
-    result.subscriber_count = (await mailingListSubscriberController.find({ mailing_list_price_tier_id: id }))?.length ?? 0;
+    if(hideSubcriberCount) {
+        result.subscriber_count = -1;
+    }
+
+    else {
+        result.subscriber_count = (await mailingListSubscriberController.find({ mailing_list_price_tier_id: id }))?.length ?? 0;
+    }
+
     return result;
+}
+
+export const publicView = async(id: number) => {
+    const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
+
+    const db = new DB();
+    let result = await db.executeQueryForSingleResult<MailingListPriceTier>(query);
+    if(!result) {
+        return result;
+    }
+
+    result.subscriber_count = -1;
+
+    let mailingList = await mailingListController.view(result.mailing_list_id);
+    if(!mailingList) {
+        return;
+    }
+    let user = await userController.view(mailingList.user_id);
+    if(!user) {
+        return;
+    }
+
+    let processedResult: ProcessedMailingListPriceTier = { ...result, amount: parseFloat(result.amount), username: "" };
+    processedResult.username = user.display_name ?? user.username;
+    return processedResult;
 }
 
 // find (all match)

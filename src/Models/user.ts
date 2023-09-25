@@ -1,6 +1,7 @@
 import { ProcessedMail } from "./mail";
 import { MailingList } from "./mailingList";
 import { MailingListBroadcast } from "./mailingListBroadcast";
+import { MailingListSubscriber } from "./mailingListSubscriber";
 import { UserGithubSetting } from "./userGithubSetting";
 import { ProcessedUserReservation, UserReservation } from "./userReservation";
 import { ProcessedUserReservationSetting, UserReservationSetting } from "./userReservationSetting";
@@ -25,6 +26,7 @@ export type User = {
     mails?: ProcessedMail[];
     mailingList?: MailingList;
     broadcasts?: MailingListBroadcast[];
+    subscriptions?: MailingListSubscriber[];
     reservations?: ProcessedUserReservation[];
     reservationSettings?: ProcessedUserReservationSetting[];
     webhooks?: Webhook[];
@@ -44,6 +46,7 @@ export type PublicUser = {
     tiktok: string;
     youtube: string;
     calendar_advance_days: number;
+    mailingList?: MailingList;
     tiers?: UserTier[];
     is_verified: boolean;
 }

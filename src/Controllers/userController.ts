@@ -6,6 +6,7 @@ import * as userTierController from './userTierController';
 import * as mailController from './mailController';
 import * as mailingListController from './mailingListController';
 import * as mailingListBroadcastController from './mailingListBroadcastController';
+import * as mailingListSubscriberController from './mailingListSubscriberController';
 import * as userReservationController from './userReservationController';
 import * as userReservationSettingController from './userReservationSettingController';
 import * as webhookController from './webhookController';
@@ -142,6 +143,7 @@ export const publicViewByUsername = async(username: string) => {
     
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.tiers = await userTierController.find({ user_id: result.id });
+    result.mailingList = await mailingListController.findByUserId(result.id, true);
     return result;
 }
 
@@ -163,6 +165,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].mails =  await mailController.find({'user_id': res.id});
         result[index].mailingList =  await mailingListController.getUserMailingList(res.id);
         result[index].broadcasts = await mailingListBroadcastController.find({ user_id: res.id });
+        result[index].subscriptions = await mailingListSubscriberController.find({ user_id: res.id });
         result[index].reservations =  await userReservationController.findByUsername(res.id);
         result[index].reservationSettings =  await userReservationSettingController.find({'user_id': res.id});
         result[index].githubSettings = await userGithubSettingController.find({'user_id': res.id});
@@ -230,7 +233,7 @@ export const getHomepageUsers = async() => {
                     on r.user_id = u.id
                     group by 1,2,3,4
                     having sum(coalesce(m.value_usd, 0)) + sum(coalesce(r.value_usd, 0)) > 0 or profile_picture is not null or is_verified
-                    order by value_usd desc nulls last, profile_picture desc nulls last
+                    order by is_verified, value_usd desc nulls last, profile_picture desc nulls last
                     limit 50`;
 
     const db = new DB();

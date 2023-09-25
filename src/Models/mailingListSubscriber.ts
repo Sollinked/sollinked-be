@@ -1,3 +1,5 @@
+import { MailingListPriceTier, ProcessedMailingListPriceTier } from "./mailingListPriceTier";
+
 export type MailingListSubscriber = {
     id: number;
     mailing_list_price_tier_id: number;
@@ -6,6 +8,9 @@ export type MailingListSubscriber = {
     email_address: string;
     expiry_date: string;
     is_cancelled: boolean;
+
+    // generated
+    price_tier?: ProcessedMailingListPriceTier;
 }
 
 export const fillableColumns = [

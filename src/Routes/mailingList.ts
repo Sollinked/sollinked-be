@@ -138,8 +138,8 @@ routes.post('/priceList', async(req, res) => {
     
             try {
                 let priceRes = await axios.post('https://api.spherepay.co/v1/price', {
-                        name: `${user.display_name ?? user.username}'s Mail Subscription`,
-                        description: `Receive emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
+                        name: `${user.display_name ?? user.username} - ${price.name}`,
+                        description: `Receive ${price.name} emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
                         product: list.product_id,
                         type: "recurring",
                         currency: USDC_ADDRESS,
@@ -302,7 +302,7 @@ routes.post('/broadcast', async(req, res) => {
             continue;
         }
 
-        let subscribers = await mailingListSubscriberController.find({ mailing_list_price_tier_id: tier});
+        let subscribers = await mailingListSubscriberController.find({ mailing_list_price_tier_id: tier });
         if(!subscribers || subscribers.length === 0) {
             continue;
         }
@@ -473,7 +473,7 @@ routes.get('/:username', async function(req, res) {
     }
 
 
-    let list = await mailingListController.findByUsername(user.id, true);
+    let list = await mailingListController.findByUserId(user.id, true);
 
     return res.send({
         success: true,

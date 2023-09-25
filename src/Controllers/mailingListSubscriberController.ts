@@ -1,6 +1,7 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
+import * as mailingListPriceTierController from './mailingListPriceTierController';
 import { MailingListSubscriber, fillableColumns } from "../Models/mailingListSubscriber";
 
 const table = 'mailing_list_subscribers';
@@ -37,12 +38,18 @@ export const view = async(id: number) => {
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
-    const query = `SELECT * FROM ${table} WHERE ${params}`;
+    const query = `SELECT * FROM ${table} WHERE ${params} AND expiry_date >= CURRENT_TIMESTAMP AND is_cancelled = false`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<MailingListSubscriber>(query);
+    let results = await db.executeQueryForResults<MailingListSubscriber>(query);
+    if(!results) {
+        return results;
+    }
 
-    return result;
+    for(const [index, result] of results.entries()) {
+        results[index].price_tier = await mailingListPriceTierController.publicView(result.mailing_list_price_tier_id);
+    }
+    return results;
 }
 
 // list (all)

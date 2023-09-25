@@ -59,7 +59,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
     return result;
 }
 
-export const findByUsername = async(user_id: number, onlyActive: boolean = true) => {
+export const findByUserId = async(user_id: number, onlyActive: boolean = true) => {
     // ignore cancelled
     const query = `SELECT * FROM ${table} WHERE user_id = ${user_id}`;
 

@@ -66,7 +66,8 @@ export const broadcast = async(broadcast_id: number) => {
         return;
     }
     
-    await update(broadcast_id, { is_executing: true });
+    let now = moment();
+    await update(broadcast_id, { executed_at: now.format('YYYY-MM-DDTHH:mm:ssZ'), is_executing: true });
 
     let logs = await mailingListBroadcastLogController.find({ mailing_list_broadcast_id: broadcast_id, is_success: false });
     if(!logs || logs.length === 0) {
@@ -94,7 +95,7 @@ export const broadcast = async(broadcast_id: number) => {
         }
         await mailingListBroadcastLogController.update(log.id, { is_success: true, success_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') })
     }
-    
+
     await update(broadcast_id, { is_executing: false, executed_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') });
     return;
 }
@@ -128,7 +129,7 @@ export const view = async(id: number) => {
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
-    const query = `SELECT * FROM ${table} WHERE ${params}`;
+    const query = `SELECT * FROM ${table} WHERE ${params} order by id desc`;
 
     const db = new DB();
     let results = await db.executeQueryForResults<MailingListBroadcast>(query);
