@@ -446,6 +446,7 @@ routes.post('/subscribe', async(req, res) => {
             mailing_list_price_tier_id: priceTier.id,
             user_id,
             price_id: price.id,
+            value_usd: priceTier.amount,
             expiry_date: moment().add(priceTier.charge_every, 'M').format('YYYY-MM-DDTHH:mm:ssZ'),
             email_address: email,
         });

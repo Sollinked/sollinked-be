@@ -370,6 +370,7 @@ export default [
                 mailing_list_price_tier_id int not null,
                 user_id int not null,
                 price_id text not null, -- subscription id from sphere
+                value_usd decimal not null,
                 email_address text not null,  -- email address for the subscription
                 expiry_date timestamp not null,
                 is_cancelled boolean not null default(false)
