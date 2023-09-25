@@ -69,7 +69,6 @@ export class GithubBot {
 
         color = color.replace("#", "");
         try {
-            console.log(color);
             await this.octokit.request('POST /repos/{owner}/{repo}/labels', {
                 owner: this.owner,
                 repo: this.repo,

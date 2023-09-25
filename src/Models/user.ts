@@ -1,5 +1,6 @@
 import { ProcessedMail } from "./mail";
 import { MailingList } from "./mailingList";
+import { MailingListBroadcast } from "./mailingListBroadcast";
 import { UserGithubSetting } from "./userGithubSetting";
 import { ProcessedUserReservation, UserReservation } from "./userReservation";
 import { ProcessedUserReservationSetting, UserReservationSetting } from "./userReservationSetting";
@@ -23,6 +24,7 @@ export type User = {
     tiers?: UserTier[];
     mails?: ProcessedMail[];
     mailingList?: MailingList;
+    broadcasts?: MailingListBroadcast[];
     reservations?: ProcessedUserReservation[];
     reservationSettings?: ProcessedUserReservationSetting[];
     webhooks?: Webhook[];

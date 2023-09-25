@@ -3,6 +3,7 @@ import * as userController from '../Controllers/userController';
 import * as mailingListController from '../Controllers/mailingListController';
 import * as mailingListPriceTierController from '../Controllers/mailingListPriceTierController';
 import * as mailingListSubscriberController from '../Controllers/mailingListSubscriberController';
+import * as mailingListBroadcastController from '../Controllers/mailingListBroadcastController';
 import axios from 'axios';
 import moment from 'moment';
 import { getSphereKey, getSphereWalletId } from '../../utils';
@@ -224,6 +225,111 @@ routes.post('/priceList', async(req, res) => {
              });
         })
     )
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/retry/:id', async(req, res) => {
+    let data = req.body;
+    let { id } = req.params;
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!id) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let users = await userController.find({ address: data.address });
+    if(!users || users.length === 0) {
+        return res.status(404).send("Missing user");
+    }
+    let user = users[0];
+
+    let broadcast = await mailingListBroadcastController.view(Number(id));
+    if(!broadcast) {
+        return res.status(404).send("Missing broadcast");
+    }
+
+    if(broadcast.user_id !== user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    await mailingListBroadcastController.retryBroadcast(Number(id));
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/broadcast', async(req, res) => {
+    let data = req.body;
+
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!data.tier_ids || !data.title || !data.content) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let users = await userController.find({ address: data.address });
+    if(!users || users.length === 0) {
+        return res.status(404).send("Missing user");
+    }
+
+    let user = users[0];
+    let emails: string[] = [];
+
+    // get unique emails for aggregated tiers
+    for(const [index, tier] of data.tier_ids.entries()) {
+        let priceTier = await mailingListPriceTierController.view(tier);
+        if(!priceTier) {
+            continue;
+        }
+
+        let mailingList = await mailingListController.view(priceTier.mailing_list_id);
+        if(!mailingList) {
+            continue;
+        }
+
+        // does not belong to user
+        if(mailingList.user_id !== user.id) {
+            continue;
+        }
+
+        let subscribers = await mailingListSubscriberController.find({ mailing_list_price_tier_id: tier});
+        if(!subscribers || subscribers.length === 0) {
+            continue;
+        }
+        
+        subscribers.forEach(subscriber => {
+            if(emails.includes(subscriber.email_address)) {
+                return;
+            }
+            emails.push(subscriber.email_address);
+        });
+    };
+
+    if(emails.length === 0) {
+        return res.status(400).send('No subscribers found');
+    }
+
+    // create a broadcast entry with the unique emails
+    let broadcastRes = await mailingListBroadcastController.createAndBroadcast({
+        user_id: user.id,
+        title: data.title,
+        content: data.content,
+        is_executing: false,
+    }, emails);
+
+    if(!broadcastRes) {
+        return res.status(500).send("Unable to broadcast");
+    }
 
     return res.send({
         success: true,

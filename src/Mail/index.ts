@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from 'uuid';
 export type SendEmailParams = {
     to: string,
     subject: string;
-    text: string;
+    text?: string;
     textAsHtml?: string;
     inReplyTo?: string;
     references?: string;
@@ -82,8 +82,9 @@ export const sendEmail = async ({
             retries++;
             console.log(`send mail retrying: ${retries}`);
         }
-
     }
+
+    return retries < 3;
 }
 
 export const getEmailByMessageId = (messageId: string) => {

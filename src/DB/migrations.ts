@@ -393,7 +393,9 @@ export default [
         query: `
             CREATE TABLE mailing_list_broadcasts (
                 id serial PRIMARY KEY,
-                mailing_list_price_tier_id int not null,
+                user_id int not null,
+                title text not null,
+                content text not null,
                 created_at timestamp default(current_timestamp) not null,
                 execute_at timestamp default(current_timestamp) not null,
                 is_executing boolean not null
@@ -404,7 +406,7 @@ export default [
     {
         name: "create_mailing_list_broadcasts_indexes",
         query: `
-            CREATE INDEX mailing_list_broadcasts_mailing_list_id_idx ON mailing_list_broadcasts(mailing_list_price_tier_id);
+            CREATE INDEX mailing_list_broadcasts_mailing_list_id_idx ON mailing_list_broadcasts(user_id);
         `,
         rollback_query: `
             DROP INDEX mailing_list_broadcasts_mailing_list_id_idx;
@@ -416,8 +418,10 @@ export default [
             CREATE TABLE mailing_list_broadcast_logs (
                 id serial PRIMARY KEY,
                 mailing_list_broadcast_id int not null,
-                is_success boolean not null,
-                log_text text not null
+                to_email text not null,
+                is_success boolean default(false) not null,
+                success_at timestamp null,
+                log_text text default('') not null
             )
         `,
         rollback_query: `DROP TABLE mailing_list_broadcast_logs;`,

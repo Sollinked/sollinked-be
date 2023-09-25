@@ -1,14 +1,20 @@
 export type MailingListBroadcast = {
     id: number;
-    mailing_list_price_tier_id: number;
+    user_id: number;
+    title: string;
+    content: string;
     created_at: string;
     execute_at: string;
     is_executing: boolean;
+    success_count: number;
+    total_count: number;
 }
 
 export const fillableColumns = [
     'id',
-    'mailing_list_price_tier_id',
+    'user_id',
+    'title',
+    'content',
     'created_at',
     'execute_at',
     'is_executing',

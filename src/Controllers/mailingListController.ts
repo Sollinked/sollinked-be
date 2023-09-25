@@ -32,7 +32,7 @@ export const view = async(id: number) => {
     const db = new DB();
     const result = await db.executeQueryForSingleResult<MailingList>(query);
 
-    return result ?? {};
+    return result;
 }
 
 export const getUserMailingList = async(user_id: number) => {

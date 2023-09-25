@@ -67,6 +67,14 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
     await db.executeQueryForSingleResult(query);
 }
 
+export const getCount = async(broadcast_id: number) => {
+    const query = `SELECT count(*)::int as total_count, count(is_success or null)::int as success_count FROM ${table} WHERE mailing_list_broadcast_id = ${broadcast_id}`;
+
+    const db = new DB();
+    const result = await db.executeQueryForSingleResult<{ total_count: number, success_count: number }>(query);
+    return result;
+}
+
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
