@@ -298,7 +298,7 @@ routes.post('/subscribe', async(req, res) => {
             return res.status(400).send("price missing");;
         }
 
-        let priceTiers = await mailingListPriceTierController.find({ price_id: price.id });
+        let priceTiers = await mailingListPriceTierController.find({ price_id: price.id }, true);
         if(!priceTiers || priceTiers.length === 0) {
             console.log(`Unable to find priceTier: ${payment.id}`);
             return res.status(500).send("Unable to find priceTier");;

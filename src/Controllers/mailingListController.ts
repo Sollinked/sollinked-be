@@ -75,7 +75,7 @@ export const findByUsername = async(user_id: number, onlyActive: boolean = true)
         params.is_active = true;
     }
 
-    result.tiers = await mailingListPriceTierController.find(params);
+    result.tiers = await mailingListPriceTierController.find(params, true);
     return result;
 }
 

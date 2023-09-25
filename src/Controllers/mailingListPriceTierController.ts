@@ -1,6 +1,7 @@
 import { formatDBParamsToStr } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
+import * as mailingListSubscriberController from './mailingListSubscriberController';
 import { MailingListPriceTier, ProcessedMailingListPriceTier, fillableColumns } from "../Models/mailingListPriceTier";
 
 const table = 'mailing_list_price_tiers';
@@ -29,13 +30,17 @@ export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult<MailingListPriceTier>(query);
+    let result = await db.executeQueryForSingleResult<MailingListPriceTier>(query);
+    if(!result) {
+        return result;
+    }
 
-    return result ?? {};
+    result.subscriber_count = (await mailingListSubscriberController.find({ mailing_list_price_tier_id: id }))?.length ?? 0;
+    return result;
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}) => {
+export const find = async(whereParams: {[key: string]: any}, hideSubcriberCount: boolean = false) => {
     const params = formatDBParamsToStr(whereParams, ' AND ');
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
@@ -47,8 +52,10 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     let processedResults: ProcessedMailingListPriceTier[] = [];
     for(const [index, result] of results.entries()) {
+        let subscriber_count = hideSubcriberCount? -1 : (await mailingListSubscriberController.find({ mailing_list_price_tier_id: result.id }))?.length ?? 0;
         processedResults.push({
             ...result,
+            subscriber_count,
             amount: parseFloat(result.amount ?? '0'),
         })
     }
