@@ -301,6 +301,14 @@ export const formatDBParamsToStr = (params : {
             }
         }
 
+        else if(Array.isArray(p)) {
+            if (valueOnly) {
+                stringParams.push(`${prepend? prepend + "." : ""}'${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
+            } else {
+                stringParams.push(`${prepend? prepend + "." : ""}${k} = '${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
+            }
+        }
+
         else {
             if (valueOnly) {
                 stringParams.push(`${prepend? prepend + "." : ""}${value}`);

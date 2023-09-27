@@ -1,17 +1,19 @@
 {
   "name": "sollinked-be",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "main": "index.js",
   "scripts": {
     "test": "tsc && node test.js",
     "start": "node index.js",
     "restart": "tsc && node index.js",
     "migrate": "tsc && node migrate.js",
+    "migrate:rollback": "tsc && node migrate.js && node rollback.js",
     "migrate:seed": "tsc && node migrate.js && node seed.js",
     "drop": "tsc && node drop.js",
     "drop:seed": "tsc && node drop.js && node migrate.js && node seed.js",
     "seed": "tsc && node seed.js",
     "rollback": "tsc && node rollback.js",
+    "rollback:migrate": "tsc && node rollback.js && node migrate.js",
     "rollback:seed": "tsc && node rollback.js && node migrate.js && node seed.js",
     "dev": "nodemon --ext \"ts\" --exec \"tsc && node index.js\"  --exclude node_modules . || exit 1",
     "init": "tsc && node init.js"

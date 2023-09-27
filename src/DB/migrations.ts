@@ -475,5 +475,52 @@ export default [
             DROP COLUMN is_draft;
         `,
     },
+    {
+        name: "add_updated_at_to_mailing_list_broadcasts",
+        query: `
+            ALTER TABLE mailing_list_broadcasts
+            ADD updated_at timestamptz default(current_timestamp);
+            CREATE TRIGGER update_mailing_list_broadcasts_updated_at BEFORE UPDATE ON mailing_list_broadcasts FOR EACH ROW EXECUTE PROCEDURE update_at_column();
+        `,
+        rollback_query: `
+            ALTER TABLE mailing_list_broadcasts
+            DROP COLUMN updated_at;
+            DROP TRIGGER update_mailing_list_broadcasts_updated_at ON mailing_list_broadcasts;
+        `,
+    },
+    {
+        name: "add_tier_ids_to_mailing_list_broadcasts",
+        query: `
+            ALTER TABLE mailing_list_broadcasts
+            ADD tier_ids integer[];
+        `,
+        rollback_query: `
+            ALTER TABLE mailing_list_broadcasts
+            DROP COLUMN tier_ids;
+        `,
+    },
+    {
+        name: "change_timestamps_for_mailing_list_broadcasts",
+        query: `
+            ALTER TABLE mailing_list_broadcasts
+            ALTER COLUMN created_at TYPE timestamptz;
+            ALTER TABLE mailing_list_broadcasts
+            ALTER COLUMN execute_at TYPE timestamptz;
+            ALTER TABLE mailing_list_broadcasts
+            ALTER COLUMN execute_at DROP NOT NULL;
+            ALTER TABLE mailing_list_broadcasts
+            ALTER COLUMN execute_at DROP DEFAULT;
+        `,
+        rollback_query: `
+        ALTER TABLE mailing_list_broadcasts
+        ALTER COLUMN created_at TYPE timestamp;
+        ALTER TABLE mailing_list_broadcasts
+        ALTER COLUMN execute_at TYPE timestamp;
+        ALTER TABLE mailing_list_broadcasts
+        ALTER COLUMN execute_at SET DEFAULT current_timestamp;
+        ALTER TABLE mailing_list_broadcasts
+        ALTER COLUMN execute_at SET NOT NULL;
+        `,
+    },
     
 ];
