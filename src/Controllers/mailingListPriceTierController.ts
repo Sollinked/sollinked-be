@@ -119,6 +119,43 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
     await db.executeQueryForSingleResult(query);
 }
 
+export const getUniqueEmailsForTiers = async(tiers: number[], user_id: number) => {
+
+    let emails: string[] = [];
+
+    // get unique emails for aggregated tiers
+    for(const [index, tier] of tiers.entries()) {
+        let priceTier = await view(tier);
+        if(!priceTier) {
+            continue;
+        }
+
+        let mailingList = await mailingListController.view(priceTier.mailing_list_id);
+        if(!mailingList) {
+            continue;
+        }
+
+        // does not belong to user
+        if(mailingList.user_id !== user_id) {
+            continue;
+        }
+
+        let subscribers = await mailingListSubscriberController.find({ mailing_list_price_tier_id: tier });
+        if(!subscribers || subscribers.length === 0) {
+            continue;
+        }
+        
+        subscribers.forEach(subscriber => {
+            if(emails.includes(subscriber.email_address)) {
+                return;
+            }
+            emails.push(subscriber.email_address);
+        });
+    };
+
+    return emails;
+}
+
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;

@@ -464,4 +464,16 @@ export default [
             DROP INDEX mailing_list_price_tiers_mailing_list_id_idx;
         `,
     },
+    {
+        name: "add_is_draft_to_mailing_list_broadcasts",
+        query: `
+            ALTER TABLE mailing_list_broadcasts
+            ADD is_draft boolean default(false);
+        `,
+        rollback_query: `
+            ALTER TABLE mailing_list_broadcasts
+            DROP COLUMN is_draft;
+        `,
+    },
+    
 ];

@@ -6,6 +6,7 @@ export type MailingListBroadcast = {
     created_at: string;
     execute_at: string;
     is_executing: boolean;
+    is_draft: boolean;
     success_count: number;
     total_count: number;
 }
@@ -18,4 +19,5 @@ export const fillableColumns = [
     'created_at',
     'execute_at',
     'is_executing',
+    'is_draft',
 ];

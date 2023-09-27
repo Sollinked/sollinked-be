@@ -13,7 +13,7 @@ const table = 'mailing_list_broadcasts';
 export const init = async() => { }
 
 // create
-export const create = async(insertParams: any, emails: string[]) => {
+export const create = async(insertParams: any) => {
     const filtered = _.pick(insertParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, ', ', true);
 
@@ -29,31 +29,23 @@ export const create = async(insertParams: any, emails: string[]) => {
         return;
     }
 
-    let user = await userController.view(insertParams.user_id);
-    if(!user) {
-        console.log('Missing user');
-        return;
-    }
-
-    let columns = ['mailing_list_broadcast_id', 'to_email'];
-
-    let values: any[] = []; // change test to admin later
-    emails.forEach(email => {
-        values.push([result.id, email]);
-    });
-
-    if(values.length === 0){
-        return;
-    }
-
-    let insertSubscriberQuery = getInsertQuery(columns, values, 'mailing_list_broadcast_logs');
-    await db.executeQueryForSingleResult(insertSubscriberQuery);
-
     return result;
 }
 
-export const broadcast = async(broadcast_id: number) => {
+export const broadcast = async(broadcast_id: number, emails?: string[]) => {
     let credentials = getMailCredentials();
+
+    if(emails && emails.length > 0) {
+        let db = new DB();
+        let columns = ['mailing_list_broadcast_id', 'to_email'];
+        let values: any[] = []; // change test to admin later
+        emails.forEach(email => {
+            values.push([broadcast_id, email]);
+        });
+
+        let insertSubscriberQuery = getInsertQuery(columns, values, 'mailing_list_broadcast_logs');
+        await db.executeQueryForSingleResult(insertSubscriberQuery);
+    }
 
     let broadcast = await view(broadcast_id);
     if(!broadcast) {
@@ -101,19 +93,50 @@ export const broadcast = async(broadcast_id: number) => {
 }
 
 export const createAndBroadcast = async(insertParams: any, emails: string[]) => {
-    let res = await create(insertParams, emails);
+    let res = await create(insertParams);
     if(!res) {
         return;
     }
 
     // dont wait
-    broadcast(res.id);
+    broadcast(res.id, emails);
     return res;
 }
 
 export const retryBroadcast = async(broadcast_id: number) => {
     // dont wait
     broadcast(broadcast_id);
+    return;
+}
+
+export const testDraft = async(broadcast_id: number) => {
+    // dont wait
+    let credentials = getMailCredentials();
+
+    let broadcast = await view(broadcast_id);
+    if(!broadcast) {
+        console.log("Missing broadcast object");
+        return;
+    }
+
+    let user = await userController.view(broadcast.user_id);
+    if(!user) {
+        console.log("Missing user");
+        return;
+    }
+
+    if(!user.email_address) {
+        console.log("Missing email address");
+        return;
+    }
+
+    await sendEmail({
+        to: user.email_address,
+        from: `${user.username}@${credentials.domain}`,
+        subject: broadcast.title,
+        textAsHtml: broadcast.content,
+    });
+
     return;
 }
 

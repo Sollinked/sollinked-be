@@ -283,37 +283,7 @@ routes.post('/broadcast', async(req, res) => {
     }
 
     let user = users[0];
-    let emails: string[] = [];
-
-    // get unique emails for aggregated tiers
-    for(const [index, tier] of data.tier_ids.entries()) {
-        let priceTier = await mailingListPriceTierController.view(tier);
-        if(!priceTier) {
-            continue;
-        }
-
-        let mailingList = await mailingListController.view(priceTier.mailing_list_id);
-        if(!mailingList) {
-            continue;
-        }
-
-        // does not belong to user
-        if(mailingList.user_id !== user.id) {
-            continue;
-        }
-
-        let subscribers = await mailingListSubscriberController.find({ mailing_list_price_tier_id: tier });
-        if(!subscribers || subscribers.length === 0) {
-            continue;
-        }
-        
-        subscribers.forEach(subscriber => {
-            if(emails.includes(subscriber.email_address)) {
-                return;
-            }
-            emails.push(subscriber.email_address);
-        });
-    };
+    let emails: string[] = await mailingListPriceTierController.getUniqueEmailsForTiers(data.tier_ids, user.id);
 
     if(emails.length === 0) {
         return res.status(400).send('No subscribers found');
@@ -330,6 +300,158 @@ routes.post('/broadcast', async(req, res) => {
     if(!broadcastRes) {
         return res.status(500).send("Unable to broadcast");
     }
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/newDraft', async(req, res) => {
+    let data = req.body;
+
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!data.title || !data.content) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let users = await userController.find({ address: data.address });
+    if(!users || users.length === 0) {
+        return res.status(404).send("Missing user");
+    }
+
+    let user = users[0];
+
+    // create a broadcast entry with the unique emails
+    let broadcastRes = await mailingListBroadcastController.create({
+        user_id: user.id,
+        title: data.title,
+        content: data.content,
+        is_executing: false,
+        is_draft: true,
+    });
+
+    if(!broadcastRes) {
+        return res.status(500).send("Unable to save draft");
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/updateDraft/:id', async(req, res) => {
+    let data = req.body;
+    let { id } = req.params;
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!id) {
+        return res.status(400).send("Invalid params");
+    }
+
+    if(!data.title || !data.content) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let users = await userController.find({ address: data.address });
+    if(!users || users.length === 0) {
+        return res.status(404).send("Missing user");
+    }
+    let user = users[0];
+
+    let broadcast = await mailingListBroadcastController.view(Number(id));
+    if(!broadcast) {
+        return res.status(404).send("Missing broadcast");
+    }
+
+    if(broadcast.user_id !== user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    await mailingListBroadcastController.update(Number(id), { 
+        title: data.title,
+        content: data.content,
+    });
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/broadcastDraft/:id', async(req, res) => {
+    let data = req.body;
+    let { id } = req.params;
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!id) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let users = await userController.find({ address: data.address });
+    if(!users || users.length === 0) {
+        return res.status(404).send("Missing user");
+    }
+    let user = users[0];
+
+    let broadcast = await mailingListBroadcastController.view(Number(id));
+    if(!broadcast) {
+        return res.status(404).send("Missing broadcast");
+    }
+
+    if(broadcast.user_id !== user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    let emails: string[] = await mailingListPriceTierController.getUniqueEmailsForTiers(data.tier_ids, user.id);
+    if(emails.length === 0) {
+        return res.status(400).send('No subscribers found');
+    }
+
+    await mailingListBroadcastController.update(Number(id), { is_draft: false });
+    await mailingListBroadcastController.broadcast(Number(id), emails);
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/testDraft/:id', async(req, res) => {
+    let data = req.body;
+    let { id } = req.params;
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!id) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let users = await userController.find({ address: data.address });
+    if(!users || users.length === 0) {
+        return res.status(404).send("Missing user");
+    }
+    let user = users[0];
+
+    let broadcast = await mailingListBroadcastController.view(Number(id));
+    if(!broadcast) {
+        return res.status(404).send("Missing broadcast");
+    }
+
+    if(broadcast.user_id !== user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    await mailingListBroadcastController.testDraft(Number(id));
 
     return res.send({
         success: true,
