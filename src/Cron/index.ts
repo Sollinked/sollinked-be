@@ -11,23 +11,23 @@ export const init = () => {
     // run every 1 minute
     cron.schedule('*/1 * * * *', () => {
         // processEmails();
-        // processPayments();
-        // processClaims();
-        // processExpiredReservationPayments();
-        // processReservationClaims();
-        // processGithubInvitations();
-        // syncRepo();
-        // processGithubIssues();
-        // processMailsWithNoResponse();
+        processPayments();
+        processClaims();
+        processExpiredReservationPayments();
+        processReservationClaims();
+        processGithubInvitations();
+        syncRepo();
+        processGithubIssues();
+        processMailsWithNoResponse();
     });
 
     setInterval(() => {
-        // processReservationPayments();
+        processReservationPayments();
     }, 5000);
 
     // process emails every 30s
     setInterval(() => {
         // might have to check if it's checking emails
-        // processEmails();
+        processEmails();
     }, 30000);
 }
