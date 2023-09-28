@@ -157,11 +157,7 @@ export const processEmails = () => {
             imap.openBox('INBOX', false, () => {
                 // open inbox
                 imap.search([
-                    'UNSEEN',
-                    [
-                        'SINCE',
-                        new Date(),
-                    ]
+                    'UNSEEN'
                 ], (err, results) => {
                     try {
                         const f = imap.fetch(results, { bodies: '' });
