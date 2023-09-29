@@ -614,13 +614,12 @@ export const getTx = async(txHash: string) => {
     const endpoint = getRPCEndpoint(); //Replace with your RPC Endpoint
     const connection = new WrapperConnection(endpoint);
 
-    let tx = await connection.getTransaction(txHash);
-
+    let tx = await connection.getTransaction(txHash, { maxSupportedTransactionVersion: 0 });
     return tx;
 }
 
 export const getTokensTransferredToUser = async(txHash: string, toAddress: string, token: string) => {
-    let now = moment().add(-2, 'minute');
+    let now = moment().add(-60, 'minute');
     let txDetails = await getTx(txHash);
     if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
         throw new Error("No Tx Details");
