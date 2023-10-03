@@ -523,4 +523,16 @@ export default [
         `,
     },
     
+    // add notification to expired emails
+    {
+        name: "add_sent_message_id_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD sent_message_id text;
+        `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN sent_message_id;
+        `,
+    },
 ];

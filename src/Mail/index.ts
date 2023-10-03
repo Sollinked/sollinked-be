@@ -46,7 +46,8 @@ export const sendEmail = async ({
     const { host, user, pass, name, bcc } = getMailCredentials();
 
     let retries = 0;
-    
+    let sentMessageId = "";
+
     while(retries < 3) {
         try {
             const transporter = nodemailer.createTransport({
@@ -73,6 +74,7 @@ export const sendEmail = async ({
             });
     
             console.log(`email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
+            sentMessageId = info.messageId;
             break;
         }
 
@@ -84,7 +86,7 @@ export const sendEmail = async ({
         }
     }
 
-    return retries < 3;
+    return sentMessageId;
 }
 
 export const getEmailByMessageId = (messageId: string) => {

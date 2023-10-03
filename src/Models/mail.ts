@@ -5,6 +5,7 @@ export type Mail = {
     to_email: string;
     bcc_to_email?: string;
     message_id: string;
+    sent_message_id: string;
     tiplink_url: string;
     tiplink_public_key: string;
     is_processed: boolean;
@@ -23,6 +24,7 @@ export type ProcessedMail = {
     to_email: string;
     bcc_to_email?: string;
     message_id: string;
+    sent_message_id: string;
     tiplink_url: string;
     tiplink_public_key: string;
     is_processed: boolean;
@@ -41,6 +43,7 @@ export const fillableColumns = [
     'to_email',
     'bcc_to_email',
     'message_id',
+    'sent_message_id',
     'tiplink_url',
     'tiplink_public_key',
     'is_processed',

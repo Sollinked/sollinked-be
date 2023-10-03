@@ -102,7 +102,7 @@ routes.post('/payment/:username', async(req, res) => {
                     continue;
                 }
     
-                await sendEmail({
+                let sent_message_id = await sendEmail({
                     to: user.email_address!,
                     subject: `${subject ?? "No Subject"} (${valueUsd} USDC)`,
                     text: `${message}`,
@@ -112,6 +112,13 @@ routes.post('/payment/:username', async(req, res) => {
                 let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
                 let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
                 let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
+
+                // receipt
+                await sendEmail({
+                    to: mail.from_email,
+                    subject: `Email Receipt`,
+                    text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.` + `\n\n---- Copy of message -----\n\n${message}`,
+                });
     
                 // create a forwarder for responses
                 // delete this forwarder once done
@@ -124,6 +131,7 @@ routes.post('/payment/:username', async(req, res) => {
                     value_usd: valueUsd,
                     is_processed: true,
                     bcc_to_email,
+                    sent_message_id,
                 });
     
                 await sendSOLTo(true, mail.tiplink_public_key, 0.003);

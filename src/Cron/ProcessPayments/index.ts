@@ -69,7 +69,7 @@ export const processPayments = async() => {
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);
 
-            await sendEmail({
+            let sent_message_id = await sendEmail({
                 to: user.email_address,
                 subject: `${subject ?? "No Subject"} (${tokenBalance} USDC)`,
                 text: `${text}`,
@@ -81,6 +81,15 @@ export const processPayments = async() => {
             let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
             let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
             let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
+            
+            // receipt
+            await sendEmail({
+                to: from,
+                subject: subject ?? "Re:",
+                text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.`,
+                inReplyTo: mail.message_id, // have to set this to reply to message in a thread
+                references: mail.message_id, // have to set this to reply to message in a thread
+            });
 
             // create a forwarder for responses
             // delete this forwarder once done
@@ -93,6 +102,7 @@ export const processPayments = async() => {
                 value_usd: tokenBalance,
                 is_processed: true,
                 bcc_to_email,
+                sent_message_id,
             });
 
             await sendSOLTo(true, mail.tiplink_public_key, 0.003);
@@ -121,7 +131,7 @@ export const processMailsWithNoResponse = async() => {
     }
 
     for(const [index, mail] of mails.entries()) {
-        const { from_email, to_email, tiplink_url, tiplink_public_key, message_id } = mail;
+        const { from_email, to_email, tiplink_url, tiplink_public_key, message_id, sent_message_id } = mail;
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
 
         if(usdcBalance > 0) {
@@ -133,6 +143,16 @@ export const processMailsWithNoResponse = async() => {
                 text: `${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.\n\nPlease make sure it's a Tiplink URL, you will not be asked to deposit any funds.\n\nRegards,\nSollinked.
                 `,
             });
+
+            if(sent_message_id) {
+                await sendEmail({
+                    to: to_email,
+                    subject: "Email Expired",
+                    inReplyTo: sent_message_id,
+                    references: sent_message_id,
+                    text: `This email has expired, the funds had been returned to the sender.`,
+                });
+            }
         }
 
         await mailController.update(mail.key, { value_usd: 0 });
