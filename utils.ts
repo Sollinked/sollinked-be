@@ -14,6 +14,7 @@ import { base58, base64 } from 'ethers/lib/utils';
 import { createTransferCompressedNftInstruction } from './src/NFT/Transfer';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
+import axios from 'axios';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -700,6 +701,154 @@ export const getGithubCredentials = () => {
 export const getSphereKey = () => {
     return process.env.SPHERE_SECRET!;
 }
+
 export const getSphereWalletId = () => {
     return process.env.SPHERE_WALLET_ID!;
+}
+
+// Underdog
+export const getUnderdogKey = () => {
+    return {
+        apiKey: process.env.UNDERDOG_API_KEY!,
+        baseUrl: process.env.UNDERDOG_BASE_URL!,
+    };
+}
+export const getUnderdogContentPassDetails = () => {
+    return {
+        projectId: process.env.UNDERDOG_CONTENT_PASS_PROJECT_ID!,
+        name: process.env.UNDERDOG_CONTENT_PASS_NAME!,
+        symbol: process.env.UNDERDOG_CONTENT_PASS_SYMBOL!,
+    };
+}
+
+export const createContentPass = async({
+    image,
+    attributes,
+    receiverAddress,
+}: {
+    image: string; // base64 or url
+    attributes: {
+        [key: string]: string;
+    },
+    receiverAddress: string;
+}) => {
+    let {
+        projectId,
+        name,
+        symbol,
+    } = getUnderdogContentPassDetails();
+
+    let createRes = await createUnderdogNFT({
+        projectId,
+        name,
+        symbol,
+        image,
+        attributes,
+        receiverAddress,
+    });
+
+    return createRes;
+}
+
+export const createUnderdogNFT = async({
+    projectId,
+    name,
+    symbol,
+    image,
+    attributes,
+    receiverAddress,
+}: {
+    projectId: number | string;
+    name: string;
+    symbol: string;
+    image: string; // base64 or url
+    attributes: {
+        [key: string]: string;
+    },
+    receiverAddress: string;
+}) => {
+    let {apiKey, baseUrl} = getUnderdogKey();
+    try {
+        let createRes = await axios.post(`${baseUrl}/projects/${projectId}/nfts`, {
+            name,
+            symbol,
+            description: `Content pass to be used in Sollinked`,
+            delegated: true,
+            image,
+            attributes,
+            receiverAddress,
+        },
+        {
+            headers: {
+            'Authorization': `Bearer ${apiKey}` 
+            }
+        });
+
+        /**
+         *  {
+                "transactionId": "486ed473-21db-43b6-8734-e3d0abd1b9e6",
+                "nftId": 3,
+                "projectId": 1
+            }
+         */
+        if(!createRes.data || !createRes.data.nftId) {
+            return;
+        }
+
+        let nftId = createRes.data.nftId;
+        let retries = 0;
+        let mintAddress = "";
+
+        while(retries < 10) {
+            let details = await getUnderdogNft(projectId, nftId);
+            if(!details || !details.mintAddress) {
+                retries++;
+                continue;
+            }
+            
+            mintAddress = details.mintAddress;
+            break;
+        }
+
+        return {
+            mintAddress,
+            nftId,
+        };
+    }
+
+    catch(e) {
+        console.log(e);
+        return;
+    }
+}
+
+export const getUnderdogNft = async(projectId: number | string, nftId: number | string) => {
+    let {apiKey, baseUrl} = getUnderdogKey();
+    try {
+        let mintRes = await axios.get<{
+            "id": number;
+            "mintAddress": string;
+            "status": string; // "confirmed"
+            "ownerAddress": string;
+            "name": string;
+            "symbol": string;
+            "description": string;
+            "image": string; // url
+          }>(`${baseUrl}/projects/${projectId}/nfts/${nftId}`,
+        {
+            headers: {
+            'Authorization': `Bearer ${apiKey}` 
+            }
+        });
+
+        if(!mintRes.data || !mintRes.data.mintAddress) {
+            return;
+        }
+
+        return mintRes.data;
+    }
+
+    catch {
+        return;
+    }
 }
