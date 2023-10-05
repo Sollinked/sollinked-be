@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { Content, fillableColumns } from "../Models/content";
+import { Content, ProcessedContent, fillableColumns } from "../Models/content";
 
 const table = 'contents';
 
@@ -31,7 +31,15 @@ export const view = async(id: number) => {
     const db = new DB();
     const result = await db.executeQueryForSingleResult<Content>(query);
 
-    return result ?? {};
+    if(!result) {
+        return;
+    }
+
+    let processed: ProcessedContent = {
+        ...result,
+        value_usd: Number(result.value_usd),
+    };
+    return processed;
 }
 
 // find (all match)

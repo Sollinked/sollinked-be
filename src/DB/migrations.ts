@@ -546,7 +546,8 @@ export default [
                 user_id int not null,
                 name text not null,
                 description text not null,
-                amount int default(0) not null
+                amount int default(0) not null,
+                value_usd decimal default(0) not null
             )
         `,
         rollback_query: `DROP TABLE content_passes;`,
@@ -566,8 +567,8 @@ export default [
         query: `
             CREATE TABLE content_cnfts (
                 id serial PRIMARY KEY,
-                mint_address text not null,
-                nft_id int not null, -- underdog nft id
+                mint_address text, -- null cause will have to update after we get the mint address
+                nft_id int, -- underdog nft id
                 content_pass_id int not null,
                 created_at timestamptz default(current_timestamp) not null
             )
@@ -668,24 +669,34 @@ export default [
     {
         name: "create_content_payments_table",
         query: `
+            CREATE TYPE content_payment_type AS ENUM ('pass', 'single');
             CREATE TABLE content_payments (
                 id serial PRIMARY KEY,
                 user_id int not null,
                 content_id int not null,
                 tx_hash text not null,
-                value_usd decimal not null
+                value_usd decimal not null,
+                is_processed boolean default(false) not null,
+                type content_payment_type not null
             )
         `,
-        rollback_query: `DROP TABLE content_payments;`,
+        rollback_query: `
+            DROP TABLE content_payments;
+            DROP TYPE content_payment_type;
+        `,
     },
     
     {
         name: "create_content_payments_content_id_user_id_indexes",
         query: `
             CREATE INDEX content_payments_content_id_user_id_idx ON content_payments(content_id, user_id);
+            CREATE INDEX content_payments_is_processed_idx ON content_payments(is_processed);
+            CREATE INDEX content_payments_type_idx ON content_payments(type);
         `,
         rollback_query: `
             DROP INDEX content_payments_content_id_user_id_idx;
+            DROP INDEX content_payments_is_processed_idx;
+            DROP INDEX content_payments_type_idx;
         `,
     },
 

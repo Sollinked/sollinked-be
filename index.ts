@@ -13,6 +13,8 @@ import { routes as webhookRoutes } from './src/Routes/webhook';
 import { routes as gitgudRoutes } from './src/Routes/gitgud';
 import { routes as mailRoutes } from './src/Routes/mail';
 import { routes as mailingListRoutes } from './src/Routes/mailingList';
+import { routes as contentRoutes } from './src/Routes/content';
+import { routes as contentPassRoutes } from './src/Routes/contentPass';
 import * as cron from './src/Cron';
 import { VERIFY_MESSAGE } from './src/Constants';
 
@@ -98,6 +100,8 @@ app.use('/webhooks', webhookRoutes);
 app.use('/gitgud', gitgudRoutes);
 app.use('/mail', mailRoutes);
 app.use('/mailingList', mailingListRoutes);
+app.use('/content', contentRoutes);
+app.use('/contentPass', contentPassRoutes);
 
 //connect app to websocket
 let http = createServer(app);

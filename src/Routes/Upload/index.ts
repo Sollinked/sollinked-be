@@ -3,7 +3,7 @@ import path from 'path';
 import appRoot from 'app-root-path';
 import { v4 as uuidv4 } from 'uuid';
 
-const contentPath = 'public/content';
+const contentPath = 'public/profile_picture';
 const contentStorage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, path.join(appRoot.toString(), contentPath))

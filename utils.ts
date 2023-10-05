@@ -748,7 +748,7 @@ export const getProfilePictureLink = (filename?: string) => {
     if(!filename) {
         return undefined;
     }
-    return getBeDomain() + "/content/" + filename;
+    return getBeDomain() + "/profile_picture/" + filename;
 }
 
 /*

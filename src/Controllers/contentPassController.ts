@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { ContentPass, fillableColumns } from "../Models/contentPass";
+import { ContentPass, ProcessedContentPass, fillableColumns } from "../Models/contentPass";
 
 const table = 'content_passes';
 
@@ -30,8 +30,16 @@ export const view = async(id: number) => {
 
     const db = new DB();
     const result = await db.executeQueryForSingleResult<ContentPass>(query);
+    if(!result) {
+        return;
+    }
 
-    return result ?? {};
+    let processed: ProcessedContentPass = {
+        ...result,
+        value_usd: Number(result.value_usd),
+    }
+    
+    return processed;
 }
 
 // find (all match)

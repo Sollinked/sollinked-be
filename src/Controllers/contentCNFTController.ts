@@ -67,12 +67,11 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
     await db.executeQueryForSingleResult(query);
 }
 
-// delete (soft delete?)
-// export const delete = async(userId: number) => {
-//     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
+export const deleteById = async(id: number) => {
+    const query = `DELETE FROM ${table} WHERE id = ${id}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+    const db = new DB();
+    await db.executeQueryForSingleResult(query);
 
-//     return result;
-// }
+    return;
+}
