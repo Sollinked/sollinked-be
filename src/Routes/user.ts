@@ -223,18 +223,15 @@ routes.post('/me', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
     
-    let users = await userController.find({
-        address: data.address,
-    });
-
-    if(!users || users.length === 0) {
-        return res.status(404).send("Unable to find user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
 
     return res.send({
         success: true,
         message: "Success",
-        data: users[0]
+        data: user
     });
 });
 

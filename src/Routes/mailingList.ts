@@ -22,12 +22,11 @@ routes.post('/', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
 
-    let user = users[0];
     let lists = await mailingListController.find({ user_id: user.id });
     if(lists && lists.length > 0) {
         return res.status(400).send("Mailing list had already been created");
@@ -106,14 +105,12 @@ routes.post('/priceList', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
 
-    let user = users[0];
     // create product in sphere
-
     let lists = await mailingListController.find({ user_id: user.id });
     if(!lists || lists.length === 0) {
         return res.status(404).send("Missing mailing list");
@@ -138,8 +135,8 @@ routes.post('/priceList', async(req, res) => {
     
             try {
                 let priceRes = await axios.post('https://api.spherepay.co/v1/price', {
-                        name: `${user.display_name ?? user.username} - ${price.name}`,
-                        description: `Receive ${price.name} emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
+                        name: `${user!.display_name ?? user!.username} - ${price.name}`,
+                        description: `Receive ${price.name} emails from ${user!.display_name ?? user!.username} as long as you're subscribed to this product.`,
                         product: list.product_id,
                         type: "recurring",
                         currency: USDC_ADDRESS,
@@ -243,11 +240,11 @@ routes.post('/retry/:id', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
-    let user = users[0];
+
 
     let broadcast = await mailingListBroadcastController.view(Number(id));
     if(!broadcast) {
@@ -277,12 +274,11 @@ routes.post('/broadcast', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
 
-    let user = users[0];
     let emails: string[] = await mailingListPriceTierController.getUniqueEmailsForTiers(data.tier_ids, user.id);
 
     if(emails.length === 0) {
@@ -318,12 +314,11 @@ routes.post('/saveDraft', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
 
-    let user = users[0];
     let params: any = {
         user_id: user.id,
         title: data.title,
@@ -364,11 +359,11 @@ routes.post('/updateDraft/:id', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
-    let user = users[0];
+
 
     let broadcast = await mailingListBroadcastController.view(Number(id));
     if(!broadcast) {
@@ -407,11 +402,10 @@ routes.post('/broadcastDraft/:id', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
-    let user = users[0];
 
     let broadcast = await mailingListBroadcastController.view(Number(id));
     if(!broadcast) {
@@ -447,11 +441,10 @@ routes.post('/testDraft/:id', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
-    let user = users[0];
 
     let broadcast = await mailingListBroadcastController.view(Number(id));
     if(!broadcast) {
@@ -482,11 +475,11 @@ routes.post('/draft/:id', async(req, res) => {
         return res.status(400).send("Invalid params");
     }
 
-    let users = await userController.find({ address: data.address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Missing user");
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
-    let user = users[0];
+
 
     let broadcast = await mailingListBroadcastController.view(Number(id));
     if(!broadcast) {

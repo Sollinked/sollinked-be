@@ -175,6 +175,32 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     return result;
 }
+// only allow user to find own profile
+export const findByAddress = async(address: string) => {
+    const params = formatDBParamsToStr({ address }, ' AND ', false, "", true);
+
+    const query = `SELECT * FROM ${table} WHERE ${params}`;
+
+    const db = new DB();
+    let result = await db.executeQueryForSingleResult<User>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    result.tiers =  await userTierController.find({'user_id': result.id});
+    result.mails =  await mailController.find({'user_id': result.id});
+    result.mailingList =  await mailingListController.getUserMailingList(result.id);
+    result.broadcasts = await mailingListBroadcastController.find({ user_id: result.id });
+    result.subscriptions = await mailingListSubscriberController.find({ user_id: result.id });
+    result.reservations =  await userReservationController.findByUsername(result.id);
+    result.reservationSettings =  await userReservationSettingController.find({'user_id': result.id});
+    result.githubSettings = await userGithubSettingController.find({'user_id': result.id});
+    result.webhooks = await webhookController.find({ user_id: result.id })
+    result.profile_picture = getProfilePictureLink(result.profile_picture);
+
+    return result;
+}
 
 // list (all)
 export const list = async() => {
