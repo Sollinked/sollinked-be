@@ -4,7 +4,7 @@ import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
 import crypto from "crypto";
 import DB from './src/DB';
-import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
@@ -15,6 +15,7 @@ import { createTransferCompressedNftInstruction } from './src/NFT/Transfer';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import axios from 'axios';
+import { createAssociatedTokenAccountInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -507,6 +508,84 @@ export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: nu
     let txSignature = await connection.sendTransaction(transaction, [adminAccount]);
 
     return txSignature;
+}
+
+export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: number, amount: number) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+    let adminAccount = getAdminAccount();
+
+    const mintToken = new PublicKey(token);
+    const recipientAddress = new PublicKey(sendTo);
+
+    const transactionInstructions: TransactionInstruction[] = [];
+
+    // get the sender's token account
+    const associatedTokenFrom = await getAssociatedTokenAddress(
+      mintToken,
+      adminAccount.publicKey
+    );
+
+    const fromAccount = await getAccount(connection, associatedTokenFrom);
+    let {
+        associatedTokenTo,
+        transaction: createTransaction,
+    } = await getOrCreateAssociatedAccount(mintToken, adminAccount.publicKey, recipientAddress);
+
+    if(createTransaction) {
+        transactionInstructions.push(createTransaction);
+    }
+
+    // the actual instructions
+    transactionInstructions.push(
+      createTransferInstruction(
+        fromAccount.address, // source
+        associatedTokenTo, // dest
+        adminAccount.publicKey,
+        Math.round(amount * tokenDecimals),
+      )
+    );
+
+    // send the transactions
+    const transaction = new Transaction().add(...transactionInstructions);
+    // Send and confirm transaction
+    // Note: feePayer is by default the first signer, or payer, if the parameter is not set
+    const signature = await connection.sendTransaction(transaction, [adminAccount]);
+    return signature;
+}
+
+// return associatedTokenAddress and transaction
+// if associatedTokenAddress exists, transaction is null
+export const getOrCreateAssociatedAccount = async(mintToken: PublicKey, payer: PublicKey, recipient: PublicKey) => {
+    const connection = new Connection(getRPCEndpoint());
+
+    // get the recipient's token account
+    const associatedTokenTo = await getAssociatedTokenAddress(
+        mintToken,
+        recipient
+    );
+
+    let transaction = null;
+
+    // if recipient doesn't have token account
+    // create token account for recipient
+    if (!(await connection.getAccountInfo(associatedTokenTo))) {
+        transaction =
+            createAssociatedTokenAccountInstruction(
+                payer,
+                associatedTokenTo,
+                recipient,
+                mintToken
+            );
+    }
+
+    return {
+        associatedTokenTo,
+        transaction,
+    };
 }
 
 // non public key account
