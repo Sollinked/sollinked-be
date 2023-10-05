@@ -1,7 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { ContentPass, fillableColumns } from "../Models/ContentPass";
+import { ContentPass, fillableColumns } from "../Models/contentPass";
 
 const table = 'content_passes';
 
