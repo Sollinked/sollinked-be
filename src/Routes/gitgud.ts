@@ -8,6 +8,7 @@ import _ from 'lodash';
 import { getTokensTransferredToUser, getTx, sleep } from '../../utils';
 import moment from 'moment';
 import { GithubBot } from '../GithubBot';
+import { USDC_ADDRESS } from '../Constants';
 
 export const routes = Router();
 
@@ -212,7 +213,6 @@ routes.post('/newIssue', async(req, res) => {
 
         while(retries < 10) {
             try {
-                const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
                 let valueUsd = await getTokensTransferredToUser(txHash, user!.address, USDC_ADDRESS);
                 await userGithubPaymentLogController.update(payment.id, { value_usd: valueUsd });
 

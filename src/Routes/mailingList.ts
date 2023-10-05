@@ -7,7 +7,9 @@ import * as mailingListBroadcastController from '../Controllers/mailingListBroad
 import axios from 'axios';
 import moment from 'moment';
 import { getSphereKey, getSphereWalletId } from '../../utils';
+import { USDC_ADDRESS } from '../Constants';
 
+const SUBCRIPTION_FEE = (Number(process.env.PAYMENT_SUBSCRIPTION_FEE ?? '0') / 100) + 1; // eg 1.05
 export const routes = Router();
 routes.post('/', async(req, res) => {
     let data = req.body;
@@ -118,8 +120,6 @@ routes.post('/priceList', async(req, res) => {
     }
 
     let list = lists[0];
-    const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
-    // const USDC_DECIMALS = 1000000;
 
     await Promise.all(
         data.prices.map(async(price: any) => {
@@ -147,7 +147,7 @@ routes.post('/priceList', async(req, res) => {
                         taxBehavior: "exclusive",
                         billingSchema: "perUnit",
                         //unitAmount: (price.amount * USDC_DECIMALS).toString(), // 500000000
-                        unitAmountDecimal: (price.amount * 1.05).toFixed(5), // 5, * 1.05 cause of 5% service charge
+                        unitAmountDecimal: (price.amount * SUBCRIPTION_FEE).toFixed(5), // 5, * 1.05 cause of 5% service charge
                         //tierType: null,
                         //tiers: null,
                         recurring: {

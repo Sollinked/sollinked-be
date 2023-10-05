@@ -620,7 +620,7 @@ export const getTx = async(txHash: string) => {
 }
 
 export const getTokensTransferredToUser = async(txHash: string, toAddress: string, token: string) => {
-    let now = moment().add(-60, 'minute');
+    let now = moment().add(-2, 'minute');
     let txDetails = await getTx(txHash);
     if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
         throw new Error("No Tx Details");
