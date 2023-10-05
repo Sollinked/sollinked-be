@@ -13,7 +13,7 @@
     "drop:seed": "tsc && node dist/drop.js && node dist/migrate.js && node dist/seed.js",
     "seed": "tsc && node dist/seed.js",
     "rollback": "tsc && node dist/rollback.js",
-    "rollback:migrate": "tsc && node rollback.js && node dist/migrate.js",
+    "rollback:migrate": "tsc && node dist/rollback.js && node dist/migrate.js",
     "rollback:seed": "tsc && node dist/rollback.js && node dist/migrate.js && dist/node seed.js",
     "dev": "nodemon --ext \"ts\" --exec \"tsc && node dist/index.js\"  --exclude node_modules . || exit 1",
     "init": "tsc && node dist/init.js"
