@@ -12,7 +12,7 @@ export const init = async() => { }
 // create
 export const create = async(insertParams: any) => {
     const filtered = _.pick(insertParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ', true);
+    const params = formatDBParamsToStr(filtered, { valueOnly: true });
 
     // put quote
     const insertColumns = Object.keys(filtered);
@@ -44,7 +44,7 @@ export const view = async(id: number) => {
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}, createdAfter?: string, onlyFromSMTP?: boolean) => {
     const filtered = _.pick(whereParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ' AND ');
+    const params = formatDBParamsToStr(filtered, { separator: ' AND ' });
     const query = `SELECT 
                         id as key,
                         user_id,
@@ -144,7 +144,7 @@ export const list = async() => {
 export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
     // filter
     const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
+    const params = formatDBParamsToStr(filtered);
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 

@@ -21,7 +21,7 @@ export const init = async() => { }
 // create
 export const create = async(insertParams: any) => {
     const filtered = _.pick(insertParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ', true);
+    const params = formatDBParamsToStr(filtered, { valueOnly: true });
 
     // put quote
     const insertColumns = Object.keys(filtered);
@@ -149,7 +149,7 @@ export const publicViewByUsername = async(username: string) => {
 
 // only allow user to find own profile
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ', false, "", true);
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true });
 
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
@@ -177,7 +177,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
 }
 // only allow user to find own profile
 export const findByAddress = async(address: string) => {
-    const params = formatDBParamsToStr({ address }, ' AND ', false, "", true);
+    const params = formatDBParamsToStr({ address }, { separator: ' AND ', shouldLower: true });
 
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
@@ -227,7 +227,7 @@ export const update = async(id: number, updateParams: {[key: string]: any}) => {
         await changeEmailForwarder(filtered.username, user.username);
     }
 
-    const params = formatDBParamsToStr(filtered, ', ');
+    const params = formatDBParamsToStr(filtered);
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
     const db = new DB();

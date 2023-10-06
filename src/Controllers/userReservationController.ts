@@ -12,7 +12,7 @@ export const init = async() => { }
 // create
 export const create = async(insertParams: any) => {
     const filtered = _.pick(insertParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ', true);
+    const params = formatDBParamsToStr(filtered, { valueOnly: true });
 
     // put quote
     const insertColumns = Object.keys(filtered);
@@ -37,7 +37,7 @@ export const view = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}, withCancelled: boolean = false) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ' });
     const query = `SELECT * FROM ${table} WHERE ${params} ${withCancelled? '' : `AND status <> ${RESERVATION_STATUS_CANCELLED}`} ORDER BY date desc`;
 
     const db = new DB();
@@ -48,7 +48,7 @@ export const find = async(whereParams: {[key: string]: any}, withCancelled: bool
 
 // find all reserved after the date
 export const findAfter = async(whereParams: {[key: string]: any}, reservedAfter: string) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ' });
     const query = `SELECT * FROM ${table} WHERE ${params} AND reserved_at >= '${reservedAfter}' ORDER BY date desc`;
 
     const db = new DB();
@@ -71,7 +71,7 @@ export const findAfter = async(whereParams: {[key: string]: any}, reservedAfter:
 
 // find all reserved before the date
 export const findBefore = async(whereParams: {[key: string]: any}, reservedBefore: string) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ' });
     const query = `SELECT * FROM ${table} WHERE ${params} AND reserved_at <= '${reservedBefore}' ORDER BY date desc`;
 
     const db = new DB();
@@ -143,7 +143,7 @@ export const list = async() => {
 export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
     // filter
     const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
+    const params = formatDBParamsToStr(filtered);
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 

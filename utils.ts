@@ -289,8 +289,20 @@ export const isCurrentUserAdmin = async(discord_id: string) => {
  */
 export const formatDBParamsToStr = (params : {
     [key : string]: any
-}, separator : string = ', ', valueOnly : boolean = false, prepend: string = "", shouldLower: boolean = false) => {
+}, options?: {
+    separator?: string;
+    valueOnly?: boolean;
+    prepend?: string; 
+    shouldLower?: boolean;
+    isSearch?: boolean;
+}) => {
     let stringParams: string[] = [];
+    let separator = options?.separator ?? ", ";
+    let valueOnly = options?.valueOnly ?? false;
+    let prepend = options?.prepend ?? "";
+    let shouldLower = options?.shouldLower ?? false;
+    let isSearch = options?.isSearch ?? false;
+
     _.map(params, (p, k) => {
         const isString = typeof p === 'string';
         const value = isString ? `'${p.replace(/'/g, "''")}'` : p;
@@ -306,7 +318,13 @@ export const formatDBParamsToStr = (params : {
         else if(Array.isArray(p)) {
             if (valueOnly) {
                 stringParams.push(`${prepend? prepend + "." : ""}'${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
-            } else {
+            }
+            
+            else if(isSearch) {
+                stringParams.push(`'${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}' = ANY(${prepend? prepend + "." : ""}${k})`);
+            }
+            
+            else {
                 stringParams.push(`${prepend? prepend + "." : ""}${k} = '${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
             }
         }
@@ -370,10 +388,10 @@ export const getUpsertQuery = (table: string, updateField: {[key: string]: any},
     //     SELECT 3, 'C', 'Z'
     //     WHERE NOT EXISTS (SELECT 1 FROM table WHERE id=3);
 
-    const updateValue = formatDBParamsToStr(updateField, ', ');
-    const searchValue = formatDBParamsToStr(searchField, ' AND ');
-    const insertColumn = _.join(Object.keys(insertField), ', ');
-    const insertValue = formatDBParamsToStr(insertField, ', ', true);
+    const updateValue = formatDBParamsToStr(updateField);
+    const searchValue = formatDBParamsToStr(searchField, { separator: ' AND ' });
+    const insertColumn = _.join(Object.keys(insertField));
+    const insertValue = formatDBParamsToStr(insertField, { valueOnly: true });
 
     const query = `
         UPDATE ${table} SET ${updateValue} WHERE ${searchValue};
@@ -449,6 +467,10 @@ export const getCollectionMint = (whichCollection: string) => {
     collectionMetadataAccount,
     collectionMint,
   };
+}
+
+export const getContentPassCollectionAddress = () => {
+    return process.env.UNDERDOG_CONTENT_COLLECTION_ADDRESS!;
 }
 
 export const getNonPublicKeyPlayerAccount = (account: string) => {

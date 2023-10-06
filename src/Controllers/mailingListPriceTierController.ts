@@ -14,7 +14,7 @@ export const init = async() => { }
 // create
 export const create = async(insertParams: any) => {
     const filtered = _.pick(insertParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ', true);
+    const params = formatDBParamsToStr(filtered, { valueOnly: true });
 
     // put quote
     const insertColumns = Object.keys(filtered);
@@ -75,7 +75,7 @@ export const publicView = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}, hideSubcriberCount: boolean = false) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ' });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
@@ -111,7 +111,7 @@ export const list = async() => {
 export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
     // filter
     const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
+    const params = formatDBParamsToStr(filtered);
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
