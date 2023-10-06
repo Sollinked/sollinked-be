@@ -44,7 +44,7 @@ export const view = async(id: number) => {
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}, createdAfter?: string, onlyFromSMTP?: boolean) => {
     const filtered = _.pick(whereParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, { separator: ' AND ' });
+    const params = formatDBParamsToStr(filtered, { separator: ' AND ', isSearch: true });
     const query = `SELECT 
                         id as key,
                         user_id,

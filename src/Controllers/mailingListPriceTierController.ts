@@ -75,7 +75,7 @@ export const publicView = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}, hideSubcriberCount: boolean = false) => {
-    const params = formatDBParamsToStr(whereParams, { separator: ' AND ' });
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();

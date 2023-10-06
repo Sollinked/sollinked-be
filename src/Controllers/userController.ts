@@ -149,7 +149,7 @@ export const publicViewByUsername = async(username: string) => {
 
 // only allow user to find own profile
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true });
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true, isSearch: true });
 
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
@@ -177,7 +177,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
 }
 // only allow user to find own profile
 export const findByAddress = async(address: string) => {
-    const params = formatDBParamsToStr({ address }, { separator: ' AND ', shouldLower: true });
+    const params = formatDBParamsToStr({ address }, { separator: ' AND ', shouldLower: true, isSearch: true });
 
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 

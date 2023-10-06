@@ -53,7 +53,7 @@ export const view = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true });
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true, isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
@@ -77,7 +77,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
 // find (all match)
 export const findActiveSynced = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true });
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true, isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} AND is_active = true AND last_synced_at is not null;`;
 
     const db = new DB();

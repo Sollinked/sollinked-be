@@ -36,7 +36,7 @@ export const view = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, { separator: ' AND ' });
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY value_usd desc`;
 
     const db = new DB();

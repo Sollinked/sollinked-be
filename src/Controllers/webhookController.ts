@@ -57,7 +57,7 @@ export const view = async(id: number): Promise<Webhook> => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}): Promise<Webhook[]> => {
-    const params = formatDBParamsToStr(whereParams, { separator: ' AND ' });
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
