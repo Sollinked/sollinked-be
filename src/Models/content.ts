@@ -10,6 +10,7 @@ export type Content = {
     is_free: boolean;
     status: 'draft' | 'published';
     deleted_at?: string;
+    updated_at: string;
 }
 
 export type ProcessedContent = {
@@ -24,6 +25,7 @@ export type ProcessedContent = {
     is_free: boolean;
     status: 'draft' | 'published';
     deleted_at?: string;
+    updated_at: string;
 }
 
 export const fillableColumns = [
@@ -37,4 +39,5 @@ export const fillableColumns = [
     'is_free',
     'status',
     'deleted_at',
+    'updated_at',
 ];

@@ -2,7 +2,8 @@ import { Router } from 'express';
 import * as userController from '../Controllers/userController';
 import * as contentController from '../Controllers/contentController';
 import * as contentPaymentController from '../Controllers/contentPaymentController';
-import { getAdminAccount, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
+import * as contentCNFTController from '../Controllers/contentCNFTController';
+import { getAddressNftDetails, getAdminAccount, getContentPassCollectionAddress, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
 import moment from 'moment';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../Constants';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,9 +13,9 @@ const contentCreatorRatio = 1 / CONTENT_FEE;
 export const routes = Router();
 routes.post('/', async(req, res) => {
     let data = req.body;
-    let { address, title, description, content, value_usd, is_free, status, content_pass_ids } = data;
+    let { address, title, description, content, value_usd, status, content_pass_ids } = data;
 
-    if(!data || !address || !title || !description || !content_pass_ids || !is_free || !status) {
+    if(!data || !address || !title || !description || !content_pass_ids || !status) {
         return res.status(400).send("Invalid Params");
     }
 
@@ -38,35 +39,38 @@ routes.post('/', async(req, res) => {
     let uuid = uuidv4().split("-")[0];
     let slug = title.replace(/\s/g, "-") + "-" + uuid;
 
-    await contentController.create({
+    let contentRes = await contentController.create({
         user_id: user.id,
         title,
         slug,
         description,
         content_pass_ids,
         content: content ?? "",
-        is_free,
+        is_free: value_usd === 0,
         value_usd,
         status,
     });
 
+    if(!contentRes) {
+        return res.status(500).send("Unable to save draft");
+    }
+
     return res.send({
         success: true,
         message: "Success",
+        data: contentRes.id,
     });
 });
 
+// cannot update status
+// use publish / unpublish instead
 routes.post('/update/:id', async(req, res) => {
     let data = req.body;
-    let { address, title, description, content, value_usd, is_free, status, content_pass_ids } = data;
+    let { address, title, description, content: userContent, value_usd, content_pass_ids } = data;
     let { id } = req.params;
 
-    if(!data || !address || !title || !description || !content_pass_ids || !is_free || !status || !id) {
+    if(!data || !address || !title || !content_pass_ids || !id) {
         return res.status(400).send("Invalid Params");
-    }
-
-    if(status !== "draft" && status !== "published") {
-        return res.status(400).send("Invalid status");
     }
 
     if(!Array.isArray(content_pass_ids)) {
@@ -83,17 +87,22 @@ routes.post('/update/:id', async(req, res) => {
     }
 
     let idNum = Number(id);
-    let contentPass = await contentController.view(idNum);
-    if(!contentPass) {
+    let content = await contentController.view(idNum);
+    if(!content) {
         return res.status(404).send("Unable to find content pass");
     }
 
-    if(contentPass.user_id != user.id) {
+    if(content.user_id != user.id) {
         return res.status(401).send("Unauthorized");
     }
 
-    let uuid = uuidv4().split("-")[0];
-    let slug = title.replace(/\s/g, "-") + "-" + uuid;
+    let slug = content.slug;
+
+    // only change slug if the title changed
+    if(title !== content.title) {
+        let uuid = uuidv4().split("-")[0];
+        slug = title.replace(/\s/g, "-") + "-" + uuid;
+    }
 
     await contentController.update(idNum, {
         user_id: user.id,
@@ -101,15 +110,112 @@ routes.post('/update/:id', async(req, res) => {
         slug,
         description,
         content_pass_ids,
-        content: content ?? "",
-        is_free,
+        content: userContent ?? "",
+        is_free: value_usd === 0,
         value_usd,
-        status,
     });
 
     return res.send({
         success: true,
         message: "Success",
+    });
+});
+
+routes.post('/publish/:id', async(req, res) => {
+    let data = req.body;
+    let { address } = data;
+    let { id } = req.params;
+
+    if(!data || !address || !id) {
+        return res.status(400).send("Invalid Params");
+    }
+
+    let user = await userController.findByAddress(address);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    let idNum = Number(id);
+    let content = await contentController.view(idNum);
+    if(!content) {
+        return res.status(404).send("Unable to find content pass");
+    }
+
+    if(content.user_id != user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    await contentController.update(idNum, {
+        status: "published",
+    });
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/unpublish/:id', async(req, res) => {
+    let data = req.body;
+    let { address } = data;
+    let { id } = req.params;
+
+    if(!data || !address || !id) {
+        return res.status(400).send("Invalid Params");
+    }
+
+    let user = await userController.findByAddress(address);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    let idNum = Number(id);
+    let content = await contentController.view(idNum);
+    if(!content) {
+        return res.status(404).send("Unable to find content pass");
+    }
+
+    if(content.user_id != user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+    
+    await contentController.update(idNum, {
+        status: "draft",
+    });
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+routes.post('/draft/:id', async(req, res) => {
+    let data = req.body;
+    let { id } = req.params;
+
+    if(!data || !id) {
+        return res.status(400).send("Invalid Params");
+    }
+
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    let idNum = Number(id);
+    let content = await contentController.view(idNum);
+    if(!content) {
+        return res.status(404).send("Unable to find content pass");
+    }
+
+    if(content.user_id != user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: content,
     });
 });
 
@@ -196,5 +302,63 @@ routes.post('/payment/:id', async(req, res) => {
 routes.get('/:username', async(req, res) => {
 });
 
-routes.get('/:username/:slug', async(req, res) => {
+// need the address and signature to get the user to see if they have access to the content
+routes.post('/public/:username/:slug', async(req, res) => {
+    let data = req.body;
+    let { address } = data;
+    let { username, slug } = req.params;
+
+    if(!data || !username || !slug) {
+        return res.status(400).send("Invalid Params");
+    }
+
+    let contentCreator = await userController.viewByUsername(username);
+    if(!contentCreator) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    let contents = await contentController.find({ slug, status: 'published' });
+    if(!contents || contents.length === 0) {
+        return res.status(404).send("Unable to find content");
+    }
+
+    let content = contents[0];
+    let canRead = content.is_free;
+
+    // not free to read
+    if(!canRead && address) {
+        let user = await userController.findByAddress(address);
+        if(!user) {
+            return res.status(404).send("Unable to find user");
+        }
+        let payment = await contentPaymentController.find({ user_id: user.id, content_id: content.id, type: "single" });
+        canRead = !!payment && payment.length > 0;
+    }
+
+    // didn't pay for content, check if they have pass
+    if(!canRead && address) {
+        let allowedPasses = await contentCNFTController.find({ id: content.content_pass_ids });
+        if(!allowedPasses) {
+            return res.status(404).send("Unable to find content");
+        }
+        let addressCNFTs = await getAddressNftDetails(true, address);
+        let collectionMintAddress = getContentPassCollectionAddress();
+        let addressContentPasses = addressCNFTs.items.filter(x => x.grouping[0].group_value === collectionMintAddress);
+        let contentPassMintAddresses = addressContentPasses.map(x => x.id);
+        for(const [index, value] of contentPassMintAddresses.entries()) {
+            canRead = contentPassMintAddresses.includes(value);
+            if(canRead) break;
+        }
+    }
+
+    // truncate content
+    if(!canRead) {
+        content.content = "";
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: content,
+    });
 });

@@ -316,16 +316,20 @@ export const formatDBParamsToStr = (params : {
         }
 
         else if(Array.isArray(p)) {
+            let arrayVal = "'{}'";
+            if(p.length > 0) {
+                arrayVal = `'${JSON.stringify(p).replace(/^\[/, '{"').replace(/]$/, '"}').replace(",", '","')}'`;
+            }
             if (valueOnly) {
-                stringParams.push(`${prepend? prepend + "." : ""}'${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
+                stringParams.push(`${prepend? prepend + "." : ""}${arrayVal}`);
             }
             
             else if(isSearch) {
-                stringParams.push(`'${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}' = ANY(${prepend? prepend + "." : ""}${k})`);
+                stringParams.push(`${prepend? prepend + "." : ""}${k} = ANY(${arrayVal})`);
             }
             
             else {
-                stringParams.push(`${prepend? prepend + "." : ""}${k} = '${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
+                stringParams.push(`${prepend? prepend + "." : ""}${k} = ${arrayVal}`);
             }
         }
 

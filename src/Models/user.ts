@@ -1,10 +1,12 @@
+import { ProcessedContent } from "./content";
+import { ProcessedContentPass } from "./contentPass";
 import { ProcessedMail } from "./mail";
 import { MailingList } from "./mailingList";
 import { MailingListBroadcast } from "./mailingListBroadcast";
 import { MailingListSubscriber } from "./mailingListSubscriber";
 import { UserGithubSetting } from "./userGithubSetting";
-import { ProcessedUserReservation, UserReservation } from "./userReservation";
-import { ProcessedUserReservationSetting, UserReservationSetting } from "./userReservationSetting";
+import { ProcessedUserReservation } from "./userReservation";
+import { ProcessedUserReservationSetting } from "./userReservationSetting";
 import { UserTier } from "./userTier";
 import { Webhook } from "./webhook";
 
@@ -29,6 +31,8 @@ export type User = {
     subscriptions?: MailingListSubscriber[];
     reservations?: ProcessedUserReservation[];
     reservationSettings?: ProcessedUserReservationSetting[];
+    contents?: ProcessedContent[];
+    contentPasses?: ProcessedContentPass[];
     webhooks?: Webhook[];
     githubSettings?: UserGithubSetting[];
     is_verified: boolean;

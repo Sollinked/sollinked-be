@@ -699,5 +699,18 @@ export default [
             DROP INDEX content_payments_type_idx;
         `,
     },
+    {
+        name: "add_updated_at_to_contents",
+        query: `
+            ALTER TABLE contents
+            ADD updated_at timestamptz default(current_timestamp);
+            CREATE TRIGGER update_contents_updated_at BEFORE UPDATE ON contents FOR EACH ROW EXECUTE PROCEDURE update_at_column();
+        `,
+        rollback_query: `
+            ALTER TABLE contents
+            DROP COLUMN updated_at;
+            DROP TRIGGER update_contents_updated_at ON contents;
+        `,
+    },
 
 ];
