@@ -756,7 +756,7 @@ export const getTokensTransferredToUser = async(txHash: string, toAddress: strin
     let postBalance = postBalanceArray[0]?.uiTokenAmount.uiAmount ?? 0;
 
     let valueUsd = postBalance - preBalance;
-    return valueUsd;
+    return Math.round(valueUsd * 1e6) / 1e6;
 }
 
 export const verifySignature = (address: string, signature: string, message: string) => { 
@@ -955,5 +955,24 @@ export const getUnderdogNft = async(projectId: number | string, nftId: number | 
 
     catch {
         return;
+    }
+}
+
+export const getSubscriptionFee = () => {
+    const subscriptionFee = (Number(process.env.PAYMENT_SUBSCRIPTION_FEE ?? '0') / 100) + 1; // eg 1.05
+    const subscriptionRatio = 1 / subscriptionFee;
+
+    return {
+        subscriptionFee,
+        subscriptionRatio
+    }
+}
+
+export const getContentFee = () => {
+    const contentCreatorFee = (Number(process.env.PAYMENT_CONTENT_FEE ?? '0') / 100) + 1; // eg 1.05
+    const contentCreatorRatio = 1 / contentCreatorFee;
+    return {
+        contentCreatorFee,
+        contentCreatorRatio
     }
 }
