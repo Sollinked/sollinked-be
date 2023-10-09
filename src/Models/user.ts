@@ -51,6 +51,8 @@ export type PublicUser = {
     youtube: string;
     calendar_advance_days: number;
     mailingList?: MailingList;
+    contents?: ProcessedContent[];
+    contentPasses?: ProcessedContentPass[];
     tiers?: UserTier[];
     is_verified: boolean;
 }

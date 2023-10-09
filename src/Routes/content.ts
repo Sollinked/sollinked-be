@@ -3,13 +3,15 @@ import * as userController from '../Controllers/userController';
 import * as contentController from '../Controllers/contentController';
 import * as contentPaymentController from '../Controllers/contentPaymentController';
 import * as contentCNFTController from '../Controllers/contentCNFTController';
-import { getAddressNftDetails, getAdminAccount, getContentPassCollectionAddress, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
+import { getAddressNftDetails, getAdminAccount, getContentFee, getContentPassCollectionAddress, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
 import moment from 'moment';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../Constants';
 import { v4 as uuidv4 } from 'uuid';
 
-const CONTENT_FEE = (Number(process.env.PAYMENT_CONTENT_FEE ?? '0') / 100) + 1; // eg 1.05
-const contentCreatorRatio = 1 / CONTENT_FEE;
+const {
+    contentCreatorFee,
+    contentCreatorRatio,
+} = getContentFee()
 export const routes = Router();
 routes.post('/', async(req, res) => {
     let data = req.body;
@@ -254,20 +256,22 @@ routes.post('/payment/:id', async(req, res) => {
     while(retries < 10) {
         try {
             let valueUsd = await getTokensTransferredToUser(txHash, adminAccount.publicKey.toBase58(), USDC_ADDRESS);
-            if(valueUsd < content.value_usd) {
+
+            if(valueUsd < (Math.round(content.value_usd * contentCreatorFee * 1e6) / 1e6)) {
                 return res.status(400).send("Paid wrong amount");
             }
 
             // create payment history
             await contentPaymentController.create({
                 user_id: user.id,
-                content_id: content.id,
+                content_id: Number(id),
                 value_usd: valueUsd,
                 tx_hash: txHash,
                 type: "single"
             });
 
-            amount = valueUsd * contentCreatorRatio; // 95%
+            // make sure we only send the % of the value instead of using content's value_usd to prevent sending values exceeding the tx's value
+            amount = Math.round(valueUsd * contentCreatorRatio * 1e6) / 1e6; // 95%
             // break while loop
             break;
         }

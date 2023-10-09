@@ -6,10 +6,13 @@ import * as mailingListSubscriberController from '../Controllers/mailingListSubs
 import * as mailingListBroadcastController from '../Controllers/mailingListBroadcastController';
 import axios from 'axios';
 import moment from 'moment';
-import { getSphereKey, getSphereWalletId } from '../../utils';
+import { getSphereKey, getSphereWalletId, getSubscriptionFee } from '../../utils';
 import { USDC_ADDRESS } from '../Constants';
 
-const SUBCRIPTION_FEE = (Number(process.env.PAYMENT_SUBSCRIPTION_FEE ?? '0') / 100) + 1; // eg 1.05
+const {
+    subscriptionFee,
+    subscriptionRatio,
+} = getSubscriptionFee();
 export const routes = Router();
 routes.post('/', async(req, res) => {
     let data = req.body;
@@ -144,7 +147,7 @@ routes.post('/priceList', async(req, res) => {
                         taxBehavior: "exclusive",
                         billingSchema: "perUnit",
                         //unitAmount: (price.amount * USDC_DECIMALS).toString(), // 500000000
-                        unitAmountDecimal: (price.amount * SUBCRIPTION_FEE).toFixed(5), // 5, * 1.05 cause of 5% service charge
+                        unitAmountDecimal: (price.amount * subscriptionFee).toFixed(5), // 5, * 1.05 cause of 5% service charge
                         //tierType: null,
                         //tiers: null,
                         recurring: {

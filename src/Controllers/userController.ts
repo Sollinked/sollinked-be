@@ -7,6 +7,8 @@ import * as mailController from './mailController';
 import * as mailingListController from './mailingListController';
 import * as mailingListBroadcastController from './mailingListBroadcastController';
 import * as mailingListSubscriberController from './mailingListSubscriberController';
+import * as contentController from './contentController';
+import * as contentPassController from './contentPassController';
 import * as userReservationController from './userReservationController';
 import * as userReservationSettingController from './userReservationSettingController';
 import * as webhookController from './webhookController';
@@ -144,6 +146,8 @@ export const publicViewByUsername = async(username: string) => {
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.tiers = await userTierController.find({ user_id: result.id });
     result.mailingList = await mailingListController.findByUserId(result.id, true);
+    result.contentPasses = await contentPassController.find({ user_id: result.id });
+    result.contents = await contentController.find({ user_id: result.id });
     return result;
 }
 
@@ -164,6 +168,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].tiers =  await userTierController.find({'user_id': res.id});
         result[index].mails =  await mailController.find({'user_id': res.id});
         result[index].mailingList =  await mailingListController.getUserMailingList(res.id);
+        result[index].contentPasses = await contentPassController.find({ user_id: res.id });
+        result[index].contents = await contentController.find({ user_id: res.id });
         result[index].broadcasts = await mailingListBroadcastController.find({ user_id: res.id });
         result[index].subscriptions = await mailingListSubscriberController.find({ user_id: res.id });
         result[index].reservations =  await userReservationController.findByUsername(res.id);
@@ -192,6 +198,8 @@ export const findByAddress = async(address: string) => {
     result.mails =  await mailController.find({'user_id': result.id});
     result.mailingList =  await mailingListController.getUserMailingList(result.id);
     result.broadcasts = await mailingListBroadcastController.find({ user_id: result.id });
+    result.contentPasses = await contentPassController.find({ user_id: result.id });
+    result.contents = await contentController.find({ user_id: result.id, status: "published" });
     result.subscriptions = await mailingListSubscriberController.find({ user_id: result.id });
     result.reservations =  await userReservationController.findByUsername(result.id);
     result.reservationSettings =  await userReservationSettingController.find({'user_id': result.id});

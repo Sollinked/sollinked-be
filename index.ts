@@ -63,6 +63,12 @@ app.use((req, res, next) => {
         return;
     }
 
+    // check if it's getting public methods
+    if(req.path.match(/\/public\//g)) {
+        next();
+        return;
+    }
+
     // check if it's posting new email
     if(req.path.match(/\/mail\//g)) {
         next();

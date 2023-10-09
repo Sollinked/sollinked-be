@@ -45,17 +45,29 @@ export const view = async(id: number) => {
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
-    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY value_usd desc`;
+    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY id desc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<ContentPass>(query);
+    const results = await db.executeQueryForResults<ContentPass>(query);
 
-    return result;
+    if(!results) {
+        return;
+    }
+
+    let processedResults: ProcessedContentPass[] = [];
+    for(const [index, result] of results.entries()) {
+        processedResults.push({
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        })
+    }
+
+    return processedResults;
 }
 
 // list (all)
 export const list = async() => {
-    const query = `SELECT * FROM ${table} ORDER BY value_usd desc`;
+    const query = `SELECT * FROM ${table} ORDER BY id desc`;
 
     const db = new DB();
     const result = await db.executeQueryForResults<ContentPass>(query);

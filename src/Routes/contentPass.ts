@@ -32,7 +32,7 @@ routes.post('/', async(req, res) => {
         return res.status(404).send("Unable to find user");
     }
 
-    await contentPassController.create({
+    let contentPassRes = await contentPassController.create({
         user_id: user.id,
         name,
         description,
@@ -40,9 +40,14 @@ routes.post('/', async(req, res) => {
         value_usd,
     });
 
+    if(!contentPassRes) {
+        return res.status(500).send("Server Error");
+    }
+
     return res.send({
         success: true,
         message: "Success",
+        data: contentPassRes.id,
     });
 });
 
