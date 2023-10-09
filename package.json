@@ -15,8 +15,9 @@
     "rollback": "tsc && node dist/rollback.js",
     "rollback:migrate": "tsc && node dist/rollback.js && node dist/migrate.js",
     "rollback:seed": "tsc && node dist/rollback.js && node dist/migrate.js && dist/node seed.js",
-    "dev": "nodemon --ext \"ts\" --exec \"tsc && node dist/index.js\"  --exclude node_modules . || exit 1",
-    "init": "tsc && node dist/init.js"
+    "dev": "nodemon --ext \"ts\" --exec \"tsc && cp .env dist/.env && node dist/index.js\"  --exclude node_modules . || exit 1",
+    "init": "tsc && cp .env dist/.env && node dist/init.js",
+    "tsc": "tsc && cp .env dist/.env"
   },
   "author": "Kida",
   "license": "ISC",
