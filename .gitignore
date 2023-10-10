@@ -11,6 +11,7 @@ package-lock.json
 .user_keys
 
 test.ts
+todo.txt
 
 *.png
 *.jpg
