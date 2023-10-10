@@ -3,12 +3,15 @@ import * as userController from '../Controllers/userController';
 import * as contentPassController from '../Controllers/contentPassController';
 import * as contentPaymentController from '../Controllers/contentPaymentController';
 import * as contentCNFTController from '../Controllers/contentCNFTController';
-import { createContentPass, getAdminAccount, getDappDomain, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
+import { createContentPass, getAdminAccount, getContentFee, getDappDomain, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../Constants';
 import { UNLIMITED_PASS } from '../Models/contentPass';
 
-const CONTENT_FEE = (Number(process.env.PAYMENT_CONTENT_FEE ?? '0') / 100) + 1; // eg 1.05
-const contentCreatorRatio = 1 / CONTENT_FEE;
+
+const {
+    contentCreatorFee,
+    contentCreatorRatio,
+} = getContentFee();
 
 export const routes = Router();
 routes.post('/', async(req, res) => {
@@ -160,20 +163,21 @@ routes.post('/payment/:id', async(req, res) => {
         return res.status(404).send("Unable to find content pass.");
     }
 
+    let mintedCount = await contentCNFTController.find({ content_pass_id: contentPass.id });
+    if(mintedCount && mintedCount.length >= contentPass.amount && contentPass.amount > 0) {
+        await refund();
+        return res.status(400).send("Sold out");
+    }
+
     let cNftRes = await contentCNFTController.create({
         content_pass_id: contentPass.id,
     });
 
-    if(!cNftRes) {
+    if(!cNftRes || !cNftRes.id) {
         await refund();
         return res.status(500).send("Unable to mint");
     }
 
-    let mintedCount = await contentCNFTController.find({ content_pass_id: contentPass.id });
-    if(mintedCount && mintedCount.length > contentPass.amount) {
-        await refund(cNftRes.id);
-        return res.status(400).send("Sold out");
-    }
 
     let contentCreator = await userController.view(contentPass.user_id);
     if(!contentCreator) {
@@ -206,7 +210,7 @@ routes.post('/payment/:id', async(req, res) => {
             },
         });
 
-        if(!passRes) {
+        if(!passRes || !passRes.mintAddress) {
             await refund(cNftRes.id);
             return res.status(500).send("Unable to mint pass!")
         }

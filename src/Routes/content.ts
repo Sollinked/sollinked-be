@@ -326,8 +326,10 @@ routes.post('/public/:username/:slug', async(req, res) => {
         return res.status(404).send("Unable to find content");
     }
 
+    let user = await userController.findByAddress(address);
+
     let content = contents[0];
-    let canRead = content.is_free;
+    let canRead = content.is_free || content.user_id === user?.id;
 
     // not free to read
     if(!canRead && address) {
@@ -341,17 +343,24 @@ routes.post('/public/:username/:slug', async(req, res) => {
 
     // didn't pay for content, check if they have pass
     if(!canRead && address) {
-        let allowedPasses = await contentCNFTController.find({ id: content.content_pass_ids });
-        if(!allowedPasses) {
-            return res.status(404).send("Unable to find content");
+        let allowedPasses = await contentCNFTController.find({ content_pass_id: content.content_pass_ids });
+
+        if(!allowedPasses || allowedPasses.length === 0) {
+            canRead = false;
         }
-        let addressCNFTs = await getAddressNftDetails(true, address);
-        let collectionMintAddress = getContentPassCollectionAddress();
-        let addressContentPasses = addressCNFTs.items.filter(x => x.grouping[0].group_value === collectionMintAddress);
-        let contentPassMintAddresses = addressContentPasses.map(x => x.id);
-        for(const [index, value] of contentPassMintAddresses.entries()) {
-            canRead = contentPassMintAddresses.includes(value);
-            if(canRead) break;
+
+        if(allowedPasses) {
+            let addressCNFTs = await getAddressNftDetails(true, address);
+            if(addressCNFTs.items.length > 0) {
+                let collectionMintAddress = getContentPassCollectionAddress();
+                let addressContentPasses = addressCNFTs.items.filter(x => x.grouping.length > 0 && x.grouping[0].group_value === collectionMintAddress);
+                let contentPassMintAddresses = addressContentPasses.map(x => x.id);
+                let allowedPassMintAddresses = allowedPasses.filter(x => x.mint_address).map(x => x.mint_address);
+                for(const [index, value] of contentPassMintAddresses.entries()) {
+                    canRead = allowedPassMintAddresses.includes(value);
+                    if(canRead) break;
+                }
+            }
         }
     }
 
