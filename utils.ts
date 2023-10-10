@@ -319,6 +319,7 @@ export const formatDBParamsToStr = (params : {
             let arrayVal = "'{}'";
             if(p.length > 0) {
                 arrayVal = `'${JSON.stringify(p).replace(/^\[/, '{"').replace(/]$/, '"}').replace(",", '","')}'`;
+                arrayVal = arrayVal.replace(/""/g, '"'); // for strings
             }
             if (valueOnly) {
                 stringParams.push(`${prepend? prepend + "." : ""}${arrayVal}`);
