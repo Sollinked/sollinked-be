@@ -2,11 +2,14 @@ import { Router } from 'express';
 import * as userController from '../Controllers/userController';
 import * as userTierController from '../Controllers/userTierController';
 import * as userReservationSettingController from '../Controllers/userReservationSettingController';
+import * as contentCNFTController from '../Controllers/contentCNFTController';
 import { contentUpload } from './Upload';
-import { checkAllowedMime, verifySignature } from '../../utils';
+import { checkAllowedMime, getAddressNftDetails, getContentPassCollectionAddress, verifySignature } from '../../utils';
 import fs from 'fs-extra';
 import _ from 'lodash';
 import { VERIFY_MESSAGE } from '../Constants';
+import { ProcessedContentPass } from '../Models/contentPass';
+import { ContentCNFT } from '../Models/contentCNFT';
 
 export const routes = Router();
 
@@ -232,6 +235,31 @@ routes.post('/me', async(req, res) => {
         success: true,
         message: "Success",
         data: user
+    });
+});
+routes.post('/me/content_passes', async(req, res) => {
+    let data = req.body;
+
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!data.address) {
+        return res.status(400).send("Invalid params");
+    }
+    
+    let addressCNFTs = await getAddressNftDetails(true, data.address);
+    let contentCNFTs: ContentCNFT[] | undefined = [];
+    if(addressCNFTs.items.length > 0) {
+        let collectionMintAddress = getContentPassCollectionAddress();
+        let addressContentPasses = addressCNFTs.items.filter(x => x.grouping.length > 0 && x.grouping[0].group_value === collectionMintAddress);
+        let contentPassMintAddresses = addressContentPasses.map(x => x.id);
+        contentCNFTs = await contentCNFTController.find({ mint_address: contentPassMintAddresses });
+    }
+    return res.send({
+        success: true,
+        message: "Success",
+        data: contentCNFTs ?? [],
     });
 });
 
