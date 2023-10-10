@@ -1,3 +1,5 @@
+import { ProcessedContentPass } from "./contentPass";
+
 export type Content = {
     id: number;
     user_id: number;
@@ -26,9 +28,13 @@ export type ProcessedContent = {
     status: 'draft' | 'published';
     deleted_at?: string;
     updated_at: string;
+
+    // generated
+    contentPasses?: ProcessedContentPass[];
 }
 
 export const fillableColumns = [
+    'id',
     'user_id',
     'content_pass_ids',
     'content',

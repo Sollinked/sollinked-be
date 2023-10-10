@@ -65,6 +65,40 @@ export const find = async(whereParams: {[key: string]: any}) => {
     return processedResults;
 }
 
+// to append to content
+export const findByContent = async(content_id: number) => {
+    const query = `
+        SELECT 
+            cp.*,
+            sum(case when cc.id is not null then 1 else 0 end)::integer as cnft_count
+        FROM content_passes cp
+        JOIN contents c
+        ON cp.id = ANY(c.content_pass_ids)
+        LEFT JOIN content_cnfts cc
+        ON cc.content_pass_id = cp.id
+        WHERE c.id = ${content_id}
+        GROUP BY cp.id
+        -- HAVING amount >= sum(case when cc.id is not null then 1 else 0 end)
+    `;
+
+    const db = new DB();
+    const results = await db.executeQueryForResults<ContentPass>(query);
+
+    if(!results) {
+        return;
+    }
+
+    let processedResults: ProcessedContentPass[] = [];
+    for(const [index, result] of results.entries()) {
+        processedResults.push({
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        });
+    }
+
+    return processedResults;
+}
+
 // list (all)
 export const list = async() => {
     const query = `SELECT * FROM ${table} ORDER BY id desc`;

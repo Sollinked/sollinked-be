@@ -1,6 +1,7 @@
 import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
+import * as contentPassController from './contentPassController';
 import { Content, ProcessedContent, fillableColumns } from "../Models/content";
 
 const table = 'contents';
@@ -39,6 +40,7 @@ export const view = async(id: number) => {
         ...result,
         value_usd: Number(result.value_usd),
     };
+    processed.contentPasses = await contentPassController.findByContent(processed.id);
     return processed;
 }
 
@@ -55,10 +57,12 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     let processedResults: ProcessedContent[] = [];
     for(const [index, result] of results.entries()) {
-        processedResults.push({
+        let processed: ProcessedContent = {
             ...result,
             value_usd: parseFloat(result.value_usd ?? '0'),
-        })
+        };
+        processed.contentPasses = await contentPassController.findByContent(processed.id);
+        processedResults.push(processed);
     }
 
     return processedResults;
