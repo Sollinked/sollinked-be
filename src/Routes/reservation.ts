@@ -65,17 +65,16 @@ routes.post('/update', async(req, res) => {
         return res.status(400).send("No new updates");
     }
 
-    let users = await userController.find({ address });
-    if(!users || users.length === 0) {
-        return res.status(404).send("Unable to find user");
+    let user = await userController.findByAddress(address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
     }
 
-    let user_id = users[0].id;
     let reservations = await userReservationController.find({ date: moment(data.date).utc().format('YYYY-MM-DDTHH:mm:ssZ') });
 
     if(!reservations || reservations.length === 0) {
         await userReservationController.create({
-            user_id,
+            user_id: user.id,
             date: moment(data.date).utc().format('YYYY-MM-DDTHH:mm:ssZ'),
             reservation_price: data.reservation_price ?? 0,
             status

@@ -535,4 +535,182 @@ export default [
             DROP COLUMN sent_message_id;
         `,
     },
+
+    // contents
+
+    {
+        name: "create_content_passes_table",
+        query: `
+            CREATE TABLE content_passes (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                name text not null,
+                description text not null,
+                amount int default(0) not null,
+                value_usd decimal default(0) not null
+            )
+        `,
+        rollback_query: `DROP TABLE content_passes;`,
+    },
+    {
+        name: "create_content_passes_user_id_indexes",
+        query: `
+            CREATE INDEX content_passes_user_id_idx ON content_passes(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX content_passes_user_id_idx;
+        `,
+    },
+
+    {
+        name: "create_content_cnfts_table",
+        query: `
+            CREATE TABLE content_cnfts (
+                id serial PRIMARY KEY,
+                mint_address text, -- null cause will have to update after we get the mint address
+                nft_id int, -- underdog nft id
+                content_pass_id int not null,
+                created_at timestamptz default(current_timestamp) not null
+            )
+        `,
+        rollback_query: `DROP TABLE content_cnfts;`,
+    },
+
+    {
+        name: "create_content_passes_content_pass_id_indexes",
+        query: `
+            CREATE INDEX content_passes_content_pass_id_idx ON content_cnfts(content_pass_id);
+        `,
+        rollback_query: `
+            DROP INDEX content_passes_content_pass_id_idx;
+        `,
+    },
+
+    {
+        name: "create_contents_table",
+        query: `
+            CREATE TYPE content_status AS ENUM ('published', 'draft');
+            CREATE TABLE contents (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                content_pass_ids integer[] not null,
+                content text not null,
+                title text not null,
+                slug text not null,
+                description text not null,
+                value_usd decimal default(-1) not null,
+                is_free boolean default(false) not null,
+                status content_status default('draft') not null,
+                deleted_at timestamp
+            )
+        `,
+        rollback_query: `DROP TABLE contents; DROP TYPE content_status;`,
+    },
+    
+    {
+        name: "create_contents_user_id_indexes",
+        query: `
+            CREATE INDEX contents_user_id_idx ON contents(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX contents_user_id_idx;
+        `,
+    },
+
+    {
+        name: "create_content_comments_table",
+        query: `
+            CREATE TABLE content_comments (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                content_id int not null,
+                reply_to_id int,
+                comment text not null,
+                created_at timestamptz default(current_timestamp) not null,
+                deleted_at timestamp
+            )
+        `,
+        rollback_query: `DROP TABLE content_comments;`,
+    },
+    
+    {
+        name: "create_content_comments_content_id_indexes",
+        query: `
+            CREATE INDEX content_comments_content_id_idx ON content_comments(content_id);
+        `,
+        rollback_query: `
+            DROP INDEX content_comments_content_id_idx;
+        `,
+    },
+
+    {
+        name: "create_content_likes_table",
+        query: `
+            CREATE TABLE content_likes (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                content_id int not null,
+                created_at timestamptz default(current_timestamp) not null
+            )
+        `,
+        rollback_query: `DROP TABLE content_likes;`,
+    },
+    
+    {
+        name: "create_content_likes_content_id_indexes",
+        query: `
+            CREATE INDEX content_likes_content_id_idx ON content_likes(content_id);
+        `,
+        rollback_query: `
+            DROP INDEX content_likes_content_id_idx;
+        `,
+    },
+
+    {
+        name: "create_content_payments_table",
+        query: `
+            CREATE TYPE content_payment_type AS ENUM ('pass', 'single');
+            CREATE TABLE content_payments (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                content_id int not null,
+                tx_hash text not null,
+                value_usd decimal not null,
+                is_processed boolean default(false) not null,
+                type content_payment_type not null
+            )
+        `,
+        rollback_query: `
+            DROP TABLE content_payments;
+            DROP TYPE content_payment_type;
+        `,
+    },
+    
+    {
+        name: "create_content_payments_content_id_user_id_indexes",
+        query: `
+            CREATE INDEX content_payments_content_id_user_id_idx ON content_payments(content_id, user_id);
+            CREATE INDEX content_payments_is_processed_idx ON content_payments(is_processed);
+            CREATE INDEX content_payments_type_idx ON content_payments(type);
+        `,
+        rollback_query: `
+            DROP INDEX content_payments_content_id_user_id_idx;
+            DROP INDEX content_payments_is_processed_idx;
+            DROP INDEX content_payments_type_idx;
+        `,
+    },
+    {
+        name: "add_updated_at_to_contents",
+        query: `
+            ALTER TABLE contents
+            ADD updated_at timestamptz default(current_timestamp);
+            CREATE TRIGGER update_contents_updated_at BEFORE UPDATE ON contents FOR EACH ROW EXECUTE PROCEDURE update_at_column();
+        `,
+        rollback_query: `
+            ALTER TABLE contents
+            DROP COLUMN updated_at;
+            DROP TRIGGER update_contents_updated_at ON contents;
+        `,
+    },
+
 ];

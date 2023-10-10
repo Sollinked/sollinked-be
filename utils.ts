@@ -4,7 +4,7 @@ import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
 import crypto from "crypto";
 import DB from './src/DB';
-import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
@@ -14,6 +14,8 @@ import { base58, base64 } from 'ethers/lib/utils';
 import { createTransferCompressedNftInstruction } from './src/NFT/Transfer';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
+import axios from 'axios';
+import { createAssociatedTokenAccountInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -287,8 +289,20 @@ export const isCurrentUserAdmin = async(discord_id: string) => {
  */
 export const formatDBParamsToStr = (params : {
     [key : string]: any
-}, separator : string = ', ', valueOnly : boolean = false, prepend: string = "", shouldLower: boolean = false) => {
+}, options?: {
+    separator?: string;
+    valueOnly?: boolean;
+    prepend?: string; 
+    shouldLower?: boolean;
+    isSearch?: boolean;
+}) => {
     let stringParams: string[] = [];
+    let separator = options?.separator ?? ", ";
+    let valueOnly = options?.valueOnly ?? false;
+    let prepend = options?.prepend ?? "";
+    let shouldLower = options?.shouldLower ?? false;
+    let isSearch = options?.isSearch ?? false;
+
     _.map(params, (p, k) => {
         const isString = typeof p === 'string';
         const value = isString ? `'${p.replace(/'/g, "''")}'` : p;
@@ -302,10 +316,21 @@ export const formatDBParamsToStr = (params : {
         }
 
         else if(Array.isArray(p)) {
+            let arrayVal = "'{}'";
+            if(p.length > 0) {
+                arrayVal = `'${JSON.stringify(p).replace(/^\[/, '{"').replace(/]$/, '"}').replace(",", '","')}'`;
+                arrayVal = arrayVal.replace(/""/g, '"'); // for strings
+            }
             if (valueOnly) {
-                stringParams.push(`${prepend? prepend + "." : ""}'${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
-            } else {
-                stringParams.push(`${prepend? prepend + "." : ""}${k} = '${JSON.stringify(p).replace(/^\[/, '{').replace(/]$/, '}')}'`);
+                stringParams.push(`${prepend? prepend + "." : ""}${arrayVal}`);
+            }
+            
+            else if(isSearch) {
+                stringParams.push(`${prepend? prepend + "." : ""}${k} = ANY(${arrayVal})`);
+            }
+            
+            else {
+                stringParams.push(`${prepend? prepend + "." : ""}${k} = ${arrayVal}`);
             }
         }
 
@@ -368,10 +393,10 @@ export const getUpsertQuery = (table: string, updateField: {[key: string]: any},
     //     SELECT 3, 'C', 'Z'
     //     WHERE NOT EXISTS (SELECT 1 FROM table WHERE id=3);
 
-    const updateValue = formatDBParamsToStr(updateField, ', ');
-    const searchValue = formatDBParamsToStr(searchField, ' AND ');
-    const insertColumn = _.join(Object.keys(insertField), ', ');
-    const insertValue = formatDBParamsToStr(insertField, ', ', true);
+    const updateValue = formatDBParamsToStr(updateField);
+    const searchValue = formatDBParamsToStr(searchField, { separator: ' AND ' });
+    const insertColumn = _.join(Object.keys(insertField));
+    const insertValue = formatDBParamsToStr(insertField, { valueOnly: true });
 
     const query = `
         UPDATE ${table} SET ${updateValue} WHERE ${searchValue};
@@ -449,6 +474,10 @@ export const getCollectionMint = (whichCollection: string) => {
   };
 }
 
+export const getContentPassCollectionAddress = () => {
+    return process.env.UNDERDOG_CONTENT_COLLECTION_ADDRESS!;
+}
+
 export const getNonPublicKeyPlayerAccount = (account: string) => {
     return loadOrGenerateKeypair(account, '.user_keys');
 }
@@ -506,6 +535,84 @@ export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: nu
     let txSignature = await connection.sendTransaction(transaction, [adminAccount]);
 
     return txSignature;
+}
+
+export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: number, amount: number) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+    let adminAccount = getAdminAccount();
+
+    const mintToken = new PublicKey(token);
+    const recipientAddress = new PublicKey(sendTo);
+
+    const transactionInstructions: TransactionInstruction[] = [];
+
+    // get the sender's token account
+    const associatedTokenFrom = await getAssociatedTokenAddress(
+      mintToken,
+      adminAccount.publicKey
+    );
+
+    const fromAccount = await getAccount(connection, associatedTokenFrom);
+    let {
+        associatedTokenTo,
+        transaction: createTransaction,
+    } = await getOrCreateAssociatedAccount(mintToken, adminAccount.publicKey, recipientAddress);
+
+    if(createTransaction) {
+        transactionInstructions.push(createTransaction);
+    }
+
+    // the actual instructions
+    transactionInstructions.push(
+      createTransferInstruction(
+        fromAccount.address, // source
+        associatedTokenTo, // dest
+        adminAccount.publicKey,
+        Math.round(amount * tokenDecimals),
+      )
+    );
+
+    // send the transactions
+    const transaction = new Transaction().add(...transactionInstructions);
+    // Send and confirm transaction
+    // Note: feePayer is by default the first signer, or payer, if the parameter is not set
+    const signature = await connection.sendTransaction(transaction, [adminAccount]);
+    return signature;
+}
+
+// return associatedTokenAddress and transaction
+// if associatedTokenAddress exists, transaction is null
+export const getOrCreateAssociatedAccount = async(mintToken: PublicKey, payer: PublicKey, recipient: PublicKey) => {
+    const connection = new Connection(getRPCEndpoint());
+
+    // get the recipient's token account
+    const associatedTokenTo = await getAssociatedTokenAddress(
+        mintToken,
+        recipient
+    );
+
+    let transaction = null;
+
+    // if recipient doesn't have token account
+    // create token account for recipient
+    if (!(await connection.getAccountInfo(associatedTokenTo))) {
+        transaction =
+            createAssociatedTokenAccountInstruction(
+                payer,
+                associatedTokenTo,
+                recipient,
+                mintToken
+            );
+    }
+
+    return {
+        associatedTokenTo,
+        transaction,
+    };
 }
 
 // non public key account
@@ -619,7 +726,7 @@ export const getTx = async(txHash: string) => {
 }
 
 export const getTokensTransferredToUser = async(txHash: string, toAddress: string, token: string) => {
-    let now = moment().add(-60, 'minute');
+    let now = moment().add(-2, 'minute');
     let txDetails = await getTx(txHash);
     if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
         throw new Error("No Tx Details");
@@ -650,7 +757,7 @@ export const getTokensTransferredToUser = async(txHash: string, toAddress: strin
     let postBalance = postBalanceArray[0]?.uiTokenAmount.uiAmount ?? 0;
 
     let valueUsd = postBalance - preBalance;
-    return valueUsd;
+    return Math.round(valueUsd * 1e6) / 1e6;
 }
 
 export const verifySignature = (address: string, signature: string, message: string) => { 
@@ -668,7 +775,7 @@ export const getProfilePictureLink = (filename?: string) => {
     if(!filename) {
         return undefined;
     }
-    return getBeDomain() + "/content/" + filename;
+    return getBeDomain() + "/profile_picture/" + filename;
 }
 
 /*
@@ -700,6 +807,174 @@ export const getGithubCredentials = () => {
 export const getSphereKey = () => {
     return process.env.SPHERE_SECRET!;
 }
+
 export const getSphereWalletId = () => {
     return process.env.SPHERE_WALLET_ID!;
+}
+
+// Underdog
+export const getUnderdogKey = () => {
+    return {
+        apiKey: process.env.UNDERDOG_API_KEY!,
+        baseUrl: process.env.UNDERDOG_BASE_URL!,
+    };
+}
+export const getUnderdogContentPassDetails = () => {
+    return {
+        projectId: process.env.UNDERDOG_CONTENT_PASS_PROJECT_ID!,
+        name: process.env.UNDERDOG_CONTENT_PASS_NAME!,
+        symbol: process.env.UNDERDOG_CONTENT_PASS_SYMBOL!,
+    };
+}
+
+export const createContentPass = async({
+    image,
+    attributes,
+    receiverAddress,
+}: {
+    image: string; // base64 or url
+    attributes: {
+        [key: string]: string;
+    },
+    receiverAddress: string;
+}) => {
+    let {
+        projectId,
+        name,
+        symbol,
+    } = getUnderdogContentPassDetails();
+
+    let createRes = await createUnderdogNFT({
+        projectId,
+        name,
+        symbol,
+        image,
+        attributes,
+        receiverAddress,
+    });
+
+    return createRes;
+}
+
+export const createUnderdogNFT = async({
+    projectId,
+    name,
+    symbol,
+    image,
+    attributes,
+    receiverAddress,
+}: {
+    projectId: number | string;
+    name: string;
+    symbol: string;
+    image: string; // base64 or url
+    attributes: {
+        [key: string]: string;
+    },
+    receiverAddress: string;
+}) => {
+    let {apiKey, baseUrl} = getUnderdogKey();
+    try {
+        let createRes = await axios.post(`${baseUrl}/projects/${projectId}/nfts`, {
+            name,
+            symbol,
+            description: `Content pass to be used in Sollinked`,
+            delegated: true,
+            image: image.includes('localhost')? 'https://app.sollinked.com/logo.png' :  image,
+            attributes,
+            receiverAddress,
+        },
+        {
+            headers: {
+                'Authorization': `Bearer ${apiKey}` 
+            }
+        });
+
+        /**
+         *  {
+                "transactionId": "486ed473-21db-43b6-8734-e3d0abd1b9e6",
+                "nftId": 3,
+                "projectId": 1
+            }
+         */
+        if(!createRes.data || !createRes.data.nftId) {
+            return;
+        }
+
+        let nftId = createRes.data.nftId;
+        let retries = 0;
+        let mintAddress = "";
+
+        while(retries < 10) {
+            let details = await getUnderdogNft(projectId, nftId);
+            if(!details || !details.mintAddress) {
+                retries++;
+                await sleep(1000);
+                continue;
+            }
+
+            mintAddress = details.mintAddress;
+            break;
+        }
+
+        return {
+            mintAddress,
+            nftId,
+        };
+    }
+
+    catch(e) {
+        console.log(e);
+        return;
+    }
+}
+
+export const getUnderdogNft = async(projectId: number | string, nftId: number | string) => {
+    let {apiKey, baseUrl} = getUnderdogKey();
+    try {
+        let mintRes = await axios.get<{
+            "id": number;
+            "mintAddress": string;
+            "status": string; // "confirmed"
+            "ownerAddress": string;
+            "name": string;
+            "symbol": string;
+            "description": string;
+            "image": string; // url
+          }>(`${baseUrl}/projects/${projectId}/nfts/${nftId}`,
+        {
+            headers: {
+            'Authorization': `Bearer ${apiKey}` 
+            }
+        });
+
+        if(!mintRes.data || !mintRes.data.mintAddress) {
+            return;
+        }
+
+        return mintRes.data;
+    }
+
+    catch {
+        return;
+    }
+}
+
+export const getSubscriptionFee = () => {
+    const subscriptionFee = (Number(process.env.PAYMENT_SUBSCRIPTION_FEE ?? '0') / 100) + 1; // eg 1.05
+    const subscriptionRatio = 1 / subscriptionFee;
+
+    return {
+        subscriptionFee,
+        subscriptionRatio
+    }
+}
+
+export const getContentFee = () => {
+    const contentCreatorFee = (Number(process.env.PAYMENT_CONTENT_FEE ?? '0') / 100) + 1; // eg 1.05
+    const contentCreatorRatio = 1 / contentCreatorFee;
+    return {
+        contentCreatorFee,
+        contentCreatorRatio
+    }
 }

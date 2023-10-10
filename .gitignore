@@ -1,5 +1,7 @@
 /node_modules
 /attachments
+/dist
+/.vscode
 *.js
 package-lock.json
 .DS_Store
@@ -9,6 +11,7 @@ package-lock.json
 .user_keys
 
 test.ts
+todo.txt
 
 *.png
 *.jpg

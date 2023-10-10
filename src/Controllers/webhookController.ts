@@ -35,7 +35,7 @@ export const create = async(insertParams: any): Promise<{[id: string]: number}> 
     // get qr insert field
     const fillableColumns = [ 'user_id', 'status', 'value', 'template', 'type' ];
     const filtered = _.pick(insertParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ', true);
+    const params = formatDBParamsToStr(filtered, { valueOnly: true });
     const insertColumns = Object.keys(filtered);
 
     // insert into qr table
@@ -57,7 +57,7 @@ export const view = async(id: number): Promise<Webhook> => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}): Promise<Webhook[]> => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();
@@ -80,7 +80,7 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
     // filter
     const fillableColumns = [ 'status', 'value', 'template', 'type' ];
     const filtered = _.pick(updateParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ');
+    const params = formatDBParamsToStr(filtered);
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 

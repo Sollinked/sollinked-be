@@ -12,7 +12,7 @@ export const init = async() => { }
 // create
 export const create = async(insertParams: any) => {
     const filtered = _.pick(insertParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ', true);
+    const params = formatDBParamsToStr(filtered, { valueOnly: true });
 
     // put quote
     const insertColumns = Object.keys(filtered);
@@ -37,7 +37,7 @@ export const view = async(id: number) => {
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ');
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
     const db = new DB();

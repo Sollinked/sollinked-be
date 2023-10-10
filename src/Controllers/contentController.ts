@@ -1,10 +1,10 @@
-import { formatDBParamsToStr } from "../../utils";
+import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import * as mailingListPriceTierController from './mailingListPriceTierController';
-import { MailingListSubscriber, fillableColumns } from "../Models/mailingListSubscriber";
+import * as contentPassController from './contentPassController';
+import { Content, ProcessedContent, fillableColumns } from "../Models/content";
 
-const table = 'mailing_list_subscribers';
+const table = 'contents';
 
 // init entry for user
 export const init = async() => { }
@@ -30,34 +30,50 @@ export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult<MailingListSubscriber>(query);
+    const result = await db.executeQueryForSingleResult<Content>(query);
 
-    return result ?? {};
+    if(!result) {
+        return;
+    }
+
+    let processed: ProcessedContent = {
+        ...result,
+        value_usd: Number(result.value_usd),
+    };
+    processed.contentPasses = await contentPassController.findByContent(processed.id);
+    return processed;
 }
 
 // find (all match)
 export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
-    const query = `SELECT * FROM ${table} WHERE ${params} AND expiry_date >= CURRENT_TIMESTAMP AND is_cancelled = false`;
+    const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY updated_at desc`;
 
     const db = new DB();
-    let results = await db.executeQueryForResults<MailingListSubscriber>(query);
+    const results = await db.executeQueryForResults<Content>(query);
     if(!results) {
-        return results;
+        return;
     }
 
+    let processedResults: ProcessedContent[] = [];
     for(const [index, result] of results.entries()) {
-        results[index].price_tier = await mailingListPriceTierController.publicView(result.mailing_list_price_tier_id);
+        let processed: ProcessedContent = {
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        };
+        processed.contentPasses = await contentPassController.findByContent(processed.id);
+        processedResults.push(processed);
     }
-    return results;
+
+    return processedResults;
 }
 
 // list (all)
 export const list = async() => {
-    const query = `SELECT * FROM ${table}`;
+    const query = `SELECT * FROM ${table} ORDER BY updated_at desc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<MailingListSubscriber>(query);
+    const result = await db.executeQueryForResults<Content>(query);
 
     return result ?? [];
 }

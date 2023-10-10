@@ -7,6 +7,7 @@ import { getMailCredentials, getTokensTransferredToUser, sendSOLTo, sleep } from
 import { createEmailForwarder, sendEmail } from '../Mail';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
+import { USDC_ADDRESS } from '../Constants';
 
 export const routes = Router();
 routes.post('/new/:username', async(req, res) => {
@@ -85,7 +86,6 @@ routes.post('/payment/:username', async(req, res) => {
 
     while(retries < 10) {
         try {
-            const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
             let valueUsd = await getTokensTransferredToUser(txHash, mail.tiplink_public_key, USDC_ADDRESS);
             let tiers = user.tiers;
 

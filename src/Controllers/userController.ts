@@ -7,6 +7,8 @@ import * as mailController from './mailController';
 import * as mailingListController from './mailingListController';
 import * as mailingListBroadcastController from './mailingListBroadcastController';
 import * as mailingListSubscriberController from './mailingListSubscriberController';
+import * as contentController from './contentController';
+import * as contentPassController from './contentPassController';
 import * as userReservationController from './userReservationController';
 import * as userReservationSettingController from './userReservationSettingController';
 import * as webhookController from './webhookController';
@@ -21,7 +23,7 @@ export const init = async() => { }
 // create
 export const create = async(insertParams: any) => {
     const filtered = _.pick(insertParams, fillableColumns);
-    const params = formatDBParamsToStr(filtered, ', ', true);
+    const params = formatDBParamsToStr(filtered, { valueOnly: true });
 
     // put quote
     const insertColumns = Object.keys(filtered);
@@ -144,12 +146,14 @@ export const publicViewByUsername = async(username: string) => {
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.tiers = await userTierController.find({ user_id: result.id });
     result.mailingList = await mailingListController.findByUserId(result.id, true);
+    result.contentPasses = await contentPassController.find({ user_id: result.id });
+    result.contents = await contentController.find({ user_id: result.id });
     return result;
 }
 
 // only allow user to find own profile
 export const find = async(whereParams: {[key: string]: any}) => {
-    const params = formatDBParamsToStr(whereParams, ' AND ', false, "", true);
+    const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true, isSearch: true });
 
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
@@ -164,6 +168,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].tiers =  await userTierController.find({'user_id': res.id});
         result[index].mails =  await mailController.find({'user_id': res.id});
         result[index].mailingList =  await mailingListController.getUserMailingList(res.id);
+        result[index].contentPasses = await contentPassController.find({ user_id: res.id });
+        result[index].contents = await contentController.find({ user_id: res.id });
         result[index].broadcasts = await mailingListBroadcastController.find({ user_id: res.id });
         result[index].subscriptions = await mailingListSubscriberController.find({ user_id: res.id });
         result[index].reservations =  await userReservationController.findByUsername(res.id);
@@ -172,6 +178,34 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].webhooks = await webhookController.find({ user_id: res.id })
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
     }
+
+    return result;
+}
+// only allow user to find own profile
+export const findByAddress = async(address: string) => {
+    const params = formatDBParamsToStr({ address }, { separator: ' AND ', shouldLower: true, isSearch: true });
+
+    const query = `SELECT * FROM ${table} WHERE ${params}`;
+
+    const db = new DB();
+    let result = await db.executeQueryForSingleResult<User>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    result.tiers =  await userTierController.find({'user_id': result.id});
+    result.mails =  await mailController.find({'user_id': result.id});
+    result.mailingList =  await mailingListController.getUserMailingList(result.id);
+    result.broadcasts = await mailingListBroadcastController.find({ user_id: result.id });
+    result.contentPasses = []; // find in another route
+    result.contents = await contentController.find({ user_id: result.id, status: "published" });
+    result.subscriptions = await mailingListSubscriberController.find({ user_id: result.id });
+    result.reservations =  await userReservationController.findByUsername(result.id);
+    result.reservationSettings =  await userReservationSettingController.find({'user_id': result.id});
+    result.githubSettings = await userGithubSettingController.find({'user_id': result.id});
+    result.webhooks = await webhookController.find({ user_id: result.id })
+    result.profile_picture = getProfilePictureLink(result.profile_picture);
 
     return result;
 }
@@ -201,7 +235,7 @@ export const update = async(id: number, updateParams: {[key: string]: any}) => {
         await changeEmailForwarder(filtered.username, user.username);
     }
 
-    const params = formatDBParamsToStr(filtered, ', ');
+    const params = formatDBParamsToStr(filtered);
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
     const db = new DB();

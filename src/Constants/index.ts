@@ -23,3 +23,7 @@ export const EXP_TOKEN_DECIMALS = 6;
 export const GOLD_TOKEN = 'Solar Hunt Gold';
 export const GOLD_TOKEN_SYMBOL = 'SOLGOLD';
 export const GOLD_TOKEN_DECIMALS = 6;
+
+// tokens
+export const USDC_ADDRESS = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v';
+export const USDC_DECIMALS = 1000000;

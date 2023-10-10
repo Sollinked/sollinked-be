@@ -4,7 +4,7 @@ import { DataV2, createCreateMetadataAccountV3Instruction } from '@metaplex-foun
 import { bundlrStorage, keypairIdentity, Metaplex, UploadMetadataInput } from '@metaplex-foundation/js';
 import { getAdminAccount, getDappDomain, getNonPublicKeyPlayerAccount, getPlayerPublicKey, getRPCEndpoint, getTokenAccounts } from "../../utils";
 import { loadOrGenerateKeypair } from "../Helpers";
-import { EXP_TOKEN, EXP_TOKEN_DECIMALS, EXP_TOKEN_SYMBOL, GOLD_TOKEN, GOLD_TOKEN_DECIMALS, GOLD_TOKEN_SYMBOL } from "../Constants";
+import { EXP_TOKEN, EXP_TOKEN_DECIMALS, EXP_TOKEN_SYMBOL, GOLD_TOKEN, GOLD_TOKEN_DECIMALS, GOLD_TOKEN_SYMBOL, USDC_ADDRESS } from "../Constants";
 
 const endpoint = getRPCEndpoint(); //Replace with your RPC Endpoint
 const connection = new Connection(endpoint);
@@ -252,7 +252,6 @@ export const transferAllTo = async(account: string, destinationWallet: PublicKey
 }
 
 export const getAddressUSDCBalance = async(publicKey: string) => {
-    const USDC_ADDRESS = process.env.USDC_ADDRESS! as string;
     const balances = await getUserTokens(new PublicKey(publicKey));
     return balances[USDC_ADDRESS] ?? 0;
 }
