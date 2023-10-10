@@ -879,13 +879,13 @@ export const createUnderdogNFT = async({
             symbol,
             description: `Content pass to be used in Sollinked`,
             delegated: true,
-            image,
+            image: image.includes('localhost')? 'https://app.sollinked.com/logo.png' :  image,
             attributes,
             receiverAddress,
         },
         {
             headers: {
-            'Authorization': `Bearer ${apiKey}` 
+                'Authorization': `Bearer ${apiKey}` 
             }
         });
 
@@ -908,9 +908,10 @@ export const createUnderdogNFT = async({
             let details = await getUnderdogNft(projectId, nftId);
             if(!details || !details.mintAddress) {
                 retries++;
+                await sleep(1000);
                 continue;
             }
-            
+
             mintAddress = details.mintAddress;
             break;
         }
