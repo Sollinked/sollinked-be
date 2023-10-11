@@ -198,7 +198,7 @@ export const findByAddress = async(address: string) => {
     result.mails =  await mailController.find({'user_id': result.id});
     result.mailingList =  await mailingListController.getUserMailingList(result.id);
     result.broadcasts = await mailingListBroadcastController.find({ user_id: result.id });
-    result.contentPasses = []; // find in another route
+    result.contentPasses = await contentPassController.find({ user_id: result.id });
     result.contents = await contentController.find({ user_id: result.id, status: "published" });
     result.subscriptions = await mailingListSubscriberController.find({ user_id: result.id });
     result.reservations =  await userReservationController.findByUsername(result.id);
