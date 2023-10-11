@@ -147,7 +147,7 @@ export const publicViewByUsername = async(username: string) => {
     result.tiers = await userTierController.find({ user_id: result.id });
     result.mailingList = await mailingListController.findByUserId(result.id, true);
     result.contentPasses = await contentPassController.find({ user_id: result.id });
-    result.contents = await contentController.find({ user_id: result.id });
+    result.contents = await contentController.find({ user_id: result.id, status: "published" });
     return result;
 }
 
@@ -199,7 +199,7 @@ export const findByAddress = async(address: string) => {
     result.mailingList =  await mailingListController.getUserMailingList(result.id);
     result.broadcasts = await mailingListBroadcastController.find({ user_id: result.id });
     result.contentPasses = await contentPassController.find({ user_id: result.id });
-    result.contents = await contentController.find({ user_id: result.id, status: "published" });
+    result.contents = await contentController.find({ user_id: result.id });
     result.subscriptions = await mailingListSubscriberController.find({ user_id: result.id });
     result.reservations =  await userReservationController.findByUsername(result.id);
     result.reservationSettings =  await userReservationSettingController.find({'user_id': result.id});
