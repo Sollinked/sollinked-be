@@ -104,7 +104,8 @@ export const getExpired = async() => {
                         coalesce(value_usd, 0) as value_usd,
                         created_at,
                         processed_at,
-                        expiry_date
+                        expiry_date,
+                        sent_message_id
                     FROM ${table} 
                     WHERE 
                         value_usd > 0 
