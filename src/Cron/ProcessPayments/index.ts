@@ -69,18 +69,18 @@ export const processPayments = async() => {
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);
 
-            let sent_message_id = await sendEmail({
-                to: user.email_address,
-                subject: `${subject ?? "No Subject"} (${tokenBalance} USDC)`,
-                text: `${text}`,
-                textAsHtml: `${textAsHtml}`,
-                attachments,
-                replyTo: `${from}, ${uuid}@${credentials.domain}`
-            });
-
             let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
             let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
             let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
+
+            let sent_message_id = await sendEmail({
+                to: user.email_address,
+                subject: `${subject ?? "No Subject"}`,
+                text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${expiry_date}\n\n${text}`,
+                textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${expiry_date}</p><br>${textAsHtml}`,
+                attachments,
+                replyTo: `${from}, ${uuid}@${credentials.domain}`
+            });
             
             // receipt
             await sendEmail({

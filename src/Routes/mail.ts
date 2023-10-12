@@ -102,16 +102,16 @@ routes.post('/payment/:username', async(req, res) => {
                     continue;
                 }
     
-                let sent_message_id = await sendEmail({
-                    to: user.email_address!,
-                    subject: `${subject ?? "No Subject"} (${valueUsd} USDC)`,
-                    text: `${message}`,
-                    replyTo: `${mail.from_email}, ${bcc_to_email}`
-                });
-    
                 let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
                 let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
                 let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
+
+                let sent_message_id = await sendEmail({
+                    to: user.email_address!,
+                    subject: `${subject ?? "No Subject"}`,
+                    text: `Paid: ${valueUsd} USDC\nExpiry Date: ${expiry_date}\n\n${message}`,
+                    replyTo: `${mail.from_email}, ${bcc_to_email}`
+                });
 
                 // receipt
                 await sendEmail({
