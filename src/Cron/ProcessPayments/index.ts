@@ -144,7 +144,7 @@ export const processMailsWithNoResponse = async() => {
                 `,
             });
 
-            let users = await userController.find({ user_id });
+            let users = await userController.find({ id: user_id });
             if(sent_message_id && users && users[0].email_address) {
                 await sendEmail({
                     to: users[0].email_address,
