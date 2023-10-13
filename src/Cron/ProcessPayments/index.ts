@@ -131,7 +131,7 @@ export const processMailsWithNoResponse = async() => {
     }
 
     for(const [index, mail] of mails.entries()) {
-        const { from_email, to_email, tiplink_url, tiplink_public_key, message_id, sent_message_id } = mail;
+        const { user_id, from_email, to_email, tiplink_url, tiplink_public_key, message_id, sent_message_id } = mail;
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
 
         if(usdcBalance > 0) {
@@ -144,9 +144,10 @@ export const processMailsWithNoResponse = async() => {
                 `,
             });
 
-            if(sent_message_id) {
+            let users = await userController.find({ user_id });
+            if(sent_message_id && users && users[0].email_address) {
                 await sendEmail({
-                    to: to_email,
+                    to: users[0].email_address,
                     subject: "Email Expired",
                     inReplyTo: sent_message_id,
                     references: sent_message_id,
