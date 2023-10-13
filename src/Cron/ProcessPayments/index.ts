@@ -135,6 +135,7 @@ export const processMailsWithNoResponse = async() => {
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
 
         if(usdcBalance > 0) {
+            let { subject } = await getEmailByMessageId(mail.message_id) as any;
             await sendEmail({
                 to: from_email,
                 subject: "USDC Refund",
@@ -148,7 +149,7 @@ export const processMailsWithNoResponse = async() => {
             if(sent_message_id && users && users[0].email_address) {
                 await sendEmail({
                     to: users[0].email_address,
-                    subject: "Email Expired",
+                    subject,
                     inReplyTo: sent_message_id,
                     references: sent_message_id,
                     text: `This email has expired, the funds had been returned to the sender.`,
