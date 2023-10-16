@@ -52,6 +52,7 @@ const processEmailToUser = async({
             if(toEmails.length === 0) {
                 console.log('processEmailResponse: ', 'cant find email original sender, aborting');
                 console.log('processEmailResponse: ', `original sender: ${originalSender}`);
+                console.log('processEmailResponse: ', `toEmailMatch: ${toEmailMatch.join(",")}`);
                 return;
             }
 
@@ -186,7 +187,7 @@ export const processEmails = () => {
     
                                     let toText = Array.isArray(to)? to.map(x => x.text).join(", ") : to.text;
     
-                                    let toEmailMatch = toText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
+                                    let toEmailMatch = toText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,10}/g);
                                     if(!toEmailMatch || toEmailMatch.length === 0){
                                         return;
                                     }
