@@ -589,8 +589,8 @@ routes.post('/subscribe', async(req, res) => {
                 return res.status(500).send("Unable to create user");;
             }
             let result = await userController.create({
-                address: data.address,
-                username: data.username,
+                address: customer.solanaPubKey,
+                username: customer.solanaPubKey,
                 calendar_advance_days: 100,
                 email_address: email,
             });
