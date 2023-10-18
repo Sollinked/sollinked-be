@@ -24,7 +24,7 @@ export const processBroadcasts = async() => {
         }
     
         if(broadcast.is_executing) {
-            console.log("Broadcast is still ongoing");
+            // console.log("Broadcast is still ongoing");
             return;
         }
 
