@@ -5,6 +5,7 @@ import { processClaims } from "./ProcessClaims";
 import { processExpiredReservationPayments, processReservationClaims, processReservationPayments } from "./ProcessReservationPayments";
 import { processGithubInvitations, syncRepo } from "./ProcessGithubInvitations";
 import { processGithubIssues } from "./ProcessGithubIssues";
+import { processBroadcasts } from "./ProcessBroadcasts";
 
 
 export const init = () => {
@@ -29,5 +30,8 @@ export const init = () => {
     setInterval(() => {
         // might have to check if it's checking emails
         processEmails();
+
+        // broadcast
+        processBroadcasts();
     }, 30000);
 }

@@ -713,4 +713,27 @@ export default [
         `,
     },
 
+    // misc updates
+    {
+        name: "add_created_at_to_users",
+        query: `
+            ALTER TABLE users
+            ADD created_at timestamptz default(current_timestamp);
+        `,
+        rollback_query: `
+            ALTER TABLE users
+            DROP COLUMN created_at;
+        `,
+    },
+    {
+        name: "add_retry_count_to_mailing_list_broadcast_logs",
+        query: `
+            ALTER TABLE mailing_list_broadcast_logs
+            ADD retry_count int default(0);
+        `,
+        rollback_query: `
+            ALTER TABLE mailing_list_broadcast_logs
+            DROP COLUMN retry_count;
+        `,
+    }
 ];

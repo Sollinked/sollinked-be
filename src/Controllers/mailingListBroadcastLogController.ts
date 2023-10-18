@@ -75,6 +75,24 @@ export const getCount = async(broadcast_id: number) => {
     return result;
 }
 
+
+export const getUniquePendingBroadcastIds = async() => {
+    const query = `SELECT distinct mailing_list_broadcast_id FROM ${table} WHERE is_success = false`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<{ mailing_list_broadcast_id: number }>(query);
+    return result;
+}
+
+
+export const getDistinctEmailsForBroadcastId = async(broadcast_id: number) => {
+    const query = `SELECT distinct min(id) as id, to_email, MAX(retry_count) as retry_count FROM ${table} WHERE is_success = false AND retry_count < 3 AND broadcast_id = ${broadcast_id} GROUP BY to_email`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<{ id: number, to_email: string, retry_count: number }>(query);
+    return result;
+}
+
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
