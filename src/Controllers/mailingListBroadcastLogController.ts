@@ -86,7 +86,7 @@ export const getUniquePendingBroadcastIds = async() => {
 
 
 export const getDistinctEmailsForBroadcastId = async(broadcast_id: number) => {
-    const query = `SELECT distinct min(id) as id, to_email, MAX(retry_count) as retry_count FROM ${table} WHERE is_success = false AND retry_count < 3 AND broadcast_id = ${broadcast_id} GROUP BY to_email`;
+    const query = `SELECT distinct min(id) as id, to_email, MAX(retry_count) as retry_count FROM ${table} WHERE is_success = false AND retry_count < 3 AND mailing_list_broadcast_id = ${broadcast_id} GROUP BY to_email`;
 
     const db = new DB();
     const result = await db.executeQueryForResults<{ id: number, to_email: string, retry_count: number }>(query);
