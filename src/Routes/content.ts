@@ -39,7 +39,7 @@ routes.post('/', async(req, res) => {
     }
 
     let uuid = uuidv4().split("-")[0];
-    let slug = title.replace(/\s/g, "-") + "-" + uuid;
+    let slug = title.replace(/\s/g, "-").replace(/[^a-zA-Z0-9 ]/g, "") + "-" + uuid;
 
     let contentRes = await contentController.create({
         user_id: user.id,
@@ -103,7 +103,7 @@ routes.post('/update/:id', async(req, res) => {
     // only change slug if the title changed
     if(title !== content.title) {
         let uuid = uuidv4().split("-")[0];
-        slug = title.replace(/\s/g, "-") + "-" + uuid;
+        slug = title.replace(/\s/g, "-").replace(/[^a-zA-Z0-9 ]/g, "") + "-" + uuid;
     }
 
     await contentController.update(idNum, {
