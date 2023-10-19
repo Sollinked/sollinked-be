@@ -254,20 +254,106 @@ export const update = async(id: number, updateParams: {[key: string]: any}) => {
 
 // public views
 export const getHomepageUsers = async() => {
-    let query = `select 
-                        username,
-                        display_name,
-                        profile_picture,
-                        is_verified,
-                        sum(coalesce(m.value_usd, 0)) + sum(coalesce(r.value_usd, 0)) as value_usd
-                    from users u
-                    left join mails m
-                    on m.user_id = u.id
-                    left join user_reservations r
-                    on r.user_id = u.id
-                    group by 1,2,3,4
-                    having sum(coalesce(m.value_usd, 0)) + sum(coalesce(r.value_usd, 0)) > 0 or profile_picture is not null or is_verified
-                    order by is_verified desc, value_usd desc nulls last, profile_picture desc nulls last
+    let query = `
+                    with content_joined_payment as (
+                        select
+                            c.user_id,
+                            sum(cp.value_usd) as content_usd
+                        from
+                            contents c
+                        join
+                            content_payments cp
+                        on
+                            c.id = cp.content_id
+                        where cp.type = 'single'
+                        group by c.user_id
+                    ),
+                    content_pass_joined_payment as (
+                        select
+                            c.user_id,
+                            sum(cp.value_usd) as content_pass_usd
+                        from
+                            content_passes c
+                        join
+                            content_payments cp
+                        on
+                            c.id = cp.content_id
+                        where cp.type = 'pass'
+                        group by c.user_id
+                    ),
+                    mailing_list_joined_payments as (
+                        select
+                            ml.user_id,
+                            sum(mls.value_usd) as mailing_list_usd
+                        from
+                            mailing_lists ml
+                        join
+                            mailing_list_price_tiers mlpt
+                        on
+                            mlpt.mailing_list_id = ml.id
+                        join
+                            mailing_list_subscribers mls
+                        on
+                            mls.mailing_list_price_tier_id = mlpt.id
+                        group by ml.user_id
+                    ),
+                    mail_payments as (
+                        select
+                            user_id,
+                            sum(value_usd) as mail_usd
+                        from
+                            mails
+                        where
+                            has_responded = true
+                        group by user_id
+                    ),
+                    
+                    reservation_payments as (
+                        select
+                            user_id,
+                            sum(value_usd) as reservation_usd
+                        from
+                            user_reservations
+                        where value_usd > 0
+                        and status = 2 or status = 3 -- paid and claimed
+                        group by user_id
+                    ),
+
+                    agg as (
+                        select 
+                            username,
+                            display_name,
+                            profile_picture,
+                            is_verified,
+                            mail_usd,
+                            content_usd,
+                            content_pass_usd,
+                            mailing_list_usd,
+                            reservation_usd,
+                            coalesce(mail_usd, 0) + 
+                            coalesce(content_usd, 0) +  
+                            coalesce(content_pass_usd, 0) + 
+                            coalesce(mailing_list_usd, 0) + 
+                            coalesce(reservation_usd, 0) as value_usd
+                            
+                        from users u
+                        left join mail_payments m
+                        on m.user_id = u.id
+                        left join reservation_payments r
+                        on r.user_id = u.id
+                        left join content_joined_payment c
+                        on c.user_id = u.id
+                        left join content_pass_joined_payment cp
+                        on cp.user_id = u.id
+                        left join mailing_list_joined_payments mlp
+                        on mlp.user_id = u.id
+                        order by value_usd desc
+                    )
+                    
+                    select *
+                    from agg
+                    where value_usd > 0 or profile_picture is not null or is_verified
+                    order by value_usd desc nulls last, is_verified desc, profile_picture desc nulls last
                     limit 50`;
 
     const db = new DB();
