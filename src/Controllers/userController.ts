@@ -134,7 +134,7 @@ export const publicViewByUsername = async(username: string) => {
                         tiktok,
                         youtube,
                         is_verified
-                    FROM ${table} WHERE lower(username) = loweR('${username}') LIMIT 1`;
+                    FROM ${table} WHERE lower(username) = lower('${username}') LIMIT 1`;
 
     const db = new DB();
     const result = await db.executeQueryForSingleResult<PublicUser>(query);

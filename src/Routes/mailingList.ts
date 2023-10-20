@@ -466,6 +466,50 @@ routes.post('/testDraft/:id', async(req, res) => {
     });
 });
 
+routes.post('/resend', async(req, res) => {
+    let data = req.body;
+    let { subscriber_id, broadcast_id } = data;
+    if(!data || !subscriber_id || !broadcast_id) {
+        return res.status(400).send("No data");
+    }
+
+    let user = await userController.findByAddress(data.address);
+    if(!user) {
+        return res.status(404).send("Unable to find user.");
+    }
+
+    let subscriber = await mailingListSubscriberController.view(Number(subscriber_id));
+    if(!subscriber) {
+        return res.status(404).send("Missing subscription");
+    }
+
+    if(subscriber.user_id !== user.id) {
+        console.log('wrong subscriber')
+        return res.status(401).send("Unauthorized");
+    }
+
+    if(moment(subscriber.expiry_date).isBefore(moment())) {
+        return res.status(400).send("Expired");
+    }
+
+    if(!subscriber.price_tier) {
+        console.log('no subscriber')
+        return res.status(401).send("Unauthorized");
+    }
+
+    if(subscriber.price_tier.past_broadcasts.filter(x => x.id === Number(broadcast_id)).length === 0) {
+        console.log('price tier doesnt contain broadcast id')
+        return res.status(401).send("Unauthorized");
+    }
+
+    await mailingListBroadcastController.broadcast(Number(broadcast_id), [subscriber.email_address]);
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
 // it is actually get draft
 routes.post('/draft/:id', async(req, res) => {
     let data = req.body;

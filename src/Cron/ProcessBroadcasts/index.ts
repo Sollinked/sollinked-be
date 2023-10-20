@@ -13,7 +13,6 @@ export const processBroadcasts = async() => {
     }
 
     let now = moment();
-    let twoHoursAgo = moment().add(-2, 'h');
 
     for(const [, broadcastObject] of broadcasts.entries()) {
         let broadcast_id = broadcastObject.mailing_list_broadcast_id;
@@ -26,11 +25,6 @@ export const processBroadcasts = async() => {
         if(broadcast.is_executing) {
             // console.log("Broadcast is still ongoing");
             return;
-        }
-
-        if(moment(broadcast.created_at).isBefore(twoHoursAgo)) {
-            // dont process old ones
-            continue;
         }
         
         await mailingListBroadcastController.update(broadcast_id, { executed_at: now.format('YYYY-MM-DDTHH:mm:ssZ'), is_executing: true });

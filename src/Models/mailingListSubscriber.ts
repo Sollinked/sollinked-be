@@ -1,4 +1,5 @@
-import { MailingListPriceTier, ProcessedMailingListPriceTier } from "./mailingListPriceTier";
+import { PastBroadcast } from "./mailingListBroadcast";
+import { ProcessedMailingListPriceTier } from "./mailingListPriceTier";
 
 export type MailingListSubscriber = {
     id: number;

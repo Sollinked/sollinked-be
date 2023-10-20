@@ -4,6 +4,7 @@ import _ from "lodash";
 import * as userController from './userController';
 import * as mailingListController from './mailingListController';
 import * as mailingListSubscriberController from './mailingListSubscriberController';
+import * as mailingListBroadcastController from './mailingListBroadcastController';
 import { MailingListPriceTier, ProcessedMailingListPriceTier, fillableColumns } from "../Models/mailingListPriceTier";
 
 const table = 'mailing_list_price_tiers';
@@ -68,8 +69,9 @@ export const publicView = async(id: number) => {
         return;
     }
 
-    let processedResult: ProcessedMailingListPriceTier = { ...result, amount: parseFloat(result.amount), username: "" };
+    let processedResult: ProcessedMailingListPriceTier = { ...result, amount: parseFloat(result.amount), username: "", past_broadcasts: [] };
     processedResult.username = user.display_name ?? user.username;
+    processedResult.past_broadcasts = await mailingListBroadcastController.findPastBroadcastsByPriceTierId(result.id);
     return processedResult;
 }
 
@@ -87,10 +89,12 @@ export const find = async(whereParams: {[key: string]: any}, hideSubcriberCount:
     let processedResults: ProcessedMailingListPriceTier[] = [];
     for(const [index, result] of results.entries()) {
         let subscriber_count = hideSubcriberCount? -1 : (await mailingListSubscriberController.find({ mailing_list_price_tier_id: result.id }))?.length ?? 0;
+        let past_broadcasts = await mailingListBroadcastController.findPastBroadcastsByPriceTierId(result.id);
         processedResults.push({
             ...result,
             subscriber_count,
             amount: parseFloat(result.amount ?? '0'),
+            past_broadcasts,
         })
     }
     

@@ -13,6 +13,14 @@ export type MailingListBroadcast = {
     total_count: number;
 }
 
+export type PastBroadcast = {
+    id: number;
+    user_id: number;
+    username: string;
+    title: string;
+    created_at: string;
+}
+
 export const fillableColumns = [
     'id',
     'user_id',

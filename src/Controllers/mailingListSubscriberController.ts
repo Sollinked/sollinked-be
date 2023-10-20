@@ -30,9 +30,13 @@ export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
-    const result = await db.executeQueryForSingleResult<MailingListSubscriber>(query);
+    let result = await db.executeQueryForSingleResult<MailingListSubscriber>(query);
+    if(!result) {
+        return result;
+    }
 
-    return result ?? {};
+    result.price_tier = await mailingListPriceTierController.publicView(result.mailing_list_price_tier_id);
+    return result;
 }
 
 // find (all match)

@@ -3,7 +3,7 @@ import DB from "../DB"
 import _ from "lodash";
 import * as mailingListBroadcastLogController from './mailingListBroadcastLogController';
 import * as userController from './userController';
-import { MailingListBroadcast, fillableColumns } from "../Models/mailingListBroadcast";
+import { MailingListBroadcast, PastBroadcast, fillableColumns } from "../Models/mailingListBroadcast";
 import { sendEmail } from "../Mail";
 import moment from 'moment';
 
@@ -33,6 +33,7 @@ export const create = async(insertParams: any) => {
 }
 
 export const broadcast = async(broadcast_id: number, emails?: string[]) => {
+    console.log(emails);
     if(emails && emails.length > 0) {
         let db = new DB();
         let columns = ['mailing_list_broadcast_id', 'to_email'];
@@ -53,14 +54,12 @@ export const createAndBroadcast = async(insertParams: any, emails: string[]) => 
         return;
     }
 
-    // dont wait
-    broadcast(res.id, emails);
+    await broadcast(res.id, emails);
     return res;
 }
 
 export const retryBroadcast = async(broadcast_id: number) => {
-    // dont wait
-    broadcast(broadcast_id);
+    await broadcast(broadcast_id);
     return;
 }
 
@@ -93,6 +92,28 @@ export const testDraft = async(broadcast_id: number) => {
     });
 
     return;
+}
+
+export const findPastBroadcastsByPriceTierId = async(tier_id: number) => {
+    const query = `SELECT 
+                        mlb.id,
+                        u.id as user_id,
+                        username,
+                        title,
+                        mlb.created_at
+                    FROM mailing_list_broadcasts mlb
+                    JOIN users u
+                    ON u.id = mlb.user_id
+                    WHERE ${Number(tier_id)} = ANY(mlb.tier_ids)
+                      AND is_draft = false`;
+
+    const db = new DB();
+    const result = await db.executeQueryForResults<PastBroadcast>(query);
+    if(!result) {
+        return [];
+    }
+    return result;
+
 }
 
 // view (single - id)

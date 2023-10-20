@@ -1,3 +1,5 @@
+import { PastBroadcast } from "./mailingListBroadcast";
+
 export type MailingListPriceTier = {
     id: number;
     mailing_list_id: number;
@@ -29,6 +31,7 @@ export type ProcessedMailingListPriceTier = {
 
     // generated
     username?: string;
+    past_broadcasts: PastBroadcast[];
 }
 
 export const fillableColumns = [
