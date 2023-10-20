@@ -27,7 +27,7 @@ export const processBroadcasts = async() => {
             return;
         }
         
-        await mailingListBroadcastController.update(broadcast_id, { executed_at: now.format('YYYY-MM-DDTHH:mm:ssZ'), is_executing: true });
+        await mailingListBroadcastController.update(broadcast_id, { is_executing: true });
     
         let logs = await mailingListBroadcastLogController.getDistinctEmailsForBroadcastId(broadcast_id);
         if(!logs || logs.length === 0) {
@@ -57,6 +57,6 @@ export const processBroadcasts = async() => {
             await mailingListBroadcastLogController.update(log.id, { is_success: true, success_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') })
         }
     
-        await mailingListBroadcastController.update(broadcast_id, { is_executing: false, executed_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') });
+        await mailingListBroadcastController.update(broadcast_id, { is_executing: false, execute_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') });
     }
 }
