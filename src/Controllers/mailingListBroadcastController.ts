@@ -94,7 +94,7 @@ export const testDraft = async(broadcast_id: number) => {
     return;
 }
 
-export const findPastBroadcastsByPriceTierId = async(tier_id: number) => {
+export const findPastBroadcastsByPriceTierId = async(tier_id: number, user_id: number) => {
     const query = `SELECT 
                         mlb.id,
                         u.id as user_id,
@@ -104,8 +104,15 @@ export const findPastBroadcastsByPriceTierId = async(tier_id: number) => {
                     FROM mailing_list_broadcasts mlb
                     JOIN users u
                     ON u.id = mlb.user_id
-                    WHERE ${Number(tier_id)} = ANY(mlb.tier_ids)
-                      AND is_draft = false`;
+                    WHERE (
+                            ${Number(tier_id)} = ANY(mlb.tier_ids) OR 
+                            -- broadcast has no specific tier
+                            (
+                                ARRAY_LENGTH(mlb.tier_ids) = is null
+                                AND mlb.user_id = ${Number(user_id)}
+                            )
+                        )
+                        AND is_draft = false`;
 
     const db = new DB();
     const result = await db.executeQueryForResults<PastBroadcast>(query);

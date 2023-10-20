@@ -71,7 +71,7 @@ export const publicView = async(id: number) => {
 
     let processedResult: ProcessedMailingListPriceTier = { ...result, amount: parseFloat(result.amount), username: "", past_broadcasts: [] };
     processedResult.username = user.display_name ?? user.username;
-    processedResult.past_broadcasts = await mailingListBroadcastController.findPastBroadcastsByPriceTierId(result.id);
+    processedResult.past_broadcasts = await mailingListBroadcastController.findPastBroadcastsByPriceTierId(result.id, mailingList.user_id);
     return processedResult;
 }
 
@@ -88,8 +88,9 @@ export const find = async(whereParams: {[key: string]: any}, hideSubcriberCount:
 
     let processedResults: ProcessedMailingListPriceTier[] = [];
     for(const [index, result] of results.entries()) {
+        let mailingList = await mailingListController.view(result.mailing_list_id);
         let subscriber_count = hideSubcriberCount? -1 : (await mailingListSubscriberController.find({ mailing_list_price_tier_id: result.id }))?.length ?? 0;
-        let past_broadcasts = await mailingListBroadcastController.findPastBroadcastsByPriceTierId(result.id);
+        let past_broadcasts = await mailingListBroadcastController.findPastBroadcastsByPriceTierId(result.id, mailingList?.user_id ?? 0);
         processedResults.push({
             ...result,
             subscriber_count,
