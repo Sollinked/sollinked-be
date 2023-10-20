@@ -108,12 +108,12 @@ export const findPastBroadcastsByPriceTierId = async(tier_id: number, user_id: n
                             ${Number(tier_id)} = ANY(mlb.tier_ids) OR 
                             -- broadcast has no specific tier
                             (
-                                ARRAY_LENGTH(mlb.tier_ids) = is null
+                                ARRAY_LENGTH(mlb.tier_ids, 1) is null
                                 AND mlb.user_id = ${Number(user_id)}
                             )
                         )
                         AND is_draft = false`;
-
+                        
     const db = new DB();
     const result = await db.executeQueryForResults<PastBroadcast>(query);
     if(!result) {
