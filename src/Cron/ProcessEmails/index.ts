@@ -4,7 +4,7 @@ import { deleteEmailForwarder, getImap, sendEmail } from '../../../src/Mail';
 import * as controller from '../../../src/Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
-import { getMailCredentials } from '../../../utils';
+import { getExcludeEmailDomains, getMailCredentials } from '../../../utils';
 import moment from 'moment';
 
 const processEmailToUser = async({
@@ -70,6 +70,14 @@ const processEmailToUser = async({
         return;
     }
 
+    let excludeEmailDomains = getExcludeEmailDomains();
+    for(const domain of excludeEmailDomains) {
+        if(returnToEmail.includes(domain)) {
+            //dont process these domains
+            return;
+        }
+    }
+    
     // we process emails here
     const tiplink = await TipLink.create();
 

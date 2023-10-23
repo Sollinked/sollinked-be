@@ -794,6 +794,10 @@ export const getMailCredentials = () => {
     }
 }
 
+export const getExcludeEmailDomains = () => {
+    return JSON.parse(process.env.EXCLUDE_EMAIL_DOMAINS!) as string[];
+}
+
 // Github
 export const getGithubCredentials = () => {
     return {
