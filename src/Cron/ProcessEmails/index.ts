@@ -188,14 +188,14 @@ export const processEmails = () => {
                                         return;
                                     }
     
-                                    let fromEmailMatch = from.text.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
+                                    let fromEmailMatch = from.text.match(/[\w-\+\.]+@([\w-]+\.)+[\w-]{2,10}/g);
                                     if(!fromEmailMatch || fromEmailMatch.length === 0){
                                         return;
                                     }
     
                                     let toText = Array.isArray(to)? to.map(x => x.text).join(", ") : to.text;
     
-                                    let toEmailMatch = toText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,10}/g);
+                                    let toEmailMatch = toText.match(/[\w-\+\.]+@([\w-]+\.)+[\w-]{2,10}/g);
                                     if(!toEmailMatch || toEmailMatch.length === 0){
                                         return;
                                     }
@@ -216,7 +216,7 @@ export const processEmails = () => {
     
                                     let bccText = Array.isArray(bcc)? bcc.map(x => x.text).join(", ") : bcc.text;
     
-                                    let bccEmailMatch = bccText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
+                                    let bccEmailMatch = bccText.match(/[\w-\+\.]+@([\w-]+\.)+[\w-]{2,10}/g);
                                     if(!bccEmailMatch || bccEmailMatch.length === 0){
                                         return;
                                     }

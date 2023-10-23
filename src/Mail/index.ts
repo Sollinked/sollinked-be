@@ -111,7 +111,7 @@ export const getEmailByMessageId = (messageId: string) => {
                                     return simpleParser(stream as any, async(err, parsed) => {
                                         const { from, to, subject, textAsHtml, text, messageId, attachments, bcc, cc } = parsed;
 
-                                        let fromEmail = from? from.text.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g) : "";
+                                        let fromEmail = from? from.text.match(/[\w-\+\.]+@([\w-]+\.)+[\w-]{2,10}/g) : "";
                                         let fromEmailStr = "";
                                         if(Array.isArray(fromEmail) && fromEmail.length > 0) {
                                             fromEmailStr = fromEmail[0];
@@ -120,7 +120,7 @@ export const getEmailByMessageId = (messageId: string) => {
                                         let toEmails: string[] = [];
                                         if(to) {
                                             let toText = Array.isArray(to)? to.map(x => x.text).join(", ") : to.text;
-                                            let toEmailMatch = toText.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/g);
+                                            let toEmailMatch = toText.match(/[\w-\+\.]+@([\w-]+\.)+[\w-]{2,10}/g);
                                             if(Array.isArray(toEmailMatch) && toEmailMatch.length > 0) {
                                                 toEmails = toEmailMatch;
                                             }
