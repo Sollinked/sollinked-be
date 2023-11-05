@@ -26,6 +26,12 @@ export const processPayments = async() => {
         let bcc_to_email = `${uuid}@${credentials.domain}`;
     
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
+
+        // errored
+        if(tokenBalance === null) {
+            continue;
+        }
+
         if(tokenBalance === 0) {
             continue;
         }
@@ -133,6 +139,11 @@ export const processMailsWithNoResponse = async() => {
     for(const [index, mail] of mails.entries()) {
         const { user_id, from_email, to_email, tiplink_url, tiplink_public_key, message_id, sent_message_id } = mail;
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
+
+        // errored
+        if(usdcBalance === null) {
+            continue;
+        }
 
         if(usdcBalance > 0) {
             let { subject } = await getEmailByMessageId(mail.message_id) as any;

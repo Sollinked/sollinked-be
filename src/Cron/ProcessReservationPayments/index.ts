@@ -39,6 +39,12 @@ export const processReservationPayments = async() => {
 
     for(const [index, reservation] of reservations.entries()) {
         let tokenBalance = await getAddressUSDCBalance(reservation.tiplink_public_key!);
+        
+        // errored
+        if(tokenBalance === null) {
+            continue;
+        }
+
         if(tokenBalance === 0) {
             continue;
         }
@@ -83,6 +89,11 @@ export const processExpiredReservationPayments = async() => {
 
     for(const [index, reservation] of reservations.entries()) {
         let tokenBalance = await getAddressUSDCBalance(reservation.tiplink_public_key!);
+
+        // errored
+        if(tokenBalance === null) {
+            continue;
+        }
 
         // paid
         if(tokenBalance >= reservation.value_usd!) {
@@ -130,7 +141,7 @@ export const processReservationClaims = async() => {
         let tokenBalance = await getAddressUSDCBalance(reservation.tiplink_public_key!);
 
         // not claimed
-        if(tokenBalance > 0) {
+        if(tokenBalance === null || tokenBalance > 0) {
             continue;
         }
 

@@ -253,5 +253,8 @@ export const transferAllTo = async(account: string, destinationWallet: PublicKey
 
 export const getAddressUSDCBalance = async(publicKey: string) => {
     const balances = await getUserTokens(new PublicKey(publicKey));
-    return balances[USDC_ADDRESS] ?? 0;
+    if(balances[USDC_ADDRESS] || balances[USDC_ADDRESS] === 0) {
+        return balances[USDC_ADDRESS];
+    }
+    return null;
 }

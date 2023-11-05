@@ -15,6 +15,12 @@ export const processClaims = async() => {
 
     for(const [index, mail] of mails.entries()) {
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
+        
+        // errored
+        if(tokenBalance === null) {
+            continue;
+        }
+
         if(tokenBalance > 0) {
             continue;
         }
