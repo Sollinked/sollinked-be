@@ -98,6 +98,11 @@ const processEmailToUser = async({
         returnText += "\n\nThey will reply in:";
 
         userTiers.forEach((tier, index) => {
+            if(tier.respond_days === 0) {
+                returnText += `\n${index + 1}. 12 hours for ${parseFloat(tier.value_usd).toFixed(2)} USDC`;
+                return;
+            }
+
             returnText += `\n${index + 1}. ${tier.respond_days} days for ${parseFloat(tier.value_usd).toFixed(2)} USDC`;
         });
 

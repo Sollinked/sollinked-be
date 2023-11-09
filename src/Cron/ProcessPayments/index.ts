@@ -79,6 +79,11 @@ export const processPayments = async() => {
             let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
             let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
 
+            if(tier.respond_days === 0) {
+                // add 12 hours instead
+                expiry_date = moment().add(12, 'h').format('YYYY-MM-DDTHH:mm:ssZ');
+            }
+
             let sent_message_id = await sendEmail({
                 to: user.email_address,
                 subject: `${subject ?? "No Subject"}`,

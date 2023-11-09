@@ -595,7 +595,7 @@ export const getOrCreateAssociatedAccount = async(mintToken: PublicKey, payer: P
         recipient
     );
 
-    let transaction = null;
+    let transaction: TransactionInstruction | null = null;
 
     // if recipient doesn't have token account
     // create token account for recipient
