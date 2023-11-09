@@ -66,7 +66,8 @@ export const find = async(whereParams: {[key: string]: any}, createdAfter?: stri
                     FROM ${table} 
                     WHERE ${params}
                     ${createdAfter? `AND created_at >= '${createdAfter}'` : ""}
-                    ${onlyFromSMTP? `AND message_id <> 'from site'` : ""}`;
+                    ${onlyFromSMTP? `AND message_id <> 'from site'` : ""}
+                    AND (CASE WHEN message_id = 'from site' AND bcc_to_email is null then false else true end)`;
 
     const db = new DB();
     let results = await db.executeQueryForResults<Mail>(query);
