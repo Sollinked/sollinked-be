@@ -735,5 +735,18 @@ export default [
             ALTER TABLE mailing_list_broadcast_logs
             DROP COLUMN retry_count;
         `,
+    },
+
+    // fix claimed status
+    {
+        name: "add_claim_balance_verify_count_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD claim_balance_verify_count int default(0);
+        `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN claim_balance_verify_count;
+        `,
     }
 ];

@@ -15,6 +15,7 @@ export type Mail = {
     processed_at?: string;
     value_usd?: string;
     expiry_date?: string;
+    claim_balance_verify_count: number;
 }
 
 export type ProcessedMail = {
@@ -34,6 +35,7 @@ export type ProcessedMail = {
     processed_at?: string;
     value_usd?: number;
     expiry_date?: string;
+    claim_balance_verify_count: number;
 }
 
 export const fillableColumns = [
@@ -53,4 +55,5 @@ export const fillableColumns = [
     'processed_at',
     'value_usd',
     'expiry_date',
+    'claim_balance_verify_count',
 ];
