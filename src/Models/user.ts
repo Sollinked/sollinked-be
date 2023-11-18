@@ -7,6 +7,7 @@ import { MailingListSubscriber } from "./mailingListSubscriber";
 import { UserGithubSetting } from "./userGithubSetting";
 import { ProcessedUserReservation } from "./userReservation";
 import { ProcessedUserReservationSetting } from "./userReservationSetting";
+import { UserTag } from "./userTag";
 import { UserTier } from "./userTier";
 import { Webhook } from "./webhook";
 
@@ -35,6 +36,7 @@ export type User = {
     contentPasses?: ProcessedContentPass[];
     webhooks?: Webhook[];
     githubSettings?: UserGithubSetting[];
+    tags?: UserTag[];
     is_verified: boolean;
 }
 
@@ -55,6 +57,7 @@ export type PublicUser = {
     contentPasses?: ProcessedContentPass[];
     tiers?: UserTier[];
     is_verified: boolean;
+    tags?: UserTag[];
 }
 
 export type HomepageUser = {

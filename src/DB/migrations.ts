@@ -748,5 +748,31 @@ export default [
             ALTER TABLE mails
             DROP COLUMN claim_balance_verify_count;
         `,
-    }
+    },
+
+    // user tags
+
+    {
+        name: "create_user_tags_table",
+        query: `
+            CREATE TABLE user_tags (
+                id serial PRIMARY KEY,
+                user_id int not null,
+                name text not null
+            )
+        `,
+        rollback_query: `
+            DROP TABLE user_tags;
+        `,
+    },
+    
+    {
+        name: "create_user_tags_user_id_indexes",
+        query: `
+            CREATE INDEX user_tags_user_id_idx ON user_tags(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX user_tags_user_id_idx;
+        `,
+    },
 ];

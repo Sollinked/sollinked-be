@@ -1,16 +1,15 @@
 import { Router } from 'express';
 import * as userController from '../Controllers/userController';
 import * as userTierController from '../Controllers/userTierController';
+import * as userTagController from '../Controllers/userTagController';
 import * as userReservationSettingController from '../Controllers/userReservationSettingController';
 import * as contentCNFTController from '../Controllers/contentCNFTController';
 import { contentUpload } from './Upload';
-import { checkAllowedMime, getAddressNftDetails, getContentPassCollectionAddress, verifySignature } from '../../utils';
+import { checkAllowedMime, getAddressNftDetails, getApiKey, getContentPassCollectionAddress, getMd5, verifySignature } from '../../utils';
 import fs from 'fs-extra';
 import _ from 'lodash';
 import { VERIFY_MESSAGE } from '../Constants';
-import { ProcessedContentPass } from '../Models/contentPass';
 import { ContentCNFT } from '../Models/contentCNFT';
-
 export const routes = Router();
 
 //
@@ -206,6 +205,69 @@ routes.post('/updateReservationSettings/:user_id', async(req, res) => {
         console.log(e);
 
         return res.status(500).send("Unable to update user reservation settings");
+
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+    });
+});
+
+// currently only whale tags
+routes.post('/updateTags/:user_id', async(req, res) => {
+    let data = req.body;
+    let {address, signature, message, tags, hash } = data;
+    let user_id = parseInt(req.params.user_id);
+
+    if(!data) {
+        return res.status(400).send("No data");
+    }
+
+    if(!data.address || !data.tags || !data.hash) {
+        return res.status(400).send("Invalid params");
+    }
+
+    let verifyHash = getMd5(JSON.stringify(tags));
+
+    // not verified tags update
+    // need this cause we want to make sure the user's price labels are good
+    // since everything is on client side
+    if(verifyHash !== hash) {
+        return res.status(401).send("Unauthorized");
+
+    }
+
+    let verified = verifySignature(address, signature, message ?? VERIFY_MESSAGE);
+    if(!verified) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    // cant save address
+    data = _.omit(data, ['address', 'signature']);
+
+    if(Object.keys(data).length === 0){
+        return res.status(400).send("No new updates");
+    }
+
+    let user = await userController.view(user_id);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    // not the same address
+    if(user.address !== address) {
+        return res.status(401).send("Unauthorized");
+    }
+    
+    try {
+        await userTagController.updateByUserId(user_id, data.tags);
+    }
+
+    catch(e) {
+        console.log(e);
+
+        return res.status(500).send("Unable to update tier");
 
     }
 

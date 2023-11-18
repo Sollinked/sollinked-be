@@ -15,6 +15,7 @@ import { createTransferCompressedNftInstruction } from './src/NFT/Transfer';
 import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import axios from 'axios';
+import { md5 } from 'js-md5';
 import { createAssociatedTokenAccountInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
 
 export function sleep(ms: number) {
@@ -823,6 +824,7 @@ export const getUnderdogKey = () => {
         baseUrl: process.env.UNDERDOG_BASE_URL!,
     };
 }
+
 export const getUnderdogContentPassDetails = () => {
     return {
         projectId: process.env.UNDERDOG_CONTENT_PASS_PROJECT_ID!,
@@ -981,4 +983,13 @@ export const getContentFee = () => {
         contentCreatorFee,
         contentCreatorRatio
     }
+}
+
+// api key
+export const getApiKey = () => {
+    return process.env.API_KEY!;
+}
+
+export const getMd5 = (fromString: string) => {
+    return md5.hmac(getApiKey(), fromString);
 }

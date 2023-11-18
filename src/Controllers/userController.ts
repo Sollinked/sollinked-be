@@ -13,6 +13,7 @@ import * as userReservationController from './userReservationController';
 import * as userReservationSettingController from './userReservationSettingController';
 import * as webhookController from './webhookController';
 import * as userGithubSettingController from './userGithubSettingController';
+import * as userTagController from './userTagController';
 import { changeEmailForwarder, createEmailForwarder } from "../Mail";
 
 const table = 'users';
@@ -52,6 +53,7 @@ export const view = async(id: number) => {
     
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.reservationSettings =  await userReservationSettingController.find({'user_id': id});
+    result.tags = await userTagController.find({ user_id: id });
     return result;
 }
 
@@ -69,6 +71,7 @@ export const viewByUsername = async(username: string) => {
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.reservationSettings =  await userReservationSettingController.find({ user_id: result.id });
     result.tiers = await userTierController.find({ user_id: result.id });
+    result.tags = await userTagController.find({ user_id: result.id });
     return result;
 }
 
@@ -107,6 +110,7 @@ export const publicView = async(id: number) => {
     
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.tiers = await userTierController.find({ user_id: id });
+    result.tags = await userTagController.find({ user_id: id });
     return result;
 }
 
@@ -148,6 +152,7 @@ export const publicViewByUsername = async(username: string) => {
     result.mailingList = await mailingListController.findByUserId(result.id, true);
     result.contentPasses = await contentPassController.find({ user_id: result.id });
     result.contents = await contentController.find({ user_id: result.id, status: "published" });
+    result.tags = await userTagController.find({ user_id: result.id });
     return result;
 }
 
@@ -177,6 +182,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].githubSettings = await userGithubSettingController.find({'user_id': res.id});
         result[index].webhooks = await webhookController.find({ user_id: res.id })
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
+        result[index].tags = await userTagController.find({ user_id: result[index].id });
     }
 
     return result;
@@ -206,6 +212,7 @@ export const findByAddress = async(address: string) => {
     result.githubSettings = await userGithubSettingController.find({'user_id': result.id});
     result.webhooks = await webhookController.find({ user_id: result.id })
     result.profile_picture = getProfilePictureLink(result.profile_picture);
+    result.tags = await userTagController.find({ user_id: result.id });
 
     return result;
 }
