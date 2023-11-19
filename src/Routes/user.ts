@@ -396,6 +396,25 @@ routes.get('/search/:username', async(req, res) => {
     });
 });
 
+routes.get('/searchAddress/:address', async(req, res) => {
+    let {address} = req.params;
+
+    if(!address) {
+        return res.status(400).send("No user id");
+    }
+
+    let user = await userController.searchAddress(address);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: user,
+    });
+});
+
 routes.get('/:user_id', async(req, res) => {
     let {user_id} = req.params;
 

@@ -404,3 +404,28 @@ export const search = async(username: string) => {
 
     return result;
 }
+
+// dont confuse with find, search is for public use
+export const searchAddress = async(address: string) => {
+    address = address.replace(/'/g, "''");
+    let query = `select 
+                        username,
+                        display_name,
+                        profile_picture,
+                        is_verified
+                    from users u
+                    where address = '${address}'
+                    limit 1`;
+
+    const db = new DB();
+    const result = await db.executeQueryForSingleResult<HomepageUser>(query);
+
+    if(!result) {
+        return result;
+    }
+
+    result.value_usd = 0; // dont display
+    result.profile_picture = getProfilePictureLink(result.profile_picture);
+
+    return result;
+}
