@@ -382,6 +382,7 @@ export const getHomepageUsers = async() => {
 export const search = async(username: string) => {
     username = username.replace(/'/g, "''");
     let query = `select 
+                        id,
                         username,
                         display_name,
                         profile_picture,
@@ -400,6 +401,7 @@ export const search = async(username: string) => {
     for(const [index, res] of result.entries()) {
         result[index].value_usd = 0; // dont display
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
+        result[index].tags = await userTagController.find({ user_id: result[index].id });
     }
 
     return result;
@@ -409,6 +411,7 @@ export const search = async(username: string) => {
 export const searchAddress = async(address: string) => {
     address = address.replace(/'/g, "''");
     let query = `select 
+                        id,
                         username,
                         display_name,
                         profile_picture,
@@ -426,6 +429,7 @@ export const searchAddress = async(address: string) => {
 
     result.value_usd = 0; // dont display
     result.profile_picture = getProfilePictureLink(result.profile_picture);
+    result.tags = await userTagController.find({ user_id: result.id });
 
     return result;
 }
