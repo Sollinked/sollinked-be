@@ -187,6 +187,30 @@ export const getTokenPublicKey = (whichToken: "gold" | "exp") => {
     return loadOrGenerateKeypair(whichToken).publicKey.toBase58();
 }
 
+export const getAddressAssets = async(userAccount: string) => {
+    const response = await fetch(getRPCEndpoint(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          jsonrpc: '2.0',
+          id: 'my-id',
+          method: 'getAssetsByOwner',
+          params: {
+            ownerAddress: userAccount,
+            page: 1, // Starts at 1
+            limit: 1000,
+            displayOptions: {
+                showFungible: true,
+            },
+          },
+        }),
+    });
+    let json = await response.json();
+    return json.result.items;
+}
+
 export const getUserTokens = async(userAccount: PublicKey) => {
     let mintObject: {[mintAddress: string]: number} = {};
     let userAccounts = await getTokenAccounts(connection, userAccount.toString());
@@ -251,7 +275,12 @@ export const transferAllTo = async(account: string, destinationWallet: PublicKey
     return true;
 }
 
+export const getAddressTokenBalance = async(publicKey: string, tokenAddress: string) => {
+    const balances = await getAddressAssets(publicKey);
+    let usdcBalanceItem = balances.filter((x: any) => x.id === tokenAddress)[0];
+    return usdcBalanceItem? usdcBalanceItem.token_info.balance / Math.pow(10, usdcBalanceItem.token_info.decimals) : 0;
+}
+
 export const getAddressUSDCBalance = async(publicKey: string) => {
-    const balances = await getUserTokens(new PublicKey(publicKey));
-    return balances[USDC_ADDRESS] ?? 0;
+    return await getAddressTokenBalance(publicKey, USDC_ADDRESS);
 }

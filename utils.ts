@@ -718,6 +718,18 @@ export const transferCNfts = async(nft_ids: string[], nonPublicKeyAccount: strin
     return true;
 }
 
+export const getTransactions = async(address: string, numTx: number) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new Connection(CLUSTER_URL, "confirmed");
+
+    const pubKey = new PublicKey(address);
+    let transactionList = await connection.getSignaturesForAddress(pubKey, {limit:numTx});
+    return transactionList;
+}
+
 export const getTx = async(txHash: string) => {
     const endpoint = getRPCEndpoint(); //Replace with your RPC Endpoint
     const connection = new WrapperConnection(endpoint);
