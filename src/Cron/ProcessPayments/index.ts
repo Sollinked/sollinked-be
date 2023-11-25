@@ -151,12 +151,23 @@ export const processMailsWithNoResponse = async() => {
         }
 
         if(usdcBalance > 0) {
-            let { subject } = await getEmailByMessageId(mail.message_id) as any;
+            let isFromSite = message_id === "from site";
+            let subject = "Email Refunded";
+            if(!isFromSite) {
+                try {
+                    subject = (await getEmailByMessageId(message_id) as any).subject;
+                }
+    
+                catch {
+                    console.log('cant get subject');   
+                }
+            }
+            
             await sendEmail({
                 to: from_email,
                 subject: "USDC Refund",
-                inReplyTo: message_id,
-                references: message_id,
+                inReplyTo: isFromSite? undefined : message_id,
+                references: isFromSite? undefined : message_id,
                 text: `${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.\n\nPlease make sure it's a Tiplink URL, you will not be asked to deposit any funds.\n\nRegards,\nSollinked.
                 `,
             });
