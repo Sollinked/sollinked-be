@@ -5,6 +5,7 @@ import { bundlrStorage, keypairIdentity, Metaplex, UploadMetadataInput } from '@
 import { getAdminAccount, getDappDomain, getNonPublicKeyPlayerAccount, getPlayerPublicKey, getRPCEndpoint, getTokenAccounts } from "../../utils";
 import { loadOrGenerateKeypair } from "../Helpers";
 import { EXP_TOKEN, EXP_TOKEN_DECIMALS, EXP_TOKEN_SYMBOL, GOLD_TOKEN, GOLD_TOKEN_DECIMALS, GOLD_TOKEN_SYMBOL, USDC_ADDRESS } from "../Constants";
+import fetch from 'node-fetch';
 
 const endpoint = getRPCEndpoint(); //Replace with your RPC Endpoint
 const connection = new Connection(endpoint);
