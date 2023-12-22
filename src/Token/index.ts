@@ -189,27 +189,39 @@ export const getTokenPublicKey = (whichToken: "gold" | "exp") => {
 }
 
 export const getAddressAssets = async(userAccount: string) => {
-    const response = await fetch(getRPCEndpoint(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          jsonrpc: '2.0',
-          id: 'my-id',
-          method: 'getAssetsByOwner',
-          params: {
-            ownerAddress: userAccount,
-            page: 1, // Starts at 1
-            limit: 1000,
-            displayOptions: {
-                showFungible: true,
-            },
-          },
-        }),
-    });
-    let json = await response.json();
-    return json.result.items;
+    let errors = 0;
+    while(errors < 10) {
+        try {
+            const response = await fetch(getRPCEndpoint(), {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  jsonrpc: '2.0',
+                  id: 'my-id',
+                  method: 'getAssetsByOwner',
+                  params: {
+                    ownerAddress: userAccount,
+                    page: 1, // Starts at 1
+                    limit: 1000,
+                    displayOptions: {
+                        showFungible: true,
+                    },
+                  },
+                }),
+            });
+            let json = await response.json();
+            return json.result.items;
+        }
+
+        catch(e) {
+            console.log('getAssetsByOwner');
+            console.log(e);
+            errors++;
+        }
+    }
+    return [];
 }
 
 export const getUserTokens = async(userAccount: PublicKey) => {
