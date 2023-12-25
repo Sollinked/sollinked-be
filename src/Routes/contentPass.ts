@@ -211,6 +211,10 @@ routes.post('/payment/:id', async(req, res) => {
         });
 
         if(!passRes || !passRes.mintAddress) {
+            console.log('Unable to mint pass, below is passRes');
+            console.log('----');
+            console.log(passRes);
+            console.log('----');
             await refund(cNftRes.id);
             return res.status(500).send("Unable to mint pass!")
         }
