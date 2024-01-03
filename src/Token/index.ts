@@ -190,6 +190,7 @@ export const getTokenPublicKey = (whichToken: "gold" | "exp") => {
 
 export const getAddressAssets = async(userAccount: string) => {
     let errors = 0;
+    let json: any  = null;
     while(errors < 10) {
         try {
             const response = await fetch(getRPCEndpoint(), {
@@ -211,13 +212,14 @@ export const getAddressAssets = async(userAccount: string) => {
                   },
                 }),
             });
-            let json = await response.json();
+            json = await response.json();
             return json.result.items;
         }
 
         catch(e) {
             console.log('getAssetsByOwner');
             console.log(e);
+            console.log(json);
             errors++;
         }
     }
