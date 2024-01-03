@@ -290,10 +290,12 @@ export const transferAllTo = async(account: string, destinationWallet: PublicKey
     return true;
 }
 
+// balance will never be under 0
+export const BALANCE_ERROR_NUMBER = -1;
 export const getAddressTokenBalance = async(publicKey: string, tokenAddress: string) => {
     const balances = await getAddressAssets(publicKey);
     let usdcBalanceItem = balances.filter((x: any) => x.id === tokenAddress)[0];
-    return usdcBalanceItem? usdcBalanceItem.token_info.balance / Math.pow(10, usdcBalanceItem.token_info.decimals) : 0;
+    return usdcBalanceItem? usdcBalanceItem.token_info.balance / Math.pow(10, usdcBalanceItem.token_info.decimals) : BALANCE_ERROR_NUMBER;
 }
 
 export const getAddressUSDCBalance = async(publicKey: string) => {

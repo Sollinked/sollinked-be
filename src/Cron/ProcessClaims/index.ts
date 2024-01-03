@@ -1,5 +1,5 @@
 import * as mailController from '../../Controllers/mailController';
-import { getAddressUSDCBalance } from '../../Token';
+import { BALANCE_ERROR_NUMBER, getAddressUSDCBalance } from '../../Token';
 
 const CHECK_BALANCE_COUNT = 3;
 export const processClaims = async() => {
@@ -18,7 +18,7 @@ export const processClaims = async() => {
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
 
         // errored
-        if(tokenBalance === null) {
+        if(tokenBalance === null || tokenBalance === BALANCE_ERROR_NUMBER) {
             // reset count if previously we find it's 0
             await mailController.update(mail.key, { claim_balance_verify_count: 0 });
             continue;

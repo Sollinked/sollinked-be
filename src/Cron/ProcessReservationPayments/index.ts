@@ -3,7 +3,7 @@ import * as userReservationController from '../../Controllers/userReservationCon
 import * as webhookController from '../../Controllers/webhookController';
 import * as clientio from 'socket.io-client';
 import moment from 'moment';
-import { getAddressUSDCBalance } from '../../Token';
+import { BALANCE_ERROR_NUMBER, getAddressUSDCBalance } from '../../Token';
 import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_CANCELLED, RESERVATION_STATUS_CLAIMED, RESERVATION_STATUS_PAID, RESERVATION_STATUS_PENDING } from '../../Constants';
 import { getServerPort, sendSOLTo } from '../../../utils';
 
@@ -41,7 +41,7 @@ export const processReservationPayments = async() => {
         let tokenBalance = await getAddressUSDCBalance(reservation.tiplink_public_key!);
         
         // errored
-        if(tokenBalance === null) {
+        if(tokenBalance === null || tokenBalance === BALANCE_ERROR_NUMBER) {
             continue;
         }
 
@@ -91,7 +91,7 @@ export const processExpiredReservationPayments = async() => {
         let tokenBalance = await getAddressUSDCBalance(reservation.tiplink_public_key!);
 
         // errored
-        if(tokenBalance === null) {
+        if(tokenBalance === null || tokenBalance === BALANCE_ERROR_NUMBER) {
             continue;
         }
 
@@ -140,8 +140,8 @@ export const processReservationClaims = async() => {
     for(const [index, reservation] of reservations.entries()) {
         let tokenBalance = await getAddressUSDCBalance(reservation.tiplink_public_key!);
 
-        // not claimed
-        if(tokenBalance === null || tokenBalance > 0) {
+        // not claimed or errored
+        if(tokenBalance === null  || tokenBalance === BALANCE_ERROR_NUMBER || tokenBalance > 0) {
             continue;
         }
 

@@ -4,7 +4,7 @@ import * as userTierController from '../../Controllers/userTierController';
 import * as webhookController from '../../Controllers/webhookController';
 import moment from 'moment';
 import { createEmailForwarder, deleteAttachments, getEmailByMessageId, mapAttachments, sendEmail } from '../../Mail';
-import { getAddressUSDCBalance } from '../../Token';
+import { BALANCE_ERROR_NUMBER, getAddressUSDCBalance } from '../../Token';
 import { v4 as uuidv4 } from 'uuid';
 import { getMailCredentials, sendSOLTo } from '../../../utils';
 
@@ -28,7 +28,7 @@ export const processPayments = async() => {
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
 
         // errored
-        if(tokenBalance === null) {
+        if(tokenBalance === null || tokenBalance === BALANCE_ERROR_NUMBER) {
             continue;
         }
 
@@ -146,7 +146,7 @@ export const processMailsWithNoResponse = async() => {
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
 
         // errored
-        if(usdcBalance === null) {
+        if(usdcBalance === null || usdcBalance === BALANCE_ERROR_NUMBER) {
             continue;
         }
 
