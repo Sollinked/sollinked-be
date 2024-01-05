@@ -20,21 +20,22 @@ export const processClaims = async() => {
         // errored
         if(tokenBalance === null || tokenBalance === BALANCE_ERROR_NUMBER) {
             // reset count if previously we find it's 0
-            await mailController.update(mail.key, { claim_balance_verify_count: 0 });
+            // await mailController.update(mail.key, { claim_balance_verify_count: 0 });
             continue;
         }
 
         if(tokenBalance > 0) {
             // reset count if previously we find it's 0
-            await mailController.update(mail.key, { claim_balance_verify_count: 0 });
+            // await mailController.update(mail.key, { claim_balance_verify_count: 0 });
             continue;
         }
 
         // if it's 0 and check balance count is less than required then add 1 to the count
-        if(mail.claim_balance_verify_count < CHECK_BALANCE_COUNT) {
-            await mailController.update(mail.key, { claim_balance_verify_count: mail.claim_balance_verify_count + 1 });
-            return;
-        }
+        // if(mail.claim_balance_verify_count < CHECK_BALANCE_COUNT) {
+        //     await mailController.update(mail.key, { claim_balance_verify_count: mail.claim_balance_verify_count + 1 });
+        //     return;
+        // }
+        
         // mark as claimed
         await mailController.update(mail.key, { is_claimed: true });
     } 

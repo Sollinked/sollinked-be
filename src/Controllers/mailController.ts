@@ -42,7 +42,12 @@ export const view = async(id: number) => {
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}, createdAfter?: string, onlyFromSMTP?: boolean) => {
+export const find = async(whereParams: {[key: string]: any}, args?: {
+    createdAfter?: string, 
+    onlyFromSMTP?: boolean, 
+    unexpiredOnly?: boolean,
+    checkBalanceCount?: number;
+}) => {
     const filtered = _.pick(whereParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, { separator: ' AND ', isSearch: true });
     const query = `SELECT 
@@ -64,11 +69,14 @@ export const find = async(whereParams: {[key: string]: any}, createdAfter?: stri
                         processed_at,
                         expiry_date,
                         subject,
-                        is_from_site
+                        is_from_site,
+                        claim_balance_verify_count
                     FROM ${table} 
                     WHERE ${params}
-                    ${createdAfter? `AND created_at >= '${createdAfter}'` : ""}
-                    ${onlyFromSMTP? `AND is_from_site = false` : ""}
+                    ${args?.createdAfter? `AND created_at >= '${args?.createdAfter}'` : ""}
+                    ${args?.onlyFromSMTP? `AND is_from_site = false` : ""}
+                    ${args?.unexpiredOnly? `AND expiry_date > '${moment().format('YYYY-MM-DDTHH:mm:ssZ')}'` : ""}
+                    ${args?.checkBalanceCount? `AND claim_balance_verify_count < ${args?.checkBalanceCount}` : ""}
                     AND (CASE WHEN message_id = 'from site' AND bcc_to_email is null then false else true end)`;
 
     const db = new DB();
@@ -110,7 +118,8 @@ export const getExpired = async() => {
                         expiry_date,
                         sent_message_id,
                         subject,
-                        is_from_site
+                        is_from_site,
+                        claim_balance_verify_count
                     FROM ${table} 
                     WHERE 
                         value_usd > 0 

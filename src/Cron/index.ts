@@ -1,4 +1,4 @@
-import { processEmails } from "./ProcessEmails";
+import { processEmails, processUnclaimedRespondedEmails } from "./ProcessEmails";
 import cron from 'node-cron';
 import { processMailsWithNoResponse, processPayments } from "./ProcessPayments";
 import { processClaims } from "./ProcessClaims";
@@ -24,6 +24,7 @@ export const init = () => {
 
     setInterval(() => {
         processReservationPayments();
+        processUnclaimedRespondedEmails();
     }, 5000);
 
     // process emails every 30s

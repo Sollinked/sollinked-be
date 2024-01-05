@@ -285,6 +285,18 @@ export const processEmails = () => {
     }
 }
 
+const CHECK_BALANCE_COUNT = 3;
+export const processUnclaimedRespondedEmails = async() => {
+    let mails = await controller.find({ has_responded: true, is_claimed: false, }, { unexpiredOnly: true, checkBalanceCount: CHECK_BALANCE_COUNT });
+    if(!mails) {
+        return;
+    }
+
+    for(const mail of mails) {
+        await autoClaimFromMail(mail);
+    }
+}
+
 const autoClaimFromMail = async(mail: ProcessedMail) => {
     let user = await userController.find({ id: mail.user_id });
     if(!user)  {
@@ -313,7 +325,10 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
 
     // errored
     if(retries >= 3) {
-        console.log('Unable to auto claim');
+        if(mail.claim_balance_verify_count < CHECK_BALANCE_COUNT) {
+            await controller.update(mail.key, { claim_balance_verify_count: mail.claim_balance_verify_count + 1 });
+        }
+        console.log(`Unable to auto claim: ${tiplink.url}`);
         return;
     }
 

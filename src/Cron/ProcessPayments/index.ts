@@ -13,7 +13,10 @@ export const processPayments = async() => {
     let createdAfter = moment().add(-2, 'd').format('YYYY-MM-DD')
     let mails = await mailController.find({
         is_processed: false,
-    }, createdAfter, true);
+    }, {
+        createdAfter,
+        onlyFromSMTP: true,
+    });
 
     // no mails
     if(!mails) {
