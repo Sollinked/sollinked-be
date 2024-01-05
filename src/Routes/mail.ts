@@ -39,6 +39,7 @@ routes.post('/new/:username', async(req, res) => {
         message_id: "from site",
         tiplink_url: tiplink.url.toString(),
         tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
+        is_from_site: true,
     });
 
     if(!result) {
@@ -119,7 +120,7 @@ routes.post('/payment/:username', async(req, res) => {
                 });
 
                 // receipt
-                await sendEmail({
+                let email_receipt_id = await sendEmail({
                     to: mail.from_email,
                     subject: `Email Receipt`,
                     text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.` + `\n\n---- Copy of message -----\n\n${message}`,
@@ -136,7 +137,9 @@ routes.post('/payment/:username', async(req, res) => {
                     value_usd: valueUsd,
                     is_processed: true,
                     bcc_to_email,
+                    message_id: email_receipt_id,
                     sent_message_id,
+                    subject: subject ?? "No Subject"
                 });
     
                 await sendSOLTo(true, mail.tiplink_public_key, 0.003);

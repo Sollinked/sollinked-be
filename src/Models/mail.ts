@@ -16,6 +16,8 @@ export type Mail = {
     value_usd?: string;
     expiry_date?: string;
     claim_balance_verify_count: number;
+    subject?: string;
+    is_from_site: boolean;
 }
 
 export type ProcessedMail = {
@@ -36,6 +38,8 @@ export type ProcessedMail = {
     value_usd?: number;
     expiry_date?: string;
     claim_balance_verify_count: number;
+    subject?: string;
+    is_from_site: boolean;
 }
 
 export const fillableColumns = [
@@ -56,4 +60,6 @@ export const fillableColumns = [
     'value_usd',
     'expiry_date',
     'claim_balance_verify_count',
+    'subject',
+    'is_from_site',
 ];

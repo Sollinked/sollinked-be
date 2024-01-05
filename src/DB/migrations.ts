@@ -775,4 +775,29 @@ export default [
             DROP INDEX user_tags_user_id_idx;
         `,
     },
+
+    // add subject to mails 
+    {
+        name: "add_subject_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD subject text null;
+            `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN subject;
+        `
+    },
+    {
+        name: "add_is_from_site_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD is_from_site boolean default(false) not null;
+            `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN is_from_site;
+        `
+    },
+
 ];

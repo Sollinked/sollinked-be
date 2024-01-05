@@ -62,11 +62,13 @@ export const find = async(whereParams: {[key: string]: any}, createdAfter?: stri
                         coalesce(value_usd, 0) as value_usd,
                         created_at,
                         processed_at,
-                        expiry_date
+                        expiry_date,
+                        subject,
+                        is_from_site
                     FROM ${table} 
                     WHERE ${params}
                     ${createdAfter? `AND created_at >= '${createdAfter}'` : ""}
-                    ${onlyFromSMTP? `AND message_id <> 'from site'` : ""}
+                    ${onlyFromSMTP? `AND is_from_site = false` : ""}
                     AND (CASE WHEN message_id = 'from site' AND bcc_to_email is null then false else true end)`;
 
     const db = new DB();
@@ -106,7 +108,9 @@ export const getExpired = async() => {
                         created_at,
                         processed_at,
                         expiry_date,
-                        sent_message_id
+                        sent_message_id,
+                        subject,
+                        is_from_site
                     FROM ${table} 
                     WHERE 
                         value_usd > 0 

@@ -16,9 +16,9 @@ export const init = () => {
         processClaims();
         processExpiredReservationPayments();
         processReservationClaims();
-        processGithubInvitations();
-        syncRepo();
-        processGithubIssues();
+        // processGithubInvitations();
+        // syncRepo();
+        // processGithubIssues();
         processMailsWithNoResponse();
     });
 

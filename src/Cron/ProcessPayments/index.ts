@@ -114,6 +114,7 @@ export const processPayments = async() => {
                 is_processed: true,
                 bcc_to_email,
                 sent_message_id,
+                subject: subject ?? "No Subject"
             });
 
             await sendSOLTo(true, mail.tiplink_public_key, 0.003);
@@ -142,7 +143,7 @@ export const processMailsWithNoResponse = async() => {
     }
 
     for(const [index, mail] of mails.entries()) {
-        const { user_id, from_email, to_email, tiplink_url, tiplink_public_key, message_id, sent_message_id } = mail;
+        const { user_id, from_email, to_email, tiplink_url, tiplink_public_key, message_id, sent_message_id, subject, is_from_site } = mail;
         let usdcBalance = await getAddressUSDCBalance(tiplink_public_key);
 
         // errored
@@ -151,32 +152,22 @@ export const processMailsWithNoResponse = async() => {
         }
 
         if(usdcBalance > 0) {
-            let isFromSite = message_id === "from site";
-            let subject = "Email Refunded";
-            if(!isFromSite) {
-                try {
-                    subject = (await getEmailByMessageId(message_id) as any).subject;
-                }
-    
-                catch {
-                    console.log('cant get subject');   
-                }
-            }
+            let isNotValidId = message_id === "from site";
+            let senderSubject = is_from_site? 'Email Receipt' : subject;
             
             await sendEmail({
                 to: from_email,
-                subject: "USDC Refund",
-                inReplyTo: isFromSite? undefined : message_id,
-                references: isFromSite? undefined : message_id,
-                text: `${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.\n\nPlease make sure it's a Tiplink URL, you will not be asked to deposit any funds.\n\nRegards,\nSollinked.
-                `,
+                subject: senderSubject ?? "USDC Refund",
+                inReplyTo: isNotValidId? undefined : message_id,
+                references: isNotValidId? undefined : message_id,
+                text: `${to_email} has failed to respond within the time limit. Please claim the refund through this link ${tiplink_url}.\n\nPlease make sure it's a Tiplink URL, you will not be asked to deposit any funds.\n\nRegards,\nSollinked.`,
             });
 
             let users = await userController.find({ id: user_id });
             if(sent_message_id && users && users[0].email_address) {
                 await sendEmail({
                     to: users[0].email_address,
-                    subject,
+                    subject: subject ?? "Email Refunded",
                     inReplyTo: sent_message_id,
                     references: sent_message_id,
                     text: `This email has expired, the funds had been returned to the sender.`,
