@@ -501,19 +501,18 @@ export const getAddressNftDetails = async(isPublicKey: boolean, account: string)
     return result;
 }
 
-export const getAddressSOLBalance = async(isPublicKey: boolean, account: string) => {
+export const getAddressSOLBalance = async(publicKey: PublicKey) => {
     // load the env variables and store the cluster RPC url
     const CLUSTER_URL = getRPCEndpoint();
 
     // create a new rpc connection, using the ReadApi wrapper
     const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
-    let publicKey = getPlayerPublicKey(isPublicKey, account);
 
     const result = await connection.getBalance(publicKey);
     return result / 1000000000;
 }
 
-export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: number) => {
+export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: number, keypair?: Keypair) => {
     // load the env variables and store the cluster RPC url
     const CLUSTER_URL = getRPCEndpoint();
 
@@ -523,28 +522,28 @@ export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: nu
 
     let lamports = Math.round(amount * 1000000000);
 
-    let adminAccount = getAdminAccount();
+    let currentKeypair = keypair ?? getAdminAccount();
     let transaction = new Transaction().add(
         SystemProgram.transfer({
-            fromPubkey: adminAccount.publicKey,
+            fromPubkey: currentKeypair.publicKey,
             toPubkey: publicKey,
             lamports,
         })
     );
     // Send and confirm transaction
     // Note: feePayer is by default the first signer, or payer, if the parameter is not set
-    let txSignature = await connection.sendTransaction(transaction, [adminAccount]);
+    let txSignature = await connection.sendTransaction(transaction, [currentKeypair]);
 
     return txSignature;
 }
 
-export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: number, amount: number) => {
+export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: number, amount: number, keypair?: Keypair) => {
     // load the env variables and store the cluster RPC url
     const CLUSTER_URL = getRPCEndpoint();
 
     // create a new rpc connection, using the ReadApi wrapper
     const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
-    let adminAccount = getAdminAccount();
+    let currentKeypair = keypair ?? getAdminAccount();
 
     const mintToken = new PublicKey(token);
     const recipientAddress = new PublicKey(sendTo);
@@ -554,14 +553,14 @@ export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: 
     // get the sender's token account
     const associatedTokenFrom = await getAssociatedTokenAddress(
       mintToken,
-      adminAccount.publicKey
+      currentKeypair.publicKey
     );
 
     const fromAccount = await getAccount(connection, associatedTokenFrom);
     let {
         associatedTokenTo,
         transaction: createTransaction,
-    } = await getOrCreateAssociatedAccount(mintToken, adminAccount.publicKey, recipientAddress);
+    } = await getOrCreateAssociatedAccount(mintToken, currentKeypair.publicKey, recipientAddress);
 
     if(createTransaction) {
         transactionInstructions.push(createTransaction);
@@ -572,7 +571,7 @@ export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: 
       createTransferInstruction(
         fromAccount.address, // source
         associatedTokenTo, // dest
-        adminAccount.publicKey,
+        currentKeypair.publicKey,
         Math.round(amount * tokenDecimals),
       )
     );
@@ -581,7 +580,7 @@ export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: 
     const transaction = new Transaction().add(...transactionInstructions);
     // Send and confirm transaction
     // Note: feePayer is by default the first signer, or payer, if the parameter is not set
-    const signature = await connection.sendTransaction(transaction, [adminAccount]);
+    const signature = await connection.sendTransaction(transaction, [currentKeypair]);
     return signature;
 }
 
@@ -617,15 +616,14 @@ export const getOrCreateAssociatedAccount = async(mintToken: PublicKey, payer: P
 }
 
 // non public key account
-export const clawbackSOLFrom = async(account: string) => {
+export const clawbackSOLFrom = async(keypair: Keypair) => {
     // load the env variables and store the cluster RPC url
     const CLUSTER_URL = getRPCEndpoint();
 
     // create a new rpc connection, using the ReadApi wrapper
     const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
-    let playerAccount = getNonPublicKeyPlayerAccount(account);
 
-    let solBalance = await getAddressSOLBalance(false, account);
+    let solBalance = await getAddressSOLBalance(keypair.publicKey);
 
     // leave 0.001 SOL
     let clawbackBalance = solBalance - 0.001;
@@ -640,7 +638,7 @@ export const clawbackSOLFrom = async(account: string) => {
     let adminAccount = getAdminAccount();
     let transaction = new Transaction().add(
         SystemProgram.transfer({
-            fromPubkey: playerAccount.publicKey,
+            fromPubkey: keypair.publicKey,
             toPubkey: adminAccount.publicKey,
             lamports,
         })
@@ -648,9 +646,9 @@ export const clawbackSOLFrom = async(account: string) => {
     // Send and confirm transaction
     // Note: feePayer is by default the first signer, or payer, if the parameter is not set
 
-    let txSignature = await connection.sendTransaction(transaction, [playerAccount]);
+    let txSignature = await connection.sendTransaction(transaction, [keypair]);
 
-    console.log('SOL Clawback: ' + txSignature);
+    console.log(`${clawbackBalance} SOL Clawback: ${txSignature}`);
     return txSignature;
 }
 

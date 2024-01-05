@@ -4,8 +4,10 @@ import { deleteEmailForwarder, getImap, sendEmail } from '../../../src/Mail';
 import * as controller from '../../../src/Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
-import { getExcludeEmailDomains, getMailCredentials } from '../../../utils';
+import { clawbackSOLFrom, getExcludeEmailDomains, getMailCredentials, sendTokensTo } from '../../../utils';
 import moment from 'moment';
+import { USDC_ADDRESS, USDC_DECIMALS } from '../../Constants';
+import { ProcessedMail } from '../../Models/mail';
 
 const processEmailToUser = async({
     domain,
@@ -61,6 +63,7 @@ const processEmailToUser = async({
         
             // process completed, dont need the bcc forwarder anymore
             await deleteEmailForwarder(uuid);
+            await autoClaimFromMail(mail);
             return;
         }
 
@@ -154,11 +157,12 @@ const processEmailResponse = async({
         return;
     }
 
-    // mark the mail as responded
+    // mark the mail as responded and claimed
     await controller.update(mails[0].key, { has_responded: true });
 
     // process completed, dont need the bcc forwarder anymore
     await deleteEmailForwarder(bcc_username);
+    await autoClaimFromMail(mails[0]);
 }
     
 export const processEmails = () => {
@@ -279,4 +283,57 @@ export const processEmails = () => {
         console.log('PE4: ')
         console.log(e);
     }
+}
+
+const autoClaimFromMail = async(mail: ProcessedMail) => {
+    let user = await userController.find({ id: mail.user_id });
+    if(!user)  {
+        console.log('processEmailResponse: ', `missing user`);
+        return;
+    }
+
+    if(!mail.value_usd) {
+        console.log('processEmailResponse: ', `mail has 0 value`);
+        return;
+    }
+
+    let retries  = 0;
+    let tiplink = await TipLink.fromUrl(new URL(mail.tiplink_url));
+    while(retries < 3) {
+        try {
+            await sendTokensTo(user[0].address, USDC_ADDRESS, USDC_DECIMALS, mail.value_usd, tiplink.keypair);
+            console.log('processEmailResponse: ', `Sent ${mail.value_usd} USDC to ${user[0].username} (${user[0].address})`);
+            break;
+        }
+
+        catch {
+            retries++;
+        }
+    }
+
+    // errored
+    if(retries >= 3) {
+        console.log('Unable to auto claim');
+        return;
+    }
+
+    retries = 0;
+    while(retries < 3) {
+        try {
+            await clawbackSOLFrom(tiplink.keypair);
+            break;
+        }
+
+        catch {
+            retries++;
+        }
+    }
+    if(retries >= 3) {
+        console.log(`Unable to clawback from: ${tiplink.url}`);
+        return;
+    }
+
+
+    // mark the mail as responded and claimed
+    await controller.update(mail.key, { is_claimed: true });
 }

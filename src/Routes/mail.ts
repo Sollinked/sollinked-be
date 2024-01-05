@@ -163,6 +163,7 @@ routes.post('/payment/:username', async(req, res) => {
             if(e.message === "Old Tx") {
                 return res.status(400).send("Old Tx");
             }
+            console.log(e);
             retries++;
             await sleep(2000); //sleep 2s
             continue;
