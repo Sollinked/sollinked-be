@@ -1,4 +1,4 @@
-import { clawbackSOLFrom, formatDBParamsToStr, getAddressNftDetails, getInsertQuery, sendSOLTo, transferCNfts } from "../../utils";
+import { formatDBParamsToStr, getInsertQuery, } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import { UserGithubWhitelist, fillableColumns } from "../Models/UserGithubWhitelist";
