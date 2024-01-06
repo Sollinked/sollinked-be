@@ -90,8 +90,8 @@ export const processPayments = async() => {
             let sent_message_id = await sendEmail({
                 to: user.email_address,
                 subject: `${subject ?? "No Subject"}`,
-                text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\n\n${text}`,
-                textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><br>${textAsHtml}`,
+                text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${from}\n\n${text}`,
+                textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${from} UTC</p><br>${textAsHtml}`,
                 attachments,
                 replyTo: `${from}, ${uuid}@${credentials.domain}`
             });
