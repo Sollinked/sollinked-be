@@ -93,7 +93,7 @@ export const processPayments = async() => {
                 text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${from}\n\n${text}`,
                 textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${from} UTC</p><br>${textAsHtml}`,
                 attachments,
-                replyTo: `${from}, ${uuid}@${credentials.domain}`
+                replyTo: `${uuid}@${credentials.domain}`
             });
             
             // receipt

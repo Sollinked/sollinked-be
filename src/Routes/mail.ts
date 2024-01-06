@@ -115,8 +115,8 @@ routes.post('/payment/:username', async(req, res) => {
                 let sent_message_id = await sendEmail({
                     to: user.email_address!,
                     subject: `${subject ?? "No Subject"}`,
-                    text: `Paid: ${valueUsd} USDC\nExpiry Date: ${utc_expiry_date} UTC\n\n${message}`,
-                    replyTo: `${mail.from_email}, ${bcc_to_email}`
+                    text: `Paid: ${valueUsd} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${mail.from_email} UTC\n\n${message}`,
+                    replyTo: `${bcc_to_email}`
                 });
 
                 // receipt
