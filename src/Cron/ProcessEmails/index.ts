@@ -1,6 +1,6 @@
 import { simpleParser } from 'mailparser';
 import { TipLink } from '@tiplink/api';
-import { deleteEmailForwarder, getImap, sendEmail } from '../../../src/Mail';
+import { deleteEmailForwarder, getEmailByMessageId, getImap, mapAttachments, sendEmail } from '../../../src/Mail';
 import * as controller from '../../../src/Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
@@ -8,6 +8,7 @@ import { clawbackSOLFrom, getExcludeEmailDomains, getMailCredentials, sendTokens
 import moment from 'moment';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../../Constants';
 import { ProcessedMail } from '../../Models/mail';
+import Connection, { ImapMessage } from 'imap';
 
 const processEmailToUser = async({
     domain,
@@ -15,13 +16,15 @@ const processEmailToUser = async({
     returnToEmail,
     messageId,
     subject,
+    unreadCallback,
 }: {
     domain: string;
     toEmailMatch: string[];
     returnToEmail: string;
     messageId: string;
     subject?: string;
-}) => {              
+    unreadCallback: () => void;
+}) => {            
     // only get emails to this domain and ignore noreply
     let toEmails = toEmailMatch.filter(x => x.includes(domain) && !x.includes("noreply"));
     if(toEmails.length === 0) {
@@ -37,21 +40,50 @@ const processEmailToUser = async({
         let uuidEmail = toEmail;
         let uuid = uuidEmail.replace(`@${domain}`, "");
         let mails = await controller.find({ bcc_to_email: uuidEmail });
-        if(mails && mails.length > 0) {
-            /* await sendEmail({
-                to: returnToEmail,
-                subject: 'Re: ' + subject,
-                inReplyTo: messageId,
-                references: messageId,
-                text: `This is an automated message.\n\nWe noticed that you have replied to the noreply bot. Please reply to the intended person and BCC to the specified BCC email address to claim your tip! You can also click the Reply link (it's just a mailto: link) to expedite the process.\n\nRegards, Sollinked.`,
-            }); */
 
+        // has uuid
+        if(mails && mails.length > 0) {
             let mail = mails[0];
             let originalSender = mail.from_email.toLowerCase();
         
             // check if the responder actually responded to the original sender
             let toEmails = toEmailMatch.filter(x => x.toLowerCase() === originalSender);
-            if(toEmails.length === 0) {
+
+            // send the email on behalf of the user
+            // might have cc or other to's
+            // already have uuid so it must be sent to this uuid
+            // so we just need to check if toEmails.length is 0 (not sent to original sender)
+            // to send on behalf of the user
+            if(toEmailMatch.length >= 1 && toEmails.length === 0) {
+                console.log(`Sending on behalf of ${mail.to_email}`);
+                try {
+                    let { subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(messageId) as any;
+                    let attachments = mapAttachments(parserAttachments);
+    
+                    await sendEmail({
+                        to: mail.from_email,
+                        subject: `${subject ?? "No Subject"}`,
+                        text,
+                        textAsHtml,
+                        attachments,
+                        replyTo: mail.to_email,
+                        from: mail.to_email,
+                        references: mail.message_id,
+                        inReplyTo: mail.message_id,
+                    });
+                }
+
+                catch(e: any) {
+                    console.log(`PE5: ${e.name}`);
+                    // mark as unread so we can process it again
+
+                    unreadCallback();
+                    return;
+                }
+            }
+
+            // sent to user from own email
+            else if(toEmails.length === 0) {
                 console.log('processEmailResponse: ', 'cant find email original sender, aborting');
                 console.log('processEmailResponse: ', `original sender: ${originalSender}`);
                 console.log('processEmailResponse: ', `toEmailMatch: ${toEmailMatch.join(",")}`);
@@ -60,7 +92,7 @@ const processEmailToUser = async({
 
             // mark the mail as responded
             await controller.update(mail.key, { has_responded: true });
-        
+
             // process completed, dont need the bcc forwarder anymore
             await deleteEmailForwarder(uuid);
             await autoClaimFromMail(mail);
@@ -121,7 +153,7 @@ const processEmailToUser = async({
     });
 }
 
-// user responded to email
+// user responded to email, bcc variant
 const processEmailResponse = async({
     domain,
     toEmailMatch,
@@ -180,9 +212,17 @@ export const processEmails = () => {
                     try {
                         const f = imap.fetch(results, { bodies: '' });
                         f.on('message', msg => {
+
+                            let uid = 0;
+                            msg.once('attributes', attrs => {
+                                uid = attrs.uid;
+                                imap.addFlags(uid, ['\\Seen'], () => {
+                                    // do nothing
+                                });
+                            });
+
                             msg.on('body', stream => {
                                 simpleParser(stream as any, async(err, parsed) => {
-                                    /* console.log(parsed); */
                                     const { from, to, subject, textAsHtml, text, messageId, bcc } = parsed;
     
                                     if(!from) {
@@ -217,6 +257,13 @@ export const processEmails = () => {
                                         returnToEmail,
                                         messageId,
                                         subject,
+                                        unreadCallback: () => {
+                                            console.log('marking as read')
+                                            console.log({uid})
+                                            imap.delFlags(uid, ['\\Seen'], () => {
+                                                // do nothing
+                                            });
+                                        }
                                     });
 
                                     if(!bcc) {
@@ -233,16 +280,10 @@ export const processEmails = () => {
                                     await processEmailResponse({
                                         domain: credentials.domain,
                                         toEmailMatch,
-                                        bccEmailMatch
+                                        bccEmailMatch,
                                     });
                                 })
                             })
-                            msg.once('attributes', attrs => {
-                                const {uid} = attrs;
-                                imap.addFlags(uid, ['\\Seen'], () => {
-                                    // do nothing
-                                });
-                            });
                         });
     
                         f.once('error', e => {
@@ -252,7 +293,7 @@ export const processEmails = () => {
     
                         f.once('end', () => {
                             // fetched all messages
-                            imap.end();
+                            //imap.end();
                         });
                     }
 
@@ -318,7 +359,8 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
             break;
         }
 
-        catch {
+        catch(e) {
+            console.log(e);
             retries++;
         }
     }
@@ -339,7 +381,8 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
             break;
         }
 
-        catch {
+        catch(e) {
+            console.log(e);
             retries++;
         }
     }
