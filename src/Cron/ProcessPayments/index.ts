@@ -7,6 +7,7 @@ import { createEmailForwarder, deleteAttachments, getEmailByMessageId, mapAttach
 import { BALANCE_ERROR_NUMBER, getAddressUSDCBalance } from '../../Token';
 import { v4 as uuidv4 } from 'uuid';
 import { getMailCredentials, sendSOLTo } from '../../../utils';
+import DB from '../../DB';
 
 export const processPayments = async() => {
     let credentials = getMailCredentials();
@@ -20,7 +21,8 @@ export const processPayments = async() => {
 
     // no mails
     if(!mails) {
-        console.log('process payment', 'no unprocessed mails');
+        let db = new DB();
+        await db.log('ProcessPayments', 'processPayments', 'No unprocessed mails');
         return;
     }
 
@@ -43,17 +45,20 @@ export const processPayments = async() => {
         let tiers = await userTierController.find({ user_id: mail.user_id });
 
         if(!user) {
-            console.log('process payment', 'no user');
+            let db = new DB();
+            await db.log('ProcessPayments', 'processPayments', 'No user');
             continue;
         }
         
         if(!user.email_address) {
-            console.log('process payment', `no email address: ${user.id}`);
+            let db = new DB();
+            await db.log('ProcessPayments', 'processPayments', `No email address: ${user.id}`);
             continue;
         }
 
         if(!tiers) {
-            console.log('process payment', 'no tier');
+            let db = new DB();
+            await db.log('ProcessPayments', 'processPayments', `No tier: ${user.id}`);
             /* // user didn't set tiers, all emails are eligible
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);
@@ -141,7 +146,8 @@ export const processPayments = async() => {
 export const processMailsWithNoResponse = async() => {
     let mails = await mailController.getExpired();
     if(!mails) {
-        console.log('No expired mails')
+        let db = new DB();
+        await db.log('ProcessPayments', 'processMailsWithNoResponse', `No expired mails`);
         return;
     }
 

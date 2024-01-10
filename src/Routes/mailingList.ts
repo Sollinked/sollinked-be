@@ -8,6 +8,7 @@ import axios from 'axios';
 import moment from 'moment';
 import { getSphereKey, getSphereWalletId, getSubscriptionFee } from '../../utils';
 import { USDC_ADDRESS } from '../Constants';
+import DB from '../DB';
 
 const {
     subscriptionFee,
@@ -71,8 +72,9 @@ routes.post('/', async(req, res) => {
         wallet = walletRes.data.data.wallet;
     }
 
-    catch (e){
-        console.log(e);
+    catch (e: any){
+        let db = new DB();
+        await db.log('mailingList', '/', e.toString());
         return res.status(500).send("Unable to create product");
     }
     
@@ -168,7 +170,8 @@ routes.post('/priceList', async(req, res) => {
                 );
             
                 if(!priceRes.data.ok || !priceRes.data.data || !priceRes.data.data.price) {
-                    console.log('unable to create price');
+                    let db = new DB();
+                    await db.log('mailingList', '/priceList', 'Unable to create price');
                     return;
                 }
                 priceRet = priceRes.data.data.price;
@@ -200,7 +203,8 @@ routes.post('/priceList', async(req, res) => {
                 );
             
                 if(!paymentLinkRes.data.ok || !paymentLinkRes.data.data || !paymentLinkRes.data.data.paymentLink) {
-                    console.log('unable to create payment link');
+                    let db = new DB();
+                    await db.log('mailingList', '/priceList', 'Unable to create payment link');
                     return;
                 }
         
@@ -208,7 +212,8 @@ routes.post('/priceList', async(req, res) => {
             }
         
             catch (e: any){
-                console.log('unable to create price');
+                let db = new DB();
+                await db.log('mailingList', '/priceList', `Unable to create price\n\n${e.toString()}`);
                 return;
             }
             
@@ -484,7 +489,8 @@ routes.post('/resend', async(req, res) => {
     }
 
     if(subscriber.user_id !== user.id) {
-        console.log('wrong subscriber')
+        let db = new DB();
+        await db.log('mailingList', '/resend', 'Wrong subscriber');
         return res.status(401).send("Unauthorized");
     }
 
@@ -493,12 +499,14 @@ routes.post('/resend', async(req, res) => {
     }
 
     if(!subscriber.price_tier) {
-        console.log('no subscriber')
+        let db = new DB();
+        await db.log('mailingList', '/resend', 'No subscriber');
         return res.status(401).send("Unauthorized");
     }
 
     if(subscriber.price_tier.past_broadcasts.filter(x => x.id === Number(broadcast_id)).length === 0) {
-        console.log('price tier doesnt contain broadcast id')
+        let db = new DB();
+        await db.log('mailingList', '/resend', 'Price tier doesnt contain broadcast id');
         return res.status(401).send("Unauthorized");
     }
 
@@ -571,56 +579,65 @@ routes.post('/subscribe', async(req, res) => {
         });
             
         if(!paymentRes.data.ok || !paymentRes.data.data || !paymentRes.data.data.payment) {
-            console.log(`Unable to get payment: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Unable to get payment: ${payment.id}`);
             return res.status(400).send("Unable to get payment");;
         }
 
         let paymentRet = paymentRes.data.data.payment;
         if(paymentRet.type !== "subscription") {
-            console.log(`Payment is not subscription: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Payment is not subscription: ${payment.id}`);
             return res.status(400).send("Payment is not subscription");;
         }
 
         if(paymentRet.status !== "succeeded") {
-            console.log(`Payment failed: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Payment failed: ${payment.id}`);
             return res.status(400).send("Payment failed");;
         }
 
         let paymentLink = paymentRet.paymentLink;
         if(!paymentLink) {
-            console.log(`Missing payment link: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Missing payment link: ${payment.id}`);
             return res.status(400).send("Payment link missing");;
         }
 
         let customer = paymentRet.customer;
         if(!customer || !customer.solanaPubKey) {
-            console.log(`Missing customer: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Missing customer: ${payment.id}`);
             return res.status(400).send("customer missing");;
         }
 
         let lineItems = paymentLink.lineItems;
         if(!lineItems || lineItems.length === 0) {
-            console.log(`Missing lineItems: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Missing lineItems: ${payment.id}`);
             return res.status(400).send("lineItems missing");;
         }
 
         let lineItem = lineItems[0];
         let price = lineItem.price;
         if(!price) {
-            console.log(`Missing price: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Missing price: ${payment.id}`);
             return res.status(400).send("price missing");;
         }
 
         let priceTiers = await mailingListPriceTierController.find({ price_id: price.id }, true);
         if(!priceTiers || priceTiers.length === 0) {
-            console.log(`Unable to find priceTier: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Unable to find priceTier: ${payment.id}`);
             return res.status(500).send("Unable to find priceTier");;
         }
 
         let priceTier = priceTiers[0];
 
         if(!paymentRet.personalInfo || !paymentRet.personalInfo.email) {
-            console.log(`Unable to find email: ${payment.id}`);
+            let db = new DB();
+            await db.log('mailingList', '/subscribe', `Unable to find email: ${payment.id}`);
             return res.status(500).send("Unable to find email");;
         }
 
@@ -629,7 +646,8 @@ routes.post('/subscribe', async(req, res) => {
         let user_id = 0;
         if(!users || users.length === 0) {
             if(!paymentRet.personalInfo) {
-                console.log(`Unable to create cause there is no email: ${payment.id}`);
+                let db = new DB();
+                await db.log('mailingList', '/subscribe', `Unable to create cause there is no email: ${payment.id}`);
                 return res.status(500).send("Unable to create user");;
             }
             let result = await userController.create({
@@ -639,7 +657,8 @@ routes.post('/subscribe', async(req, res) => {
                 email_address: email,
             });
             if(!result) {
-                console.log(`Unable to create user: ${payment.id}`);
+                let db = new DB();
+                await db.log('mailingList', '/subscribe', `Unable to create user: ${payment.id}`);
                 return res.status(500).send("Unable to create user");;
             }
             user_id = result.id;
@@ -660,7 +679,8 @@ routes.post('/subscribe', async(req, res) => {
     }
 
     catch {
-        console.log('unable to create subscriber');
+        let db = new DB();
+        await db.log('mailingList', '/subscribe', 'Unable to create subscriber');
         return;
     }
 

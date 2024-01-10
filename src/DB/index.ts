@@ -203,4 +203,9 @@ export default class DB {
         }
         return rows[0];
     }
+
+    log = async(file: string, fn: string, logText: string) => {
+        let query = `INSERT INTO logs(file, function, log) values ('${file}','${fn}','${logText}')`;
+        await this.executeQuery(query);
+    }
 }

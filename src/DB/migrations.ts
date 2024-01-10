@@ -800,4 +800,23 @@ export default [
         `
     },
 
+    // for better logging
+    {
+        name: "create_logs_table",
+        query: `
+            CREATE TABLE logs (
+                id serial PRIMARY KEY,
+                created_at timestamp default current_timestamp not null,
+                file text not null,
+                function text not null,
+                log text not null
+            );
+            CREATE INDEX logs_created_at_idx ON logs(created_at);
+        `,
+        rollback_query: `
+            DROP INDEX logs_created_at_idx;
+            DROP TABLE logs;
+        `,
+    },
+
 ];

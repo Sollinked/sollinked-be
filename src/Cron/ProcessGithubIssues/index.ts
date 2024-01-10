@@ -1,10 +1,13 @@
 import { GithubBot } from '../../GithubBot';
 import * as userGithubSettingController from '../../Controllers/userGithubSettingController';
+import DB from '../../DB';
 
 export const processGithubIssues = async() => {
     let userGithubSettings = await userGithubSettingController.list();
     if(!userGithubSettings){
-        console.log('process github issues', 'no setting');
+
+        let db = new DB();
+        await db.log('ProcessGithubIssues', 'processGithubIssues', 'Missing setting');
         return;
     }
 
@@ -14,9 +17,9 @@ export const processGithubIssues = async() => {
             await bot.processUnwantedIssues();
         }
 
-        catch(e) {
-            console.log('Process github issues');
-            console.log(e);
+        catch(e: any) {
+            let db = new DB();
+            await db.log('ProcessGithubIssues', 'processGithubIssues', e.toString());
         }
     }
 }

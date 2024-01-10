@@ -626,10 +626,11 @@ export const clawbackSOLFrom = async(keypair: Keypair) => {
     let solBalance = await getAddressSOLBalance(keypair.publicKey);
 
     // leave 0.001 SOL
+    let db = new DB();
     let clawbackBalance = solBalance - 0.001;
 
     if(clawbackBalance <= 0) {
-        console.log('balance too low to clawback');
+        await db.log('utils', 'clawbackSolFrom', `Balance too low to clawback`);
         return "";
     }
 
@@ -648,7 +649,7 @@ export const clawbackSOLFrom = async(keypair: Keypair) => {
 
     let txSignature = await connection.sendTransaction(transaction, [keypair]);
 
-    console.log(`${clawbackBalance} SOL Clawback: ${txSignature}`);
+    await db.log('utils', 'clawbackSolFrom', `${clawbackBalance} SOL, tx: ${txSignature}`);
     return txSignature;
 }
 
@@ -740,6 +741,8 @@ export const getTokensTransferredToUser = async(txHash: string, toAddress: strin
     let now = moment().add(-2, 'minute');
     let txDetails = await getTx(txHash);
     if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
+        let db = new DB();
+        await db.log('utils', 'getTokensTransferredToUser', 'No Tx');
         throw new Error("No Tx Details");
     }
 
@@ -757,7 +760,8 @@ export const getTokensTransferredToUser = async(txHash: string, toAddress: strin
 
     let txMoment = moment(blockTime * 1000);
     if(txMoment.isBefore(now)) {
-        console.log('Old Tx detected');
+        let db = new DB();
+        await db.log('utils', 'getTokensTransferredToUser', 'Old Tx detected');
         throw Error("Old Tx");
     }
 
@@ -939,8 +943,9 @@ export const createUnderdogNFT = async({
         };
     }
 
-    catch(e) {
-        console.log(e);
+    catch(e: any) {
+        let db = new DB();
+        await db.log('utils', 'createUnderdogNFT', e.toString());
         return;
     }
 }

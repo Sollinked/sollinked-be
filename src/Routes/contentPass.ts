@@ -6,6 +6,7 @@ import * as contentCNFTController from '../Controllers/contentCNFTController';
 import { createContentPass, getAdminAccount, getContentFee, getDappDomain, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../Constants';
 import { UNLIMITED_PASS } from '../Models/contentPass';
+import DB from '../DB';
 
 
 const {
@@ -211,10 +212,8 @@ routes.post('/payment/:id', async(req, res) => {
         });
 
         if(!passRes || !passRes.mintAddress) {
-            console.log('Unable to mint pass, below is passRes');
-            console.log('----');
-            console.log(passRes);
-            console.log('----');
+            let db = new DB();
+            await db.log('contentPass', '/payment/:id', `Unable to mint pass, below is passRes\n\n${passRes}`);
             await refund(cNftRes.id);
             return res.status(500).send("Unable to mint pass!")
         }

@@ -4,6 +4,7 @@ import * as mailingListBroadcastLogController from '../../Controllers/mailingLis
 import * as userController from '../../Controllers/userController';
 import moment from 'moment';
 import { sendEmail } from '../../Mail';
+import DB from '../../DB';
 
 export const processBroadcasts = async() => {
     let credentials = getMailCredentials();
@@ -12,13 +13,12 @@ export const processBroadcasts = async() => {
         return;
     }
 
-    let now = moment();
-
     for(const [, broadcastObject] of broadcasts.entries()) {
         let broadcast_id = broadcastObject.mailing_list_broadcast_id;
         let broadcast = await mailingListBroadcastController.view(broadcast_id);
         if(!broadcast) {
-            console.log("Missing broadcast object");
+            let db = new DB();
+            await db.log('ProcessBroadcasts', 'processBroadcasts', 'Missing broadcast object');
             return;
         }
     
@@ -31,13 +31,15 @@ export const processBroadcasts = async() => {
     
         let logs = await mailingListBroadcastLogController.getDistinctEmailsForBroadcastId(broadcast_id);
         if(!logs || logs.length === 0) {
-            console.log("Missing logs");
+            let db = new DB();
+            await db.log('ProcessBroadcasts', 'processBroadcasts', 'Missing logs');
             return;
         }
     
         let user = await userController.view(broadcast.user_id);
         if(!user) {
-            console.log("Missing user");
+            let db = new DB();
+            await db.log('ProcessBroadcasts', 'processBroadcasts', 'Missing user');
             return;
         }
         

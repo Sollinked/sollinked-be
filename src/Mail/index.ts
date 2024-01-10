@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Attachment } from 'nodemailer/lib/mailer';
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import DB from '../DB';
 
 export type SendEmailParams = {
     to: string,
@@ -73,16 +74,16 @@ export const sendEmail = async ({
                 replyTo
             });
     
-            console.log(`email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
+            let db = new DB();
+            await db.log('Mail', 'sendEmail', `Email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
             sentMessageId = info.messageId;
             break;
         }
 
-        catch(e) {
-            console.log('Send Email Error');
-            console.log(e);
+        catch(e: any) {
+            let db = new DB();
+            await db.log('Mail', 'sendEmail', `Send Email Error, retrying..\n\n${e.toString()}`);
             retries++;
-            console.log(`send mail retrying: ${retries}`);
         }
     }
 
@@ -91,7 +92,7 @@ export const sendEmail = async ({
 
 export const getEmailByMessageId = (messageId: string) => {
     const imap = getImap();
-    return new Promise<{ from: string, subject?: string, to: string[], cc?: AddressObject | AddressObject[], bcc?: AddressObject | AddressObject[], textAsHtml?: string, text?: string, messageId?: string, attachments: ParserAttachment[] }>((resolve, reject) => {
+    return new Promise<{ from: string, subject?: string, to: string[], cc?: AddressObject | AddressObject[], bcc?: AddressObject | AddressObject[], textAsHtml?: string, text?: string, messageId?: string, attachments: ParserAttachment[] }>(async (resolve, reject) => {
         try {
             imap.once('ready', () => {
                 // on ready
@@ -103,7 +104,7 @@ export const getEmailByMessageId = (messageId: string) => {
                             'Message-ID',
                             messageId
                         ]
-                    ], (err, results) => {
+                    ], async (err, results) => {
                         try {
                             const f = imap.fetch(results, { bodies: '' });
                             f.on('message', msg => {
@@ -131,9 +132,9 @@ export const getEmailByMessageId = (messageId: string) => {
                                 })
                             });
         
-                            f.once('error', e => {
-                                console.log('ME1: '); 
-                                console.log(e);
+                            f.once('error', async e => {
+                                let db = new DB();
+                                await db.log('Mail', 'getEmailByMessageId', `ME1:\n${e.toString()}`);
                                 return reject();
                             });
         
@@ -146,8 +147,8 @@ export const getEmailByMessageId = (messageId: string) => {
                         catch(e: any) {
 
                             if(!e.message.includes("Nothing to fetch")) {
-                                console.log('ME2: '); 
-                                console.log(e);
+                                let db = new DB();
+                                await db.log('Mail', 'getEmailByMessageId', `ME2:\n${e.toString()}`);
                             }
                             imap.end();
                         }
@@ -155,9 +156,9 @@ export const getEmailByMessageId = (messageId: string) => {
                 });
             });
     
-            imap.once('error', (err: any) => {
-                console.log('ME3: '); 
-                console.log(err);
+            imap.once('error', async(err: any) => {
+                let db = new DB();
+                await db.log('Mail', 'getEmailByMessageId', `MEe:\n${err.toString()}`);
                 return reject();
             });
     
@@ -169,8 +170,8 @@ export const getEmailByMessageId = (messageId: string) => {
         }
     
         catch (e: any){
-            console.log('ME4: '); 
-            console.log(e);
+            let db = new DB();
+            await db.log('Mail', 'getEmailByMessageId', `ME4:\n${e.toString()}`);
             return reject();
         }
     })
@@ -189,8 +190,8 @@ export const createEmailForwarder = async(username: string) => {
     });
 
     if(res.data.errors && res.data.errors.length > 0) {
-        console.log('Unable to create forwarder: ', res.data.errors.join(", "));
-        console.log(`Forwarder: ${username}`);
+        let db = new DB();
+        await db.log('Mail', 'createEmailForwarder', `Unable to create forwarder: ${res.data.errors.join(", ")}\nForwarder: ${username}`);
         return;
     }
     return;
@@ -208,7 +209,8 @@ export const deleteEmailForwarder = async(username: string) => {
     });
 
     if(res.data.errors && res.data.errors.length > 0) {
-        console.log('Unable to delete forwarder: ', res.data.errors.join(", "));
+        let db = new DB();
+        await db.log('Mail', 'deleteEmailForwarder', `Unable to delete forwarder: ${res.data.errors.join(", ")}\nForwarder: ${username}`);
         return;
     }
 
@@ -221,8 +223,9 @@ export const changeEmailForwarder = async(newUsername: string, oldUsername: stri
         await deleteEmailForwarder(oldUsername);
     }
 
-    catch (e){
-        console.log('cant change forwarder: ', e);
+    catch (e: any){
+        let db = new DB();
+        await db.log('Mail', 'changeEmailForwarder', `Unable to change forwarder:\n\n${e.toString()}`);
         return false;
     }
 

@@ -6,6 +6,7 @@ import moment from 'moment';
 import { BALANCE_ERROR_NUMBER, getAddressUSDCBalance } from '../../Token';
 import { RESERVATION_STATUS_AVAILABLE, RESERVATION_STATUS_CANCELLED, RESERVATION_STATUS_CLAIMED, RESERVATION_STATUS_PAID, RESERVATION_STATUS_PENDING } from '../../Constants';
 import { getServerPort, sendSOLTo } from '../../../utils';
+import DB from '../../DB';
 
 const port = getServerPort();
 let socket = clientio.connect(`ws://localhost:${port}`);
@@ -33,7 +34,8 @@ export const processReservationPayments = async() => {
 
     // no mails
     if(!reservations) {
-        console.log('process reservation payment', 'no unprocessed reservations');
+        let db = new DB();
+        await db.log('ProcessReservationPayments', 'processReservationPayments', `No unprocessed reservations`);
         return;
     }
 
@@ -82,7 +84,8 @@ export const processExpiredReservationPayments = async() => {
 
     // no mails
     if(!reservations) {
-        console.log('process expired reservation payment', 'no unprocessed expired reservations');
+        let db = new DB();
+        await db.log('ProcessReservationPayments', 'processExpiredReservationPayments', `No unprocessed expired reservations`);
         socket.disconnect();
         return;
     }
@@ -133,7 +136,8 @@ export const processReservationClaims = async() => {
 
     // no mails
     if(!reservations) {
-        console.log('process reservation claim', 'no unprocessed paid reservations');
+        let db = new DB();
+        await db.log('ProcessReservationPayments', 'processReservationClaims', `No unprocessed paid reservations`);
         return;
     }
 

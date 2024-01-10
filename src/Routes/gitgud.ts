@@ -9,6 +9,7 @@ import { getTokensTransferredToUser, getTx, sleep } from '../../utils';
 import moment from 'moment';
 import { GithubBot } from '../GithubBot';
 import { USDC_ADDRESS } from '../Constants';
+import DB from '../DB';
 
 export const routes = Router();
 
@@ -219,7 +220,8 @@ routes.post('/newIssue', async(req, res) => {
                 });
 
                 if(!label) {
-                    console.log('GithubBot New Issue', 'no labels');
+                    let db = new DB();
+                    await db.log('gitgud', '/newIssue', 'No labels');
                     break;
                 }
                 

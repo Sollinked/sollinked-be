@@ -8,6 +8,7 @@ import { createEmailForwarder, sendEmail } from '../Mail';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import { USDC_ADDRESS } from '../Constants';
+import DB from '../DB';
 
 export const routes = Router();
 routes.post('/new/:username', async(req, res) => {
@@ -91,7 +92,8 @@ routes.post('/payment/:username', async(req, res) => {
             let tiers = user.tiers;
 
             if(!tiers) {
-                console.log('process payment', 'no tier');
+                let db = new DB();
+                await db.log('mail', '/payment/:username', `No tier`);
                 // user didn't set tiers, all emails are ineligible
                 break;
             }
@@ -163,7 +165,10 @@ routes.post('/payment/:username', async(req, res) => {
             if(e.message === "Old Tx") {
                 return res.status(400).send("Old Tx");
             }
-            console.log(e);
+
+            let db = new DB();
+            await db.log('mail', '/payment/:username', e.toString());
+
             retries++;
             await sleep(2000); //sleep 2s
             continue;

@@ -6,6 +6,7 @@ import { getAdminAccount, getDappDomain, getNonPublicKeyPlayerAccount, getPlayer
 import { loadOrGenerateKeypair } from "../Helpers";
 import { EXP_TOKEN, EXP_TOKEN_DECIMALS, EXP_TOKEN_SYMBOL, GOLD_TOKEN, GOLD_TOKEN_DECIMALS, GOLD_TOKEN_SYMBOL, USDC_ADDRESS } from "../Constants";
 import fetch from 'node-fetch';
+import DB from "../DB";
 
 const endpoint = getRPCEndpoint(); //Replace with your RPC Endpoint
 const connection = new Connection(endpoint);
@@ -216,10 +217,9 @@ export const getAddressAssets = async(userAccount: string) => {
             return json.result.items;
         }
 
-        catch(e) {
-            console.log('getAssetsByOwner');
-            console.log(e);
-            console.log(json);
+        catch(e: any) {
+            let db = new DB();
+            await db.log('Token', 'getAddressAssets', e.toString());
             errors++;
         }
     }

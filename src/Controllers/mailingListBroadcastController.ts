@@ -33,7 +33,6 @@ export const create = async(insertParams: any) => {
 }
 
 export const broadcast = async(broadcast_id: number, emails?: string[]) => {
-    console.log(emails);
     if(emails && emails.length > 0) {
         let db = new DB();
         let columns = ['mailing_list_broadcast_id', 'to_email'];
@@ -69,18 +68,21 @@ export const testDraft = async(broadcast_id: number) => {
 
     let broadcast = await view(broadcast_id);
     if(!broadcast) {
-        console.log("Missing broadcast object");
+        let db = new DB();
+        await db.log('mailingListBroadcastController', 'testDraft', 'Missing broadcast object');
         return;
     }
 
     let user = await userController.view(broadcast.user_id);
     if(!user) {
-        console.log("Missing user");
+        let db = new DB();
+        await db.log('mailingListBroadcastController', 'testDraft', 'Missing user');
         return;
     }
 
     if(!user.email_address) {
-        console.log("Missing email address");
+        let db = new DB();
+        await db.log('mailingListBroadcastController', 'testDraft', 'Missing email address');
         return;
     }
 

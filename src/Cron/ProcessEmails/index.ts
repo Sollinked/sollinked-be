@@ -9,6 +9,7 @@ import moment from 'moment';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../../Constants';
 import { ProcessedMail } from '../../Models/mail';
 import Connection, { ImapMessage } from 'imap';
+import DB from '../../DB';
 
 const processEmailToUser = async({
     domain,
@@ -55,7 +56,8 @@ const processEmailToUser = async({
             // so we just need to check if toEmails.length is 0 (not sent to original sender)
             // to send on behalf of the user
             if(toEmailMatch.length >= 1 && toEmails.length === 0) {
-                console.log(`Sending on behalf of ${mail.to_email}`);
+                let db = new DB();
+                await db.log('ProcessEmails', 'processEmailToUser', `Sending on behalf of ${mail.to_email}`);
                 try {
                     let { subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(messageId) as any;
                     let attachments = mapAttachments(parserAttachments);
@@ -74,9 +76,8 @@ const processEmailToUser = async({
                 }
 
                 catch(e: any) {
-                    console.log(`PE5: ${e.name}`);
-                    // mark as unread so we can process it again
-
+                    let db = new DB();
+                    await db.log('ProcessEmails', 'processEmailToUser', `PE5: ${e.name}`);
                     unreadCallback();
                     return;
                 }
@@ -84,9 +85,8 @@ const processEmailToUser = async({
 
             // sent to user from own email
             else if(toEmails.length === 0) {
-                console.log('processEmailResponse: ', 'cant find email original sender, aborting');
-                console.log('processEmailResponse: ', `original sender: ${originalSender}`);
-                console.log('processEmailResponse: ', `toEmailMatch: ${toEmailMatch.join(",")}`);
+                let db = new DB();
+                await db.log('ProcessEmails', 'processEmailToUser', `Cant find email original sender, aborting\noriginal sender: ${originalSender}\ntoEmailMatch: ${toEmailMatch.join(",")}`);
                 return;
             }
 
@@ -99,8 +99,8 @@ const processEmailToUser = async({
             return;
         }
 
-        console.log('processEmailToUser: ', 'cant find user');
-        console.log('processEmailToUser: ', `user: ${username}`);
+        let db = new DB();
+        await db.log('ProcessEmails', 'processEmailToUser', `Cant find user: ${username}`);
         
         return;
     }
@@ -173,8 +173,8 @@ const processEmailResponse = async({
     let bccToEmail = bccEmails[0];
     let mails = await controller.find({ bcc_to_email: bccToEmail });
     if(!mails || mails.length === 0){
-        console.log('processEmailResponse: ', 'cant find bcc email');
-        console.log('processEmailResponse: ', `bccEmail: ${bccToEmail}`);
+        let db = new DB();
+        await db.log('ProcessEmails', 'processEmailResponse', `Cant find bcc email: ${bccToEmail}`);
         return;
     }
 
@@ -184,8 +184,8 @@ const processEmailResponse = async({
     // check if the responder actually responded to the original sender
     let toEmails = toEmailMatch.filter(x => x.toLowerCase() === originalSender);
     if(toEmails.length === 0) {
-        console.log('processEmailResponse: ', 'cant find email original sender, aborting');
-        console.log('processEmailResponse: ', `original sender: ${originalSender}`);
+        let db = new DB();
+        await db.log('ProcessEmails', 'processEmailResponse', `Cant find email original sender, aborting\noriginal sender: ${originalSender}`);
         return;
     }
 
@@ -197,7 +197,7 @@ const processEmailResponse = async({
     await autoClaimFromMail(mails[0]);
 }
     
-export const processEmails = () => {
+export const processEmails = async() => {
     const imap = getImap();
     const credentials = getMailCredentials();
 
@@ -208,10 +208,10 @@ export const processEmails = () => {
                 // open inbox
                 imap.search([
                     'UNSEEN'
-                ], (err, results) => {
+                ], async(err, results) => {
                     try {
                         const f = imap.fetch(results, { bodies: '' });
-                        f.on('message', msg => {
+                        f.on('message', async msg => {
 
                             let uid = 0;
                             msg.once('attributes', attrs => {
@@ -258,8 +258,6 @@ export const processEmails = () => {
                                         messageId,
                                         subject,
                                         unreadCallback: () => {
-                                            console.log('marking as read')
-                                            console.log({uid})
                                             imap.delFlags(uid, ['\\Seen'], () => {
                                                 // do nothing
                                             });
@@ -286,9 +284,9 @@ export const processEmails = () => {
                             })
                         });
     
-                        f.once('error', e => {
-                            console.log('PE1: ')
-                            console.log(e); 
+                        f.once('error', async e => {
+                            let db = new DB();
+                            await db.log('ProcessEmails', 'processEmails', `PE1: ${e.toString()}`);
                         });
     
                         f.once('end', () => {
@@ -299,8 +297,8 @@ export const processEmails = () => {
 
                     catch(e: any) {
                         if(!e.message.includes("Nothing to fetch")) {
-                            console.log('PE2: ')
-                            console.log(e.message);
+                            let db = new DB();
+                            await db.log('ProcessEmails', 'processEmails', `PE2: ${e.message}`);
                         }
                         imap.end();
                     }
@@ -308,9 +306,9 @@ export const processEmails = () => {
             });
         });
 
-        imap.once('error', (err: any) => {
-            console.log('PE3: ')
-            console.log(err);
+        imap.once('error', async(err: any) => {
+            let db = new DB();
+            await db.log('ProcessEmails', 'processEmails', `PE3: ${err.toString()}`);
         });
 
         imap.once('end', () => {
@@ -321,8 +319,8 @@ export const processEmails = () => {
     }
 
     catch (e: any){
-        console.log('PE4: ')
-        console.log(e);
+        let db = new DB();
+        await db.log('ProcessEmails', 'processEmails', `PE4: ${e.toString()}`)
     }
 }
 
@@ -341,12 +339,14 @@ export const processUnclaimedRespondedEmails = async() => {
 const autoClaimFromMail = async(mail: ProcessedMail) => {
     let user = await userController.find({ id: mail.user_id });
     if(!user)  {
-        console.log('processEmailResponse: ', `missing user`);
+        let db = new DB();
+        await db.log('ProcessEmails', 'autoClaimFromMail', `Missing user`);
         return;
     }
 
     if(!mail.value_usd) {
-        console.log('processEmailResponse: ', `mail has 0 value`);
+        let db = new DB();
+        await db.log('ProcessEmails', 'autoClaimFromMail', `Mail has 0 value`);
         return;
     }
 
@@ -355,12 +355,16 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
     while(retries < 3) {
         try {
             await sendTokensTo(user[0].address, USDC_ADDRESS, USDC_DECIMALS, mail.value_usd, tiplink.keypair);
-            console.log('processEmailResponse: ', `Sent ${mail.value_usd} USDC to ${user[0].username} (${user[0].address})`);
+
+            let db = new DB();
+            await db.log('ProcessEmails', 'autoClaimFromMail', `Sent ${mail.value_usd} USDC to ${user[0].username} (${user[0].address})`);
+
             break;
         }
 
-        catch(e) {
-            console.log(e);
+        catch(e: any) {
+            let db = new DB();
+            await db.log('ProcessEmails', 'autoClaimFromMail', e.toString());
             retries++;
         }
     }
@@ -370,7 +374,10 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
         if(mail.claim_balance_verify_count < CHECK_BALANCE_COUNT) {
             await controller.update(mail.key, { claim_balance_verify_count: mail.claim_balance_verify_count + 1 });
         }
-        console.log(`Unable to auto claim: ${tiplink.url}`);
+
+        let db = new DB();
+        await db.log('ProcessEmails', 'autoClaimFromMail', `Unable to auto claim: ${tiplink.url}`);
+        
         return;
     }
 
@@ -381,13 +388,15 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
             break;
         }
 
-        catch(e) {
-            console.log(e);
+        catch(e: any) {
+            let db = new DB();
+            await db.log('ProcessEmails', 'autoClaimFromMail', e.toString());
             retries++;
         }
     }
     if(retries >= 3) {
-        console.log(`Unable to clawback from: ${tiplink.url}`);
+        let db = new DB();
+        await db.log('ProcessEmails', 'autoClaimFromMail', `Unable to clawback from: ${tiplink.url}`);
         return;
     }
 

@@ -10,6 +10,7 @@ import fs from 'fs-extra';
 import _ from 'lodash';
 import { VERIFY_MESSAGE } from '../Constants';
 import { ContentCNFT } from '../Models/contentCNFT';
+import DB from '../DB';
 export const routes = Router();
 
 //
@@ -145,8 +146,9 @@ routes.post('/updateTiers/:user_id', async(req, res) => {
         await userTierController.update(user_id, data.tiers);
     }
 
-    catch(e) {
-        console.log(e);
+    catch(e: any) {
+        let db = new DB();
+        await db.log('user', '/updateTiers/:user_id', e.toString());
 
         return res.status(500).send("Unable to update tier");
 
@@ -201,8 +203,9 @@ routes.post('/updateReservationSettings/:user_id', async(req, res) => {
         await userReservationSettingController.update(user_id, data.reservationSettings);
     }
 
-    catch(e) {
-        console.log(e);
+    catch(e: any) {
+        let db = new DB();
+        await db.log('user', '/updateReservationSettings/:user_id', e.toString());
 
         return res.status(500).send("Unable to update user reservation settings");
 
@@ -264,8 +267,9 @@ routes.post('/updateTags/:user_id', async(req, res) => {
         await userTagController.updateByUserId(user_id, data.tags);
     }
 
-    catch(e) {
-        console.log(e);
+    catch(e: any) {
+        let db = new DB();
+        await db.log('user', '/updateTags/:user_id', e.toString());
 
         return res.status(500).send("Unable to update tier");
 
