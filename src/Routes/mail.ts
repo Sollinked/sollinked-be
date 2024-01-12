@@ -3,7 +3,7 @@ import * as userController from '../Controllers/userController';
 import * as mailController from '../Controllers/mailController';
 import * as webhookController from '../Controllers/webhookController';
 import { TipLink } from '@tiplink/api';
-import { getMailCredentials, getTokensTransferredToUser, sendSOLTo, sleep } from '../../utils';
+import { getMailCredentials, getTokensTransferredToUser, isValidMail, sendSOLTo, sleep } from '../../utils';
 import { createEmailForwarder, sendEmail } from '../Mail';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
@@ -18,6 +18,10 @@ routes.post('/new/:username', async(req, res) => {
 
     if(!data || !replyToEmail) {
         return res.status(400).send("Invalid Params");
+    }
+
+    if(!isValidMail(replyToEmail)) {
+        return res.status(400).send("Invalid email address");
     }
 
     let {username} = req.params;

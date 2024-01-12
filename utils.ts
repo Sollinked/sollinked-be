@@ -272,6 +272,12 @@ export const isValidUUID = (uuid: string) => {
     return (uuid.match(/^[0-9A-F]{8}-[0-9A-F]{4}-[4][0-9A-F]{3}-[89AB][0-9A-F]{3}-[0-9A-F]{12}$/i)?.length ?? 0) > 0;
 }
 
+// check if the email is valid
+export const isValidMail = (email: string) => {
+    let matches = email.match(/[\w-\+\.]+@([\w-]+\.)+[\w-]{2,10}/g);
+    return matches && matches.length > 0;
+}
+
 export const isCurrentUserAdmin = async(discord_id: string) => {
     let db = new DB();
     let query = `select count(*) as admin_count from admins where discord_id = '${discord_id}'`;
