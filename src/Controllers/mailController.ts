@@ -70,15 +70,30 @@ export const find = async(whereParams: {[key: string]: any}, args?: {
                         expiry_date,
                         subject,
                         is_from_site,
-                        claim_balance_verify_count
+                        claim_balance_verify_count,
+                        from_user_id,
+                        message,
+                        reply_message,
+                        responded_at
                     FROM ${table} 
                     WHERE ${params}
                     ${args?.createdAfter? `AND created_at >= '${args?.createdAfter}'` : ""}
                     ${args?.onlyFromSMTP? `AND is_from_site = false` : ""}
                     ${args?.unexpiredOnly? `AND expiry_date > '${moment().format('YYYY-MM-DDTHH:mm:ssZ')}'` : ""}
                     ${args?.checkBalanceCount? `AND claim_balance_verify_count < ${args?.checkBalanceCount}` : ""}
-                    AND (CASE WHEN message_id = 'from site' AND bcc_to_email is null then false else true end)`;
+                    AND (
+                        CASE 
+                        WHEN 
+                            message_id = 'from site' 
+                            AND bcc_to_email is null 
+                            AND subject is null
+                            AND message is null
+                        THEN false 
+                        ELSE true 
+                        END
+                    )`;
 
+    console.log(query);
     const db = new DB();
     let results = await db.executeQueryForResults<Mail>(query);
 
@@ -119,7 +134,11 @@ export const getExpired = async() => {
                         sent_message_id,
                         subject,
                         is_from_site,
-                        claim_balance_verify_count
+                        claim_balance_verify_count,
+                        from_user_id,
+                        message,
+                        reply_message,
+                        responded_at
                     FROM ${table} 
                     WHERE 
                         value_usd > 0 

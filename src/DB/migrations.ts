@@ -831,4 +831,48 @@ export default [
             DROP CONSTRAINT constraint_unique_address;
         `,
     },
+
+    // to track who sent the mails
+    {
+        name: "add_from_user_id_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD from_user_id integer null;
+        `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN from_user_id;
+        `,
+    },
+
+    // as message cache
+    {
+        name: "add_message_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD message text null;
+
+            ALTER TABLE mails
+            ADD reply_message text null;
+        `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN message;
+
+            ALTER TABLE mails
+            DROP COLUMN reply_message;
+        `,
+    },
+
+    {
+        name: "add_responded_at_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD responded_at timestamp null;
+        `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN responded_at;
+        `,
+    },
 ];

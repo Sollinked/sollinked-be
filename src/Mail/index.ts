@@ -33,12 +33,12 @@ export type RetrievedMail = {
     attachments: ParserAttachment[] 
 }
 
-export const getImap = () => {
-    const { user, pass, host, } = getMailCredentials();
+export const getImap = (useBcc?: boolean) => {
+    const { user, pass, host, bcc, bccPass, bccHost } = getMailCredentials();
     const imapConfig: Imap.Config = {
-        user,
-        password: pass,
-        host,
+        user: useBcc? bcc : user,
+        password: useBcc? bccPass : pass,
+        host: useBcc? bccHost : host,
         port: 143,
         tls: false,
     }
@@ -103,16 +103,16 @@ export const sendEmail = async ({
     return sentMessageId;
 }
 
-export const getEmailByMessageId = (messageId: string) => {
-    return getEmailBy('Message-ID', messageId);
+export const getEmailByMessageId = (messageId: string, useBcc?: boolean) => {
+    return getEmailBy('Message-ID', messageId, useBcc);
 }
 
-export const getEmailByReceiver = (receiver: string) => {
-    return getEmailBy('Envelope-to', receiver);
+export const getEmailByReceiver = (receiver: string, useBcc?: boolean) => {
+    return getEmailBy('Envelope-to', receiver, useBcc);
 }
 
-export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string) => {
-    const imap = getImap();
+export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string, useBcc?: boolean) => {
+    const imap = getImap(useBcc);
     return new Promise<RetrievedMail>(async (resolve, reject) => {
         try {
             imap.once('ready', () => {
@@ -131,7 +131,7 @@ export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string) 
                             f.on('message', msg => {
                                 return msg.on('body', stream => {
                                     return simpleParser(stream as any, async(err, parsed) => {
-                                        const { from, to, subject, textAsHtml, text, messageId, attachments, bcc, cc } = parsed;
+                                        let { from, to, subject, textAsHtml, text, messageId, attachments, bcc, cc } = parsed;
 
                                         let fromEmail = from? from.text.match(/[\w-\+\.]+@([\w-]+\.)+[\w-]{2,10}/g) : "";
                                         let fromEmailStr = "";
@@ -147,7 +147,13 @@ export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string) 
                                                 toEmails = toEmailMatch;
                                             }
                                         }
+
+                                        // remove bot message
+                                        textAsHtml = textAsHtml?.replace(/(.)*<p>---- Copy of message -----<\/p>/, "");
+
+                                        // remove message
                                         let textAsHtmlWithoutHistory = textAsHtml?.replace(/<p>On(.*)wrote:<\/p>(.)*/g, "");
+
                                         return resolve({ 
                                             from: fromEmailStr, 
                                             to: toEmails, 
@@ -177,12 +183,14 @@ export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string) 
                         }
 
                         catch(e: any) {
-
                             if(!e.message.includes("Nothing to fetch")) {
                                 let db = new DB();
                                 await db.log('Mail', 'getEmailBy', `ME2:\n${e.toString()}`);
+                                imap.end();
+                                return reject();
                             }
                             imap.end();
+                            return reject();
                         }
                     })
                 });

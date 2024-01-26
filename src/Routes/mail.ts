@@ -4,23 +4,29 @@ import * as mailController from '../Controllers/mailController';
 import * as webhookController from '../Controllers/webhookController';
 import { TipLink } from '@tiplink/api';
 import { getMailCredentials, getTokensTransferredToUser, isValidMail, sendSOLTo, sleep } from '../../utils';
-import { createEmailForwarder, sendEmail } from '../Mail';
+import { createEmailForwarder, getEmailByMessageId, getEmailByReceiver, sendEmail } from '../Mail';
 import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
 import { USDC_ADDRESS } from '../Constants';
 import DB from '../DB';
+import { ThreadMail } from '../Models/mail';
 
 export const routes = Router();
 routes.post('/new/:username', async(req, res) => {
     let data = req.body;
-    let {replyToEmail} = data;
+    let { address, subject, emailMessage } = data;
     let { domain } = getMailCredentials();
 
-    if(!data || !replyToEmail) {
+    if(!data) {
         return res.status(400).send("Invalid Params");
     }
 
-    if(!isValidMail(replyToEmail)) {
+    let fromUser = await userController.findByAddress(address)
+    if(!fromUser) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    if(!fromUser.email_address || !isValidMail(fromUser.email_address)) {
         return res.status(400).send("Invalid email address");
     }
 
@@ -39,12 +45,15 @@ routes.post('/new/:username', async(req, res) => {
     // save from, to, messageId and tiplink url to db
     let result = await mailController.create({
         user_id: user.id,
-        from_email: replyToEmail,
+        from_user_id: fromUser.id,
+        from_email: fromUser.email_address,
         to_email: `${username}@${domain}`,
         message_id: "from site",
         tiplink_url: tiplink.url.toString(),
         tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
         is_from_site: true,
+        subject,
+        message: emailMessage,
     });
 
     if(!result) {
@@ -61,11 +70,14 @@ routes.post('/new/:username', async(req, res) => {
     });
 });
 
+
+// deprecated
+// now uses cron
 routes.post('/payment/:username', async(req, res) => {
     let data = req.body;
-    let {replyToEmail, subject, message, txHash, mailId} = data;
+    let {replyToEmail, subject, emailMessage, txHash, mailId} = data;
 
-    if(!data || !replyToEmail || !subject || !message || !txHash || !mailId) {
+    if(!data || !replyToEmail || !subject || !emailMessage || !txHash || !mailId) {
         return res.status(400).send("Invalid Params");
     }
 
@@ -121,7 +133,7 @@ routes.post('/payment/:username', async(req, res) => {
                 let sent_message_id = await sendEmail({
                     to: user.email_address!,
                     subject: `${subject ?? "No Subject"}`,
-                    text: `Paid: ${valueUsd} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${mail.from_email}\n\n${message}`,
+                    text: `Paid: ${valueUsd} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${mail.from_email}\n\n${emailMessage}`,
                     replyTo: `${bcc_to_email}`
                 });
 
@@ -129,7 +141,7 @@ routes.post('/payment/:username', async(req, res) => {
                 let email_receipt_id = await sendEmail({
                     to: mail.from_email,
                     subject: `Email Receipt`,
-                    text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.` + `\n\n---- Copy of message -----\n\n${message}`,
+                    text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.` + `\n\n---- Copy of message -----\n\n${emailMessage}`,
                 });
     
                 // create a forwarder for responses
@@ -186,5 +198,162 @@ routes.post('/payment/:username', async(req, res) => {
     return res.send({
         success: true,
         message: "Success",
+    });
+});
+
+routes.post('/threads/:username', async(req, res) => {
+    let data = req.body;
+    let { address } = data;
+
+    if(!data) {
+        return res.status(400).send("Invalid Params");
+    }
+
+    let user = await userController.findByAddress(address);
+    if(!user) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    let {username} = req.params;
+    if(!username) {
+        return res.status(400).send("No username");
+    }
+
+    let toUser = await userController.viewByUsername(username);
+    if(!toUser) {
+        return res.status(404).send("No user");
+    }
+
+    let mails = await mailController.find({ user_id: toUser.id, from_user_id: user.id });
+    if(!mails) {
+        return res.send({
+            success: true,
+            message: "Success",
+            data: [],
+        });
+    }
+
+    let ret: ThreadMail[] = [];
+    let { domain } = getMailCredentials();
+    
+    for(let mail of mails) {
+        if(mail.key === 68) {
+            console.log('have 68')
+        }
+        // unable to retrieve this
+        if(mail.message_id === "from site" && (!mail.message || !mail.subject)) {
+            continue;
+        }
+        if(mail.key === 68) {
+            console.log('here have 68')
+        }
+
+        if(!mail.message || !mail.subject) {
+            let message_id = mail.sent_message_id ?? mail.message_id;
+            try {
+                let email = await getEmailByMessageId(message_id, message_id.includes(domain));
+                let message = email.textAsHtml ?? "";
+                mail.message = message;
+                let subject = email.subject ?? "";
+                mail.subject = subject;
+                await mailController.update(mail.key, { message, subject })
+            }
+
+            catch {
+                continue;
+            }
+        }
+    
+        if(!mail.reply_message && mail.bcc_to_email && mail.has_responded) {
+            try {
+                let email = await getEmailByReceiver(mail.bcc_to_email);
+                let reply_message = email.textAsHtmlWithoutHistory ?? "";
+                mail.reply_message = reply_message;
+                await mailController.update(mail.key, { reply_message });
+
+            }
+
+            catch {
+                continue;
+            }
+        }
+    
+        let isExpired = !mail.has_responded && moment(mail.expiry_date).isBefore(moment());
+        ret.push({
+            id: mail.key,
+            created_at: mail.created_at,
+            responded_at: mail.responded_at,
+            subject: mail.subject,
+            message: mail.message,
+            reply_message: mail.reply_message,
+            value_usd: mail.value_usd,
+            tiplink_url: isExpired? mail.tiplink_url : undefined,
+            is_processed: mail.is_processed,
+        });
+    }
+
+    ret = ret.sort((a,b) => a.id > b.id? -1 : 1);
+    return res.send({
+        success: true,
+        message: "Success",
+        data: ret,
+    });
+});
+
+routes.post('/thread/:id', async(req, res) => {
+    let data = req.body;
+    let { address } = data;
+
+    if(!data) {
+        return res.status(400).send("Invalid Params");
+    }
+
+    let {id} = req.params;
+    if(!id) {
+        return res.status(400).send("No id");
+    }
+
+    let user = await userController.findByAddress(address);
+    if(!user) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    let idInt = Number(id);
+    let mail = await mailController.view(idInt);
+    if(!mail) {
+        return res.status(404).send("Missing email");
+    }
+
+    if(mail.from_user_id !== user.id) {
+        return res.status(401).send("Unauthorized");
+    }
+
+    if(!mail.message) {
+        let email = await getEmailByMessageId(mail.message_id);
+        let message = email.text ?? "";
+        mail.message = message;
+        await mailController.update(idInt, { message })
+    }
+
+    if(!mail.reply_message && mail.bcc_to_email && mail.has_responded) {
+        let email = await getEmailByReceiver(mail.bcc_to_email);
+        let reply_message = email.textAsHtmlWithoutHistory ?? "";
+        mail.reply_message = reply_message;
+        await mailController.update(idInt, { reply_message })
+    }
+
+    let isExpired = moment(mail.expiry_date).isBefore(moment());
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: {
+            created_at: mail.created_at,
+            responded_at: mail.responded_at,
+            message: mail.message,
+            reply_message: mail.reply_message,
+            value_usd: mail.value_usd,
+            tiplink_url: isExpired? mail.tiplink_url : undefined,
+        },
     });
 });

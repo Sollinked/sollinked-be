@@ -62,6 +62,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
             value_usd: parseFloat(result.value_usd ?? '0'),
         };
         processed.contentPasses = await contentPassController.findByContent(processed.id);
+        processed.content = ""; // hide it
         processedResults.push(processed);
     }
 

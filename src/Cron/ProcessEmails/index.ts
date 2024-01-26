@@ -91,7 +91,7 @@ const processEmailToUser = async({
             }
 
             // mark the mail as responded
-            await controller.update(mail.key, { has_responded: true });
+            await controller.update(mail.key, { has_responded: true, responded_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') });
 
             // process completed, dont need the bcc forwarder anymore
             await deleteEmailForwarder(uuid);
@@ -190,7 +190,7 @@ const processEmailResponse = async({
     }
 
     // mark the mail as responded and claimed
-    await controller.update(mails[0].key, { has_responded: true });
+    await controller.update(mails[0].key, { has_responded: true, responded_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') });
 
     // process completed, dont need the bcc forwarder anymore
     await deleteEmailForwarder(bcc_username);
