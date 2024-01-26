@@ -819,4 +819,16 @@ export default [
         `,
     },
 
+    // change address to unique
+    {
+        name: "add_unique_constraint_to_users_address",
+        query: `
+            ALTER TABLE users
+            ADD CONSTRAINT constraint_unique_address UNIQUE (address);
+        `,
+        rollback_query: `
+            ALTER TABLE users
+            DROP CONSTRAINT constraint_unique_address;
+        `,
+    },
 ];
