@@ -20,6 +20,19 @@ export type SendEmailParams = {
     from?: string;
 }
 
+export type RetrievedMail = { 
+    from: string;
+    subject?: string;
+    to: string[];
+    cc?: AddressObject | AddressObject[];
+    bcc?: AddressObject | AddressObject[];
+    textAsHtml?: string;
+    textAsHtmlWithoutHistory?: string;
+    text?: string;
+    messageId?: string;
+    attachments: ParserAttachment[] 
+}
+
 export const getImap = () => {
     const { user, pass, host, } = getMailCredentials();
     const imapConfig: Imap.Config = {
@@ -91,8 +104,16 @@ export const sendEmail = async ({
 }
 
 export const getEmailByMessageId = (messageId: string) => {
+    return getEmailBy('Message-ID', messageId);
+}
+
+export const getEmailByReceiver = (receiver: string) => {
+    return getEmailBy('Envelope-to', receiver);
+}
+
+export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string) => {
     const imap = getImap();
-    return new Promise<{ from: string, subject?: string, to: string[], cc?: AddressObject | AddressObject[], bcc?: AddressObject | AddressObject[], textAsHtml?: string, text?: string, messageId?: string, attachments: ParserAttachment[] }>(async (resolve, reject) => {
+    return new Promise<RetrievedMail>(async (resolve, reject) => {
         try {
             imap.once('ready', () => {
                 // on ready
@@ -101,8 +122,8 @@ export const getEmailByMessageId = (messageId: string) => {
                     return imap.search([
                         [
                             'HEADER',
-                            'Message-ID',
-                            messageId
+                            header,
+                            value
                         ]
                     ], async (err, results) => {
                         try {
@@ -126,15 +147,26 @@ export const getEmailByMessageId = (messageId: string) => {
                                                 toEmails = toEmailMatch;
                                             }
                                         }
-
-                                        return resolve({ from: fromEmailStr, to: toEmails, bcc, cc, subject, textAsHtml, text, messageId, attachments});
+                                        let textAsHtmlWithoutHistory = textAsHtml?.replace(/<p>On(.*)wrote:<\/p>(.)*/g, "");
+                                        return resolve({ 
+                                            from: fromEmailStr, 
+                                            to: toEmails, 
+                                            bcc, 
+                                            cc, 
+                                            subject, 
+                                            textAsHtml, 
+                                            textAsHtmlWithoutHistory, 
+                                            text, 
+                                            messageId, 
+                                            attachments
+                                        });
                                     })
                                 })
                             });
         
                             f.once('error', async e => {
                                 let db = new DB();
-                                await db.log('Mail', 'getEmailByMessageId', `ME1:\n${e.toString()}`);
+                                await db.log('Mail', 'getEmailBy', `ME1:\n${e.toString()}`);
                                 return reject();
                             });
         
@@ -148,7 +180,7 @@ export const getEmailByMessageId = (messageId: string) => {
 
                             if(!e.message.includes("Nothing to fetch")) {
                                 let db = new DB();
-                                await db.log('Mail', 'getEmailByMessageId', `ME2:\n${e.toString()}`);
+                                await db.log('Mail', 'getEmailBy', `ME2:\n${e.toString()}`);
                             }
                             imap.end();
                         }
@@ -158,7 +190,7 @@ export const getEmailByMessageId = (messageId: string) => {
     
             imap.once('error', async(err: any) => {
                 let db = new DB();
-                await db.log('Mail', 'getEmailByMessageId', `MEe:\n${err.toString()}`);
+                await db.log('Mail', 'getEmailBy', `MEe:\n${err.toString()}`);
                 return reject();
             });
     
@@ -171,7 +203,7 @@ export const getEmailByMessageId = (messageId: string) => {
     
         catch (e: any){
             let db = new DB();
-            await db.log('Mail', 'getEmailByMessageId', `ME4:\n${e.toString()}`);
+            await db.log('Mail', 'getEmailBy', `ME4:\n${e.toString()}`);
             return reject();
         }
     })
