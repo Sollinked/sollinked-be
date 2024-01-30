@@ -127,6 +127,12 @@ io.on('connection', (socket: Socket) => {
         // console.log(`emitting to ${uuid}, status = ${status}`);
         io.emit(uuid, { status });
     });
+
+    socket.on('update_mail_payment_status', ({tiplink_public_key, isPaid}: { tiplink_public_key: string; isPaid: boolean }) => {
+        // console.log('server', `update received`);
+        // console.log(`emitting to ${uuid}, status = ${status}`);
+        io.emit(tiplink_public_key, { isPaid });
+    });
     
 });
 

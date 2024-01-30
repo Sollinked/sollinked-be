@@ -366,7 +366,7 @@ routes.get('/username/:username', async(req, res) => {
     let {username} = req.params;
 
     if(!username) {
-        return res.status(400).send("No user id");
+        return res.status(400).send("No username");
     }
 
     let user = await userController.publicViewByUsername(username);

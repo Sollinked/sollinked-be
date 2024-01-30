@@ -91,7 +91,7 @@ const processEmailToUser = async({
             }
 
             // mark the mail as responded
-            await controller.update(mail.key, { has_responded: true, responded_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') });
+            await controller.update(mail.key, { has_responded: true, responded_at: moment().utc().format('YYYY-MM-DDTHH:mm:ssZ') });
 
             // process completed, dont need the bcc forwarder anymore
             await deleteEmailForwarder(uuid);
@@ -116,9 +116,12 @@ const processEmailToUser = async({
     // we process emails here
     const tiplink = await TipLink.create();
 
+    let fromUsers = await userController.find({ email_address: returnToEmail });
+
     // save from, to, messageId and tiplink url to db
     await controller.create({
         user_id: users[0].id,
+        from_user_id: fromUsers?.[0]?.id ?? null,
         from_email: returnToEmail,
         to_email: toEmail,
         message_id: messageId,
@@ -190,7 +193,7 @@ const processEmailResponse = async({
     }
 
     // mark the mail as responded and claimed
-    await controller.update(mails[0].key, { has_responded: true, responded_at: moment().format('YYYY-MM-DDTHH:mm:ssZ') });
+    await controller.update(mails[0].key, { has_responded: true, responded_at: moment().utc().format('YYYY-MM-DDTHH:mm:ssZ') });
 
     // process completed, dont need the bcc forwarder anymore
     await deleteEmailForwarder(bcc_username);

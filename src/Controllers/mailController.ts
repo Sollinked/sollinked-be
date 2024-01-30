@@ -91,9 +91,9 @@ export const find = async(whereParams: {[key: string]: any}, args?: {
                         THEN false 
                         ELSE true 
                         END
-                    )`;
+                    )
+                    ORDER BY created_at desc`;
 
-    console.log(query);
     const db = new DB();
     let results = await db.executeQueryForResults<Mail>(query);
 
@@ -177,6 +177,7 @@ export const list = async() => {
 // update
 export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
     // filter
+    console.log()
     const filtered = _.pick(updateParams, fillableColumns);
     const params = formatDBParamsToStr(filtered);
 

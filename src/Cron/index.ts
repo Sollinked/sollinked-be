@@ -1,6 +1,6 @@
 import { processEmails, processUnclaimedRespondedEmails } from "./ProcessEmails";
 import cron from 'node-cron';
-import { processMailsWithNoResponse, processPayments } from "./ProcessPayments";
+import { processFromSitePayments, processMailsWithNoResponse, processPayments } from "./ProcessPayments";
 import { processClaims } from "./ProcessClaims";
 import { processExpiredReservationPayments, processReservationClaims, processReservationPayments } from "./ProcessReservationPayments";
 import { processGithubInvitations, syncRepo } from "./ProcessGithubInvitations";
@@ -13,6 +13,7 @@ export const init = () => {
     cron.schedule('*/1 * * * *', () => {
         // processEmails();
         processPayments();
+        processFromSitePayments();
         processClaims();
         processExpiredReservationPayments();
         processReservationClaims();

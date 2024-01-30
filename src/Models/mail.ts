@@ -85,4 +85,5 @@ export const fillableColumns = [
     'from_user_id',
     'message',
     'reply_message',
+    'responded_at',
 ];

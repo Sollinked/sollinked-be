@@ -237,15 +237,9 @@ routes.post('/threads/:username', async(req, res) => {
     let { domain } = getMailCredentials();
     
     for(let mail of mails) {
-        if(mail.key === 68) {
-            console.log('have 68')
-        }
         // unable to retrieve this
         if(mail.message_id === "from site" && (!mail.message || !mail.subject)) {
             continue;
-        }
-        if(mail.key === 68) {
-            console.log('here have 68')
         }
 
         if(!mail.message || !mail.subject) {
@@ -302,9 +296,13 @@ routes.post('/threads/:username', async(req, res) => {
 
 routes.post('/thread/:id', async(req, res) => {
     let data = req.body;
-    let { address } = data;
+    let { address, toUserId } = data;
 
     if(!data) {
+        return res.status(400).send("Invalid Params");
+    }
+    
+    if(!toUserId) {
         return res.status(400).send("Invalid Params");
     }
 
@@ -328,6 +326,10 @@ routes.post('/thread/:id', async(req, res) => {
         return res.status(401).send("Unauthorized");
     }
 
+    if(mail.user_id !== toUserId) {
+        return res.status(401).send("Unauthorized");
+    }
+
     if(!mail.message) {
         let email = await getEmailByMessageId(mail.message_id);
         let message = email.text ?? "";
@@ -348,12 +350,58 @@ routes.post('/thread/:id', async(req, res) => {
         success: true,
         message: "Success",
         data: {
+            id: mail.key,
             created_at: mail.created_at,
             responded_at: mail.responded_at,
+            subject: mail.subject,
             message: mail.message,
             reply_message: mail.reply_message,
             value_usd: mail.value_usd,
             tiplink_url: isExpired? mail.tiplink_url : undefined,
+            is_processed: mail.is_processed,
+        },
+    });
+});
+
+routes.get('/payment/:id', async(req, res) => {
+    let data = req.body;
+
+    if(!data) {
+        return res.status(400).send("Invalid Params");
+    }
+
+    let {id} = req.params;
+    if(!id) {
+        return res.status(400).send("No id");
+    }
+
+    let idInt = Number(id);
+    let mail = await mailController.view(idInt);
+    if(!mail) {
+        return res.status(404).send("Missing email");
+    }
+
+    // restart cron process
+    if(!mail.is_processed) {
+        await mailController.update(idInt, {
+           created_at: moment().format('YYYY-MM-DDTHH:mm:ssZ'), 
+        });
+    }
+
+    let user = await userController.view(mail.user_id);
+    if(!user) {
+        return res.status(404).send("Missing user");
+    }
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: {
+            tiplink_public_key: mail.tiplink_public_key,
+            is_processed: mail.is_processed,
+            tiers: user.tiers ?? [],
+            username: user.username,
+            display_name: user.display_name,
         },
     });
 });

@@ -53,6 +53,7 @@ export const view = async(id: number) => {
     
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.reservationSettings =  await userReservationSettingController.find({'user_id': id});
+    result.tiers = await userTierController.find({ user_id: result.id });
     result.tags = await userTagController.find({ user_id: id });
     return result;
 }
