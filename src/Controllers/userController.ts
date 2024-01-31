@@ -14,6 +14,7 @@ import * as userReservationSettingController from './userReservationSettingContr
 import * as webhookController from './webhookController';
 import * as userGithubSettingController from './userGithubSettingController';
 import * as userTagController from './userTagController';
+import * as userContentIdController from './contentProductIdController';
 import { changeEmailForwarder, createEmailForwarder } from "../Mail";
 
 const table = 'users';
@@ -55,6 +56,7 @@ export const view = async(id: number) => {
     result.reservationSettings =  await userReservationSettingController.find({'user_id': id});
     result.tiers = await userTierController.find({ user_id: result.id });
     result.tags = await userTagController.find({ user_id: id });
+    result.contentProductId = (await userContentIdController.find({ user_id: result.id }))?.[0] ?? undefined;
     return result;
 }
 
@@ -73,6 +75,7 @@ export const viewByUsername = async(username: string) => {
     result.reservationSettings =  await userReservationSettingController.find({ user_id: result.id });
     result.tiers = await userTierController.find({ user_id: result.id });
     result.tags = await userTagController.find({ user_id: result.id });
+    result.contentProductId = (await userContentIdController.find({ user_id: result.id }))?.[0] ?? undefined;
     return result;
 }
 
@@ -184,6 +187,7 @@ export const find = async(whereParams: {[key: string]: any}) => {
         result[index].webhooks = await webhookController.find({ user_id: res.id })
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
         result[index].tags = await userTagController.find({ user_id: result[index].id });
+        result[index].contentProductId = (await userContentIdController.find({ user_id: result[index].id }))?.[0] ?? undefined;
     }
 
     return result;
@@ -214,6 +218,7 @@ export const findByAddress = async(address: string) => {
     result.webhooks = await webhookController.find({ user_id: result.id })
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.tags = await userTagController.find({ user_id: result.id });
+    result.contentProductId = (await userContentIdController.find({ user_id: result.id }))?.[0] ?? undefined;
 
     return result;
 }

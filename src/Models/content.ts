@@ -13,6 +13,7 @@ export type Content = {
     status: 'draft' | 'published';
     deleted_at?: string;
     updated_at: string;
+    paymentlink_id?: string;
 }
 
 export type ProcessedContent = {
@@ -28,6 +29,7 @@ export type ProcessedContent = {
     status: 'draft' | 'published';
     deleted_at?: string;
     updated_at: string;
+    paymentlink_id?: string;
 
     // generated
     contentPasses?: ProcessedContentPass[];
@@ -46,4 +48,5 @@ export const fillableColumns = [
     'status',
     'deleted_at',
     'updated_at',
+    'paymentlink_id',
 ];

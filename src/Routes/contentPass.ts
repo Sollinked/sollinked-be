@@ -3,7 +3,8 @@ import * as userController from '../Controllers/userController';
 import * as contentPassController from '../Controllers/contentPassController';
 import * as contentPaymentController from '../Controllers/contentPaymentController';
 import * as contentCNFTController from '../Controllers/contentCNFTController';
-import { createContentPass, getAdminAccount, getContentFee, getDappDomain, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
+import * as contentProductIdController from '../Controllers/contentProductIdController';
+import { createContentPass, createSpherePaymentLink, createSpherePrice, createSphereProduct, getAdminAccount, getContentFee, getDappDomain, getSphereWalletId, getTokensTransferredToUser, sendTokensTo, sleep } from '../../utils';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../Constants';
 import { UNLIMITED_PASS } from '../Models/contentPass';
 import DB from '../DB';
@@ -36,12 +37,70 @@ routes.post('/', async(req, res) => {
         return res.status(404).send("Unable to find user");
     }
 
+    let sphereProductId = user.contentProductId;
+    if(!sphereProductId) {
+        let name = `${user.display_name ?? user.username}'s Blog Access`;
+        let description = `Gives access to ${user.display_name ?? user.username} blogs`;
+        let productRes = await createSphereProduct(
+            name,
+            description,
+        );
+
+        if(!productRes) {
+            return res.status(500).send("Unable to create product");
+        }
+
+        sphereProductId = productRes.product.id;
+        await contentProductIdController.create({ user_id: user.id, content_product_id: sphereProductId });
+    }
+
+    let is_free = value_usd === 0;
+    let paymentLinkId = null;
+    if(!is_free) {
+        let { contentCreatorFee } = getContentFee();
+        let priceRet = await createSpherePrice(
+            name,
+            description,
+            sphereProductId!.content_product_id,
+            "oneTime",
+            USDC_ADDRESS,
+            (value_usd * contentCreatorFee).toFixed(5)
+        );
+
+        if(!priceRet) {
+            return res.status(500).send("Unable to create price");
+        }
+
+        let priceId = priceRet.id;
+        let wallets: {
+            id: string,
+            shareBps: number,
+        }[] = [
+            {
+                id: getSphereWalletId(),
+                shareBps: 10000, // we will process it ourselves
+            }
+        ];
+
+        let paymentLinkRet = await createSpherePaymentLink(
+            priceId,
+            wallets,
+        )
+
+        if(!paymentLinkRet) {
+            return res.status(500).send("Unable to create payment link");
+        }
+
+        paymentLinkId = paymentLinkRet.id;
+    }
+
     let contentPassRes = await contentPassController.create({
         user_id: user.id,
         name,
         description,
         amount,
         value_usd,
+        paymentlink_id: paymentLinkId,
     });
 
     if(!contentPassRes) {
@@ -87,12 +146,72 @@ routes.post('/update/:id', async(req, res) => {
         return res.status(401).send("Unauthorized");
     }
 
+    let sphereProductId = user.contentProductId;
+    if(!sphereProductId) {
+        let name = `${user.display_name ?? user.username}'s Blog Access`;
+        let description = `Gives access to ${user.display_name ?? user.username} blogs`;
+        let productRes = await createSphereProduct(
+            name,
+            description,
+        );
+
+        if(!productRes) {
+            return res.status(500).send("Unable to create product");
+        }
+
+        sphereProductId = productRes.product.id;
+        await contentProductIdController.create({ user_id: user.id, content_product_id: sphereProductId });
+    }
+
+    let is_free = value_usd === 0;
+    let paymentLinkId = null;
+    if(!is_free && contentPass.value_usd !== value_usd && value_usd) {
+        let name = contentPass.name;
+        let description = contentPass.description;
+        let { contentCreatorFee } = getContentFee();
+        let priceRet = await createSpherePrice(
+            name,
+            description,
+            sphereProductId!.content_product_id,
+            "oneTime",
+            USDC_ADDRESS,
+            (value_usd * contentCreatorFee).toFixed(5)
+        );
+
+        if(!priceRet) {
+            return res.status(500).send("Unable to create price");
+        }
+
+        let priceId = priceRet.id;
+        let wallets: {
+            id: string,
+            shareBps: number,
+        }[] = [
+            {
+                id: getSphereWalletId(),
+                shareBps: 10000, // we will process it ourselves
+            }
+        ];
+
+        let paymentLinkRet = await createSpherePaymentLink(
+            priceId,
+            wallets,
+        )
+
+        if(!paymentLinkRet) {
+            return res.status(500).send("Unable to create payment link");
+        }
+
+        paymentLinkId = paymentLinkRet.id;
+    }
+
     await contentPassController.update(idNum, {
         user_id: user.id,
         name,
         description,
         amount,
         value_usd,
+        paymentlink_id: paymentLinkId,
     });
 
     return res.send({

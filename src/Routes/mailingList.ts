@@ -6,7 +6,7 @@ import * as mailingListSubscriberController from '../Controllers/mailingListSubs
 import * as mailingListBroadcastController from '../Controllers/mailingListBroadcastController';
 import axios from 'axios';
 import moment from 'moment';
-import { getSphereKey, getSphereWalletId, getSubscriptionFee } from '../../utils';
+import { createSpherePaymentLink, createSpherePrice, createSphereProduct, getSphereKey, getSphereWalletId, getSubscriptionFee } from '../../utils';
 import { USDC_ADDRESS } from '../Constants';
 import DB from '../DB';
 
@@ -40,36 +40,22 @@ routes.post('/', async(req, res) => {
     let product = null;
     let wallet = null;
     try {
-        let productRes = await axios.post('https://api.spherepay.co/v1/product', {
-                name: `${user.display_name ?? user.username}'s Mail Subscription`,
-                description: `Receive emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`,
-            },
-            {
-                headers: {
-                'Authorization': `Bearer ${getSphereKey()}` 
-                }
-            });
-    
-        if(!productRes.data.ok || !productRes.data.data || !productRes.data.data.product) {
-            return res.status(500).send("Unable to create product");
-        }
-        let walletRes = await axios.post('https://api.spherepay.co/v1/wallet', {
-                address: user.address,
-                network: 'sol',
-                nickname: `${user.username} Wallet`,
-            },
-            {
-                headers: {
-                'Authorization': `Bearer ${getSphereKey()}` 
-                }
-            });
-    
-        if(!walletRes.data.ok || !walletRes.data.data || !walletRes.data.data.wallet) {
-            return res.status(500).send("Unable to create wallet");
+        let name = `${user.display_name ?? user.username}'s Mail Subscription`;
+        let description = `Receive emails from ${user.display_name ?? user.username} as long as you're subscribed to this product.`;
+        let receiverAddress = user.address;
+        let receiverWalletName = `${user.username} Wallet`;
+        let sphereRes = await createSphereProduct(name, description, receiverAddress, receiverWalletName);
+
+        if(!sphereRes) {
+            return res.status(500).send("Unable to create subscription");
         }
 
-        product = productRes.data.data.product;
-        wallet = walletRes.data.data.wallet;
+        product = sphereRes.product;
+        wallet = sphereRes.wallet;
+
+        if(!wallet) {
+            return res.status(500).send("Unable to create wallet");
+        }
     }
 
     catch (e: any){
@@ -135,80 +121,57 @@ routes.post('/priceList', async(req, res) => {
                 return;
             }
 
-            let priceRet = null;
-            let paymentLinkRet = null;
+            let priceRet: any = null;
+            let paymentLinkRet: any = null;
     
             try {
-                let priceRes = await axios.post('https://api.spherepay.co/v1/price', {
-                        name: `${user!.display_name ?? user!.username} - ${price.name}`,
-                        description: `Receive ${price.name} emails from ${user!.display_name ?? user!.username} as long as you're subscribed to this product.`,
-                        product: list.product_id,
-                        type: "recurring",
-                        currency: USDC_ADDRESS,
-                        network: "sol",
-                        taxBehavior: "exclusive",
-                        billingSchema: "perUnit",
-                        //unitAmount: (price.amount * USDC_DECIMALS).toString(), // 500000000
-                        unitAmountDecimal: (price.amount * subscriptionFee).toFixed(5), // 5, * 1.05 cause of 5% service charge
-                        //tierType: null,
-                        //tiers: null,
-                        recurring: {
-                            type: "delegated",
-                            interval: "month",
-                            intervalCount: price.charge_every, // per month
-                            usageAggregation: "sum",
-                            usageType: "licensed",
-                            defaultLength: price.prepay_month,
-                            // usageDefaultQuantity: "",
-                        }
-                    }, 
-                    {
-                        headers: {
-                          'Authorization': `Bearer ${getSphereKey()}` 
-                        }
-                    }
-                );
-            
-                if(!priceRes.data.ok || !priceRes.data.data || !priceRes.data.data.price) {
-                    let db = new DB();
-                    await db.log('mailingList', '/priceList', 'Unable to create price');
-                    return;
+                let name = `${user!.display_name ?? user!.username} - ${price.name}`;
+                let description = `Receive ${price.name} emails from ${user!.display_name ?? user!.username} as long as you're subscribed to this product.`;
+                let productId = list.product_id;
+                let currency = USDC_ADDRESS;
+                let amount = (price.amount * subscriptionFee).toFixed(5); // 5, * 1.05 cause of 5% service charge
+                let type: "recurring" | "oneTime" = "recurring";
+                let intervalCount = price.charge_every;
+                let defaultLength = price.prepay_month;
+                let priceRet = await createSpherePrice(
+                    name,
+                    description,
+                    productId,
+                    type,
+                    currency,
+                    amount,
+                    intervalCount,
+                    defaultLength
+                );  
+
+                if(!priceRet) {
+                    return res.status(500).send("Unable to create price");
                 }
-                priceRet = priceRes.data.data.price;
                 
-                // create sphere payment link
-                let paymentLinkRes = await axios.post('https://api.spherepay.co/v1/paymentLink', {
-                        lineItems: [{
-                            price: priceRet.id,
-                            quantity: 1,
-                            quantityMutable: false,
-                        }],
-                        wallets: [
-                            {
-                                id: list.wallet_id,
-                                shareBps: 9524, // 95%
-                            },
-                            {
-                                id: getSphereWalletId(),
-                                shareBps: 10000 - 9524, // 5%
-                            }
-                        ],
-                        requiresEmail: true,
-                    }, 
+                let priceId = priceRet.id;
+                let wallets: {
+                    id: string,
+                    shareBps: number,
+                }[] = [
                     {
-                        headers: {
-                        'Authorization': `Bearer ${getSphereKey()}` 
-                        }
+                        id: list.wallet_id,
+                        shareBps: 9524, // 95%
+                    },
+                    {
+                        id: getSphereWalletId(),
+                        shareBps: 10000 - 9524, // 5%
                     }
-                );
-            
-                if(!paymentLinkRes.data.ok || !paymentLinkRes.data.data || !paymentLinkRes.data.data.paymentLink) {
-                    let db = new DB();
-                    await db.log('mailingList', '/priceList', 'Unable to create payment link');
-                    return;
+                ];
+                let requiresEmail = true;
+                paymentLinkRet = await createSpherePaymentLink(
+                    priceId,
+                    wallets,
+                    requiresEmail,
+                )
+
+                if(!paymentLinkRet) {
+                    return res.status(500).send("Unable to create payment link");
                 }
-        
-                paymentLinkRet = paymentLinkRes.data.data.paymentLink;
             }
         
             catch (e: any){
@@ -219,7 +182,7 @@ routes.post('/priceList', async(req, res) => {
             
             await mailingListPriceTierController.create({ 
                 mailing_list_id: list.id,
-                price_id: priceRet.id, // id from sphere
+                price_id: priceRet!.id, // id from sphere
                 paymentlink_id: paymentLinkRet.id,
                 name: price.name, 
                 description: price.description, 
@@ -550,141 +513,6 @@ routes.post('/draft/:id', async(req, res) => {
         message: "Success",
         data: broadcast
     });
-});
-
-// for webhook
-routes.post('/subscribe', async(req, res) => {
-    let data = req.body;
-
-    if(!data) {
-        return res.status(400).send("No data");
-    }
-
-    if(!data.data) {
-        return res.status(400).send("Invalid params");
-    }
-
-    if(!data.data.payment || !data.data.payment.id) {
-        return res.status(400).send("Missing payment object");
-    }
-
-    // verify from sphere
-    let payment = data.data.payment;
-    try {
-        let paymentRes = await axios.get(`https://api.spherepay.co/v1/payment/${payment.id}`, 
-        {
-            headers: {
-              'Authorization': `Bearer ${getSphereKey()}` 
-            }
-        });
-            
-        if(!paymentRes.data.ok || !paymentRes.data.data || !paymentRes.data.data.payment) {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Unable to get payment: ${payment.id}`);
-            return res.status(400).send("Unable to get payment");;
-        }
-
-        let paymentRet = paymentRes.data.data.payment;
-        if(paymentRet.type !== "subscription") {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Payment is not subscription: ${payment.id}`);
-            return res.status(400).send("Payment is not subscription");;
-        }
-
-        if(paymentRet.status !== "succeeded") {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Payment failed: ${payment.id}`);
-            return res.status(400).send("Payment failed");;
-        }
-
-        let paymentLink = paymentRet.paymentLink;
-        if(!paymentLink) {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Missing payment link: ${payment.id}`);
-            return res.status(400).send("Payment link missing");;
-        }
-
-        let customer = paymentRet.customer;
-        if(!customer || !customer.solanaPubKey) {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Missing customer: ${payment.id}`);
-            return res.status(400).send("customer missing");;
-        }
-
-        let lineItems = paymentLink.lineItems;
-        if(!lineItems || lineItems.length === 0) {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Missing lineItems: ${payment.id}`);
-            return res.status(400).send("lineItems missing");;
-        }
-
-        let lineItem = lineItems[0];
-        let price = lineItem.price;
-        if(!price) {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Missing price: ${payment.id}`);
-            return res.status(400).send("price missing");;
-        }
-
-        let priceTiers = await mailingListPriceTierController.find({ price_id: price.id }, true);
-        if(!priceTiers || priceTiers.length === 0) {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Unable to find priceTier: ${payment.id}`);
-            return res.status(500).send("Unable to find priceTier");;
-        }
-
-        let priceTier = priceTiers[0];
-
-        if(!paymentRet.personalInfo || !paymentRet.personalInfo.email) {
-            let db = new DB();
-            await db.log('mailingList', '/subscribe', `Unable to find email: ${payment.id}`);
-            return res.status(500).send("Unable to find email");;
-        }
-
-        let email = paymentRet.personalInfo.email;
-        let users = await userController.find({ address: customer.solanaPubKey });
-        let user_id = 0;
-        if(!users || users.length === 0) {
-            if(!paymentRet.personalInfo) {
-                let db = new DB();
-                await db.log('mailingList', '/subscribe', `Unable to create cause there is no email: ${payment.id}`);
-                return res.status(500).send("Unable to create user");;
-            }
-            let result = await userController.create({
-                address: customer.solanaPubKey,
-                username: customer.solanaPubKey,
-                calendar_advance_days: 100,
-                email_address: email,
-            });
-            if(!result) {
-                let db = new DB();
-                await db.log('mailingList', '/subscribe', `Unable to create user: ${payment.id}`);
-                return res.status(500).send("Unable to create user");;
-            }
-            user_id = result.id;
-        }
-
-        else {
-            user_id = users[0].id;
-        }
-
-        await mailingListSubscriberController.create({
-            mailing_list_price_tier_id: priceTier.id,
-            user_id,
-            price_id: price.id,
-            value_usd: priceTier.amount,
-            expiry_date: moment().add(priceTier.charge_every, 'M').format('YYYY-MM-DDTHH:mm:ssZ'),
-            email_address: email,
-        });
-    }
-
-    catch {
-        let db = new DB();
-        await db.log('mailingList', '/subscribe', 'Unable to create subscriber');
-        return;
-    }
-
-    return res.send("Success");
 });
 
 // public function

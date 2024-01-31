@@ -109,9 +109,21 @@ export const list = async() => {
     const query = `SELECT * FROM ${table} ORDER BY id desc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<ContentPass>(query);
+    const results = await db.executeQueryForResults<ContentPass>(query);
 
-    return result ?? [];
+    if(!results) {
+        return;
+    }
+
+    let processedResults: ProcessedContentPass[] = [];
+    for(const [index, result] of results.entries()) {
+        processedResults.push({
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        });
+    }
+
+    return processedResults;
 }
 
 // update

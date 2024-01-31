@@ -1,5 +1,6 @@
 import { ProcessedContent } from "./content";
 import { ProcessedContentPass } from "./contentPass";
+import { ContentProductId } from "./contentProductId";
 import { ProcessedMail } from "./mail";
 import { MailingList } from "./mailingList";
 import { MailingListBroadcast } from "./mailingListBroadcast";
@@ -34,6 +35,7 @@ export type User = {
     reservationSettings?: ProcessedUserReservationSetting[];
     contents?: ProcessedContent[];
     contentPasses?: ProcessedContentPass[];
+    contentProductId?: ContentProductId;
     webhooks?: Webhook[];
     githubSettings?: UserGithubSetting[];
     tags?: UserTag[];

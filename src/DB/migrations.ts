@@ -875,4 +875,41 @@ export default [
             DROP COLUMN responded_at;
         `,
     },
+
+    // for blogs
+    {
+        name: "create_content_product_ids_table",
+        query: `
+            CREATE TABLE content_product_ids (
+                id serial PRIMARY KEY,
+                user_id integer not null,
+                content_product_id text not null
+            )
+        `,
+        rollback_query: `DROP TABLE content_product_ids;`,
+    },
+
+    {
+        name: "add_paymentlink_id_to_contents",
+        query: `
+            ALTER TABLE contents
+            ADD paymentlink_id text null;
+        `,
+        rollback_query: `
+            ALTER TABLE contents
+            DROP COLUMN paymentlink_id;
+        `,
+    },
+
+    {
+        name: "add_paymentlink_id_to_content_passes",
+        query: `
+            ALTER TABLE content_passes
+            ADD paymentlink_id text null;
+        `,
+        rollback_query: `
+            ALTER TABLE content_passes
+            DROP COLUMN paymentlink_id;
+        `,
+    },
 ];

@@ -74,9 +74,23 @@ export const list = async() => {
     const query = `SELECT * FROM ${table} ORDER BY updated_at desc`;
 
     const db = new DB();
-    const result = await db.executeQueryForResults<Content>(query);
+    const results = await db.executeQueryForResults<Content>(query);
+    if(!results) {
+        return;
+    }
 
-    return result ?? [];
+    let processedResults: ProcessedContent[] = [];
+    for(const [index, result] of results.entries()) {
+        let processed: ProcessedContent = {
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        };
+        processed.contentPasses = await contentPassController.findByContent(processed.id);
+        processed.content = ""; // hide it
+        processedResults.push(processed);
+    }
+
+    return processedResults;
 }
 
 // update

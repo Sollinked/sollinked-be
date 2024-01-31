@@ -961,6 +961,7 @@ export const createUnderdogNFT = async({
 export const getUnderdogNft = async(projectId: number | string, nftId: number | string) => {
     let {apiKey, baseUrl} = getUnderdogKey();
     try {
+        console.log(`${baseUrl}/projects/${projectId}/nfts/${nftId}`);
         let mintRes = await axios.get<{
             "id": number;
             "mintAddress": string;
@@ -977,6 +978,8 @@ export const getUnderdogNft = async(projectId: number | string, nftId: number | 
             }
         });
 
+        console.log(mintRes)
+
         if(!mintRes.data || !mintRes.data.mintAddress) {
             return;
         }
@@ -984,7 +987,157 @@ export const getUnderdogNft = async(projectId: number | string, nftId: number | 
         return mintRes.data;
     }
 
+    catch(e) {
+        return;
+    }
+}
+
+// sphere
+export const createSphereProduct = async(name: string, description: string, receiverWalletName?: string, receiverAddress?: string) => {
+    try {
+        let productRes = await axios.post('https://api.spherepay.co/v1/product', {
+                name,
+                description,
+            },
+            {
+                headers: {
+                'Authorization': `Bearer ${getSphereKey()}` 
+                }
+            });
+    
+        if(!productRes.data.ok || !productRes.data.data || !productRes.data.data.product) {
+            return;
+        }
+
+        let wallet;
+        if(receiverWalletName && receiverAddress) {
+            let walletRes = await axios.post('https://api.spherepay.co/v1/wallet', {
+                    address: receiverAddress,
+                    network: 'sol',
+                    nickname: `${receiverWalletName} Wallet`,
+                },
+                {
+                    headers: {
+                    'Authorization': `Bearer ${getSphereKey()}` 
+                    }
+                });
+        
+            if(!walletRes.data.ok || !walletRes.data.data || !walletRes.data.data.wallet) {
+                return;
+            }
+
+            wallet = walletRes.data.data.wallet;
+        }
+
+        let product = productRes.data.data.product;
+
+        return {
+            product,
+            wallet
+        };
+    }
+
     catch {
+        return;
+    }
+}
+
+export const createSpherePrice = async(
+    name: string, 
+    description: string, 
+    productId: string, // sphere's product id
+    type: "recurring" | "oneTime",
+    currency: string, // token address,
+    amount: string,
+    intervalCount?: number, // for subscriptions
+    defaultLength?: number, // for subscriptions
+) => {
+    try {
+        let priceRes = await axios.post('https://api.spherepay.co/v1/price', {
+                name,
+                description,
+                product: productId,
+                type,
+                currency,
+                network: "sol",
+                taxBehavior: "exclusive",
+                billingSchema: "perUnit",
+                //unitAmount: (price.amount * USDC_DECIMALS).toString(), // 500000000
+                unitAmountDecimal: amount,
+                //tierType: null,
+                //tiers: null,
+                recurring: type === "recurring"? {
+                    type: "delegated",
+                    interval: "month",
+                    intervalCount: intervalCount, // per month
+                    usageAggregation: "sum",
+                    usageType: "licensed",
+                    defaultLength: defaultLength,
+                    // usageDefaultQuantity: "",
+                } : undefined
+            }, 
+            {
+                headers: {
+                  'Authorization': `Bearer ${getSphereKey()}` 
+                }
+            }
+        );
+    
+        if(!priceRes.data.ok || !priceRes.data.data || !priceRes.data.data.price) {
+            let db = new DB();
+            await db.log('utils', 'createSpherePrice', 'Unable to create price');
+            return;
+        }
+        let priceRet = priceRes.data.data.price;
+
+        return priceRet;
+    }
+
+    catch (e: any){
+        let db = new DB();
+        await db.log('utils', 'createSpherePrice', `Unable to create price\n\n${e.toString()}`);
+        return;
+    }
+}
+
+export const createSpherePaymentLink = async(
+    priceId: string,
+    wallets: {
+        id: string,
+        shareBps: number,
+    }[],
+    requiresEmail?: boolean,
+) => {
+    try {
+        // create sphere payment link
+        let paymentLinkRes = await axios.post('https://api.spherepay.co/v1/paymentLink', {
+                lineItems: [{
+                    price: priceId,
+                    quantity: 1,
+                    quantityMutable: false,
+                }],
+                wallets,
+                requiresEmail,
+            }, 
+            {
+                headers: {
+                'Authorization': `Bearer ${getSphereKey()}` 
+                }
+            }
+        );
+    
+        if(!paymentLinkRes.data.ok || !paymentLinkRes.data.data || !paymentLinkRes.data.data.paymentLink) {
+            let db = new DB();
+            await db.log('utils', 'createSpherePaymentLink', 'Unable to create payment link');
+            return;
+        }
+
+        return paymentLinkRes.data.data.paymentLink;
+    }
+
+    catch (e: any){
+        let db = new DB();
+        await db.log('utils', 'createSpherePaymentLink', `Unable to create payment link\n\n${e.toString()}`);
         return;
     }
 }

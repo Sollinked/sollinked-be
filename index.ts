@@ -15,6 +15,7 @@ import { routes as mailRoutes } from './src/Routes/mail';
 import { routes as mailingListRoutes } from './src/Routes/mailingList';
 import { routes as contentRoutes } from './src/Routes/content';
 import { routes as contentPassRoutes } from './src/Routes/contentPass';
+import { routes as handleWebhookRoutes } from './src/Routes/handleWebhook';
 import * as cron from './src/Cron';
 import { VERIFY_MESSAGE } from './src/Constants';
 
@@ -40,6 +41,12 @@ app.use(cors({
 }));
 
 app.use((req, res, next) => {
+    // check if it's a handleWebhook request
+    if(req.path.match(/\/handleWebhook\/sphere/g)) {
+        next();
+        return;
+    }
+
     // check if it's to reserve a time slot
     if((req.path.match(/\/reservation\//g) && req.method.toLowerCase() === "get")|| req.path.match(/\/reservation\/new\/.*/g)) {
         next();
@@ -108,6 +115,7 @@ app.use('/mail', mailRoutes);
 app.use('/mailingList', mailingListRoutes);
 app.use('/content', contentRoutes);
 app.use('/contentPass', contentPassRoutes);
+app.use('/handleWebhook', handleWebhookRoutes);
 
 //connect app to websocket
 let http = createServer(app);

@@ -7,7 +7,8 @@ export type ContentPass = {
     description: string;
     amount: number; // limited amount
     value_usd: string; // price per pass
-    cnft_count: number; // how many miinted
+    cnft_count: number; // how many minted
+    paymentlink_id?: string;
 }
 
 export type ProcessedContentPass = {
@@ -17,7 +18,8 @@ export type ProcessedContentPass = {
     description: string;
     amount: number; // limited amount
     value_usd: number; // price per pass
-    cnft_count: number; // how many miinted
+    cnft_count: number; // how many minted
+    paymentlink_id?: string;
 }
 
 export const fillableColumns = [
@@ -27,4 +29,5 @@ export const fillableColumns = [
     'description',
     'amount',
     'value_usd',
+    'paymentlink_id',
 ];
