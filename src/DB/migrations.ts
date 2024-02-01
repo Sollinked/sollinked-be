@@ -912,4 +912,17 @@ export default [
             DROP COLUMN paymentlink_id;
         `,
     },
+
+    // make sure no double creates
+    {
+        name: "add_unique_constraint_to_content_payments_tx_hash",
+        query: `
+            ALTER TABLE content_payments
+            ADD CONSTRAINT constraint_unique_tx_hash UNIQUE (tx_hash);
+        `,
+        rollback_query: `
+            ALTER TABLE content_payments
+            DROP CONSTRAINT constraint_unique_tx_hash;
+        `,
+    },
 ];

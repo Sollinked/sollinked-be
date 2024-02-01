@@ -188,7 +188,7 @@ export default class DB {
             console.log(query);
             console.error(e.message);
             await client.end();
-            return e.message;
+            return;
         }
 
         await client.end();

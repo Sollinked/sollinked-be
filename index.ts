@@ -141,6 +141,10 @@ io.on('connection', (socket: Socket) => {
         // console.log(`emitting to ${uuid}, status = ${status}`);
         io.emit(tiplink_public_key, { isPaid });
     });
+
+    socket.on('update_content_payment_status', ({address}: { address: string; }) => {
+        io.emit(`content_${address}`, "Paid");
+    });
     
 });
 

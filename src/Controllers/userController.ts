@@ -155,7 +155,7 @@ export const publicViewByUsername = async(username: string) => {
     result.tiers = await userTierController.find({ user_id: result.id });
     result.mailingList = await mailingListController.findByUserId(result.id, true);
     result.contentPasses = await contentPassController.find({ user_id: result.id });
-    result.contents = await contentController.find({ user_id: result.id, status: "published" });
+    result.contents = await contentController.find({ user_id: result.id, status: "published" }, true);
     result.tags = await userTagController.find({ user_id: result.id });
     return result;
 }

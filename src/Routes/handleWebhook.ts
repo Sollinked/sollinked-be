@@ -10,15 +10,25 @@ import * as contentCNFTController from '../Controllers/contentCNFTController';
 import * as contentPaymentController from '../Controllers/contentPaymentController';
 import axios from 'axios';
 import moment from 'moment';
-import { createContentPass, createSpherePaymentLink, createSpherePrice, createSphereProduct, getDappDomain, getSphereKey, getSphereWalletId, getSubscriptionFee, sendTokensTo } from '../../utils';
+import { createContentPass, createSpherePaymentLink, createSpherePrice, createSphereProduct, getDappDomain, getServerPort, getSphereKey, getSphereWalletId, getSubscriptionFee, sendTokensTo } from '../../utils';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../Constants';
 import DB from '../DB';
+import * as clientio from 'socket.io-client';
 
 const {
     subscriptionFee,
     subscriptionRatio,
 } = getSubscriptionFee();
 export const routes = Router();
+
+const port = getServerPort();
+let socket = clientio.connect(`ws://localhost:${port}`);
+const notifyPayer = (address: string) => {
+    if(socket.connected) {
+        // socket connected
+        socket.emit('update_content_payment_status', { address });
+    }
+}
 
 const processSubscription = async(payment: any, paymentRet: any) => {
     let paymentLink = paymentRet.paymentLink;
@@ -149,13 +159,19 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
         let content = contents[0];
 
         // create payment history
-        await contentPaymentController.create({
+        let paymentRes = await contentPaymentController.create({
             user_id: user_id,
             content_id: content.id,
             value_usd: content.value_usd,
             tx_hash: payment.id,
             type: "single"
         });
+
+        if(!paymentRes) {
+            let db = new DB();
+            await db.log('handleWebhook', 'processOneTimePayment', "Unable to create payment history: tx_hash might be duplicated");
+            return "Unable to create payment history: tx_hash might be duplicated";
+        }
 
         // send payment to user
         let contentCreator = await userController.view(content.user_id);
@@ -168,6 +184,7 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
             await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, content.value_usd);
         }
 
+        notifyPayer(customer.solanaPubKey);
         return "";
     }
 
@@ -176,13 +193,19 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
         let contentPass = contentPasses[0];
 
         // create payment history
-        await contentPaymentController.create({
+        let paymentRes = await contentPaymentController.create({
             user_id: user_id,
             content_id: contentPass.id,
             value_usd: contentPass.value_usd,
             tx_hash: payment.id,
             type: "pass"
         });
+
+        if(!paymentRes) {
+            let db = new DB();
+            await db.log('handleWebhook', 'processOneTimePayment', "Unable to create payment history: tx_hash might be duplicated");
+            return "Unable to create payment history: tx_hash might be duplicated";
+        }
 
         let contentCreator = await userController.view(contentPass.user_id);
         if(!contentCreator) {
@@ -197,22 +220,24 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
             },
         });
 
-        if(!passRes || !passRes.mintAddress) {
+        // send usdc to the content creator
+        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, contentPass.value_usd);
+
+        if(!passRes || !passRes.nftId) {
             let db = new DB();
             await db.log('handleWebhook', 'processOneTimePayment', `Unable to mint pass, below is passRes\n\n${passRes}`);
             return "Unable to mint pass!";
         }
 
-        // send usdc to the content creator
-        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, contentPass.value_usd);
-
         // create a log in db
         let { mintAddress, nftId } = passRes;
         await contentCNFTController.create({
-            mint_address: mintAddress,
+            mint_address: mintAddress, // might be empty so we need to add this in later
             nft_id: nftId,
             content_pass_id: contentPass.id,
         });
+
+        notifyPayer(customer.solanaPubKey);
     }
 
     return "";

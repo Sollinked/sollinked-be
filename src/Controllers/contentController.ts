@@ -45,7 +45,7 @@ export const view = async(id: number) => {
 }
 
 // find (all match)
-export const find = async(whereParams: {[key: string]: any}) => {
+export const find = async(whereParams: {[key: string]: any}, shouldHide: boolean = false) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} ORDER BY updated_at desc`;
 
@@ -62,7 +62,9 @@ export const find = async(whereParams: {[key: string]: any}) => {
             value_usd: parseFloat(result.value_usd ?? '0'),
         };
         processed.contentPasses = await contentPassController.findByContent(processed.id);
-        processed.content = ""; // hide it
+        if(shouldHide) {
+            processed.content = "";
+        }
         processedResults.push(processed);
     }
 
