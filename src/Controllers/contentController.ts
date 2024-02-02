@@ -2,7 +2,7 @@ import { formatDBParamsToStr, } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
 import * as contentPassController from './contentPassController';
-import { Content, ProcessedContent, fillableColumns } from "../Models/content";
+import { Content, ProcessedContent, ProcessedContentWithUser, fillableColumns } from "../Models/content";
 
 const table = 'contents';
 
@@ -89,6 +89,34 @@ export const list = async() => {
         };
         processed.contentPasses = await contentPassController.findByContent(processed.id);
         processed.content = ""; // hide it
+        processedResults.push(processed);
+    }
+
+    return processedResults;
+}
+
+// list (all)
+export const getLatest = async(top: number) => {
+    const query = `SELECT * FROM ${table} where status = 'published' ORDER BY updated_at desc`;
+
+    const db = new DB();
+    const results = await db.executeQueryForResults<Content>(query);
+    if(!results) {
+        return;
+    }
+
+    let processedResults: ProcessedContentWithUser[] = [];
+    for(const [index, result] of results.entries()) {
+        const userQuery = `SELECT username, display_name FROM users where id = ${result.user_id}`;
+        const user = await db.executeQueryForSingleResult<{ username: string, display_name: string }>(userQuery);
+        console.log(user);
+        let processed: ProcessedContentWithUser = {
+            ...result,
+            value_usd: parseFloat(result.value_usd ?? '0'),
+        };
+        processed.contentPasses = await contentPassController.findByContent(processed.id);
+        processed.content = ""; // hide it
+        processed.user = user;
         processedResults.push(processed);
     }
 

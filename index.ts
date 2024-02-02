@@ -47,6 +47,12 @@ app.use((req, res, next) => {
         return;
     }
 
+    // check if it's to get latest contents
+    if((req.path.match(/\/content/g) && req.method.toLowerCase() === "get")) {
+        next();
+        return;
+    }
+
     // check if it's to reserve a time slot
     if((req.path.match(/\/reservation\//g) && req.method.toLowerCase() === "get")|| req.path.match(/\/reservation\/new\/.*/g)) {
         next();

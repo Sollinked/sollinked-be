@@ -424,8 +424,15 @@ routes.post('/payment/:id', async(req, res) => {
 });
 
 // public routes
-// get all published by user
-routes.get('/:username', async(req, res) => {
+// get all the latest updates
+routes.get('/', async(req, res) => {
+    let contents = await contentController.getLatest(50);
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: contents,
+    });
 });
 
 // need the address and signature to get the user to see if they have access to the content
