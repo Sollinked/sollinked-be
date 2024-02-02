@@ -177,7 +177,6 @@ export const list = async() => {
 // update
 export const update = async(id: number, updateParams: {[key: string]: any}): Promise<void> => {
     // filter
-    console.log()
     const filtered = _.pick(updateParams, fillableColumns);
     const params = formatDBParamsToStr(filtered);
 

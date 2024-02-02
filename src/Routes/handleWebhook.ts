@@ -276,7 +276,6 @@ routes.post('/sphere', async(req, res) => {
 
         let paymentRet = paymentRes.data.data.payment;
         if(paymentRet.status !== "succeeded") {
-            console.log('payment status is not succeeded');
             let db = new DB();
             await db.log('handleWebhook', '/sphere', `Payment failed: ${payment.id}`);
             return res.status(400).send("Payment failed");
@@ -285,7 +284,8 @@ routes.post('/sphere', async(req, res) => {
         if(paymentRet.type === "subscription") {
             let errorMessage = await processSubscription(payment, paymentRet);
             if(errorMessage !== "") {
-                console.log(errorMessage);
+                let db = new DB();
+                await db.log('handleWebhook', '/sphere', errorMessage);
                 return res.status(400).send("Payment failed");
             }
         }
@@ -293,7 +293,8 @@ routes.post('/sphere', async(req, res) => {
         else {
             let errorMessage = await processOneTimePayment(payment, paymentRet);
             if(errorMessage !== "") {
-                console.log(errorMessage);
+                let db = new DB();
+                await db.log('handleWebhook', '/sphere', errorMessage);
                 return res.status(400).send("Payment failed");
             }
         }
