@@ -40,6 +40,7 @@ export type User = {
     githubSettings?: UserGithubSetting[];
     tags?: UserTag[];
     is_verified: boolean;
+    holiday_mode: boolean;
 }
 
 export type PublicUser = {
@@ -59,6 +60,7 @@ export type PublicUser = {
     contentPasses?: ProcessedContentPass[];
     tiers?: UserTier[];
     is_verified: boolean;
+    holiday_mode: boolean;
     tags?: UserTag[];
 }
 
@@ -70,6 +72,7 @@ export type HomepageUser = {
     value_usd: number;
     is_verified: boolean;
     tags?: UserTag[];
+    holiday_mode: boolean;
 }
 
 export const fillableColumns = [
@@ -87,4 +90,5 @@ export const fillableColumns = [
     'youtube',
     'calendar_advance_days',
     'is_verified',
+    'holiday_mode',
 ];

@@ -94,7 +94,7 @@ routes.post('/update/:id', contentUpload.single('profile_picture'), async(req, r
     if(user.address !== address) {
         return res.status(401).send("Unauthorized");
     }
-    
+
     let updateRes = await userController.update(id, data);
     if(updateRes && typeof updateRes === 'string') {
         return res.status(400).send((updateRes as string).includes("duplicate")? 'Username is claimed, please choose another!' : "Unknown Error");

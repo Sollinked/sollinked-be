@@ -102,7 +102,8 @@ export const publicView = async(id: number) => {
                         twitch,
                         tiktok,
                         youtube,
-                        is_verified
+                        is_verified,
+                        holiday_mode
                     FROM ${table} WHERE id = ${id} LIMIT 1`;
 
     const db = new DB();
@@ -141,7 +142,8 @@ export const publicViewByUsername = async(username: string) => {
                         twitch,
                         tiktok,
                         youtube,
-                        is_verified
+                        is_verified,
+                        holiday_mode
                     FROM ${table} WHERE lower(username) = lower('${username}') LIMIT 1`;
 
     const db = new DB();
@@ -338,6 +340,7 @@ export const getHomepageUsers = async() => {
                             display_name,
                             profile_picture,
                             is_verified,
+                            holiday_mode,
                             mail_usd,
                             content_usd,
                             content_pass_usd,
@@ -392,7 +395,8 @@ export const search = async(username: string) => {
                         username,
                         display_name,
                         profile_picture,
-                        is_verified
+                        is_verified,
+                        holiday_mode
                     from users u
                     where username ilike '%${username}%' or display_name ilike '%${username}%'
                     limit 50`;
@@ -421,7 +425,8 @@ export const searchAddress = async(address: string) => {
                         username,
                         display_name,
                         profile_picture,
-                        is_verified
+                        is_verified,
+                        holiday_mode
                     from users u
                     where address = '${address}'
                     limit 1`;

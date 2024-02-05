@@ -109,7 +109,6 @@ export const getLatest = async(top: number) => {
     for(const [index, result] of results.entries()) {
         const userQuery = `SELECT username, display_name FROM users where id = ${result.user_id}`;
         const user = await db.executeQueryForSingleResult<{ username: string, display_name: string }>(userQuery);
-        console.log(user);
         let processed: ProcessedContentWithUser = {
             ...result,
             value_usd: parseFloat(result.value_usd ?? '0'),

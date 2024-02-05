@@ -925,4 +925,18 @@ export default [
             DROP CONSTRAINT constraint_unique_tx_hash;
         `,
     },
+
+    // add holiday mode
+    {
+        name: "add_holiday_mode_to_users",
+        query: `
+            ALTER TABLE users
+            ADD holiday_mode boolean not null default(false);
+        `,
+        rollback_query: `
+            ALTER TABLE users
+            DROP COLUMN holiday_mode;
+        `,
+    },
+
 ];

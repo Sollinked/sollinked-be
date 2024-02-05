@@ -402,6 +402,8 @@ routes.get('/payment/:id', async(req, res) => {
             tiers: user.tiers ?? [],
             username: user.username,
             display_name: user.display_name,
+            holiday_mode: user.holiday_mode,
+            is_verified: user.is_verified,
         },
     });
 });
