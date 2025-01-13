@@ -6,6 +6,7 @@ import { processExpiredReservationPayments, processReservationClaims, processRes
 import { processGithubInvitations, syncRepo } from "./ProcessGithubInvitations";
 import { processGithubIssues } from "./ProcessGithubIssues";
 import { processBroadcasts } from "./ProcessBroadcasts";
+import { processAuctionPayments } from "./ProcessAuctions";
 
 
 export const init = () => {
@@ -21,6 +22,7 @@ export const init = () => {
         // syncRepo();
         // processGithubIssues();
         processMailsWithNoResponse();
+        processAuctionPayments();
     });
 
     setInterval(() => {

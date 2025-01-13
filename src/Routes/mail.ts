@@ -281,6 +281,7 @@ routes.post('/threads/:username', async(req, res) => {
             value_usd: mail.value_usd,
             tiplink_url: isExpired? mail.tiplink_url : undefined,
             is_processed: mail.is_processed,
+            is_auction: mail.is_auction,
         });
     }
 

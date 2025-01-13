@@ -16,6 +16,7 @@ import { routes as mailingListRoutes } from './src/Routes/mailingList';
 import { routes as contentRoutes } from './src/Routes/content';
 import { routes as contentPassRoutes } from './src/Routes/contentPass';
 import { routes as handleWebhookRoutes } from './src/Routes/handleWebhook';
+import { routes as auctionRoutes } from './src/Routes/auction';
 import * as cron from './src/Cron';
 import { VERIFY_MESSAGE } from './src/Constants';
 
@@ -49,6 +50,12 @@ app.use((req, res, next) => {
 
     // check if it's to get latest contents
     if((req.path.match(/\/content/g) && req.method.toLowerCase() === "get")) {
+        next();
+        return;
+    }
+
+    // check if it's to get auctions
+    if((req.path.match(/\/auction/g) && req.method.toLowerCase() === "get")) {
         next();
         return;
     }
@@ -122,6 +129,7 @@ app.use('/mailingList', mailingListRoutes);
 app.use('/content', contentRoutes);
 app.use('/contentPass', contentPassRoutes);
 app.use('/handleWebhook', handleWebhookRoutes);
+app.use('/auction', auctionRoutes);
 
 //connect app to websocket
 let http = createServer(app);

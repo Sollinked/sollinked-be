@@ -2,6 +2,7 @@ import { ProcessedContent } from "./content";
 import { ProcessedContentPass } from "./contentPass";
 import { ContentProductId } from "./contentProductId";
 import { ProcessedMail } from "./mail";
+import { MailAuction } from "./mailAuction";
 import { MailingList } from "./mailingList";
 import { MailingListBroadcast } from "./mailingListBroadcast";
 import { MailingListSubscriber } from "./mailingListSubscriber";
@@ -28,6 +29,7 @@ export type User = {
     youtube?: string;
     tiers?: UserTier[];
     mails?: ProcessedMail[];
+    auctions?: MailAuction[];
     mailingList?: MailingList;
     broadcasts?: MailingListBroadcast[];
     subscriptions?: MailingListSubscriber[];

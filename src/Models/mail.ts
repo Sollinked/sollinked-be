@@ -22,6 +22,7 @@ export type Mail = {
     message?: string;
     reply_message?: string;
     responded_at?: string;
+    is_auction: boolean;
 }
 
 export type ProcessedMail = {
@@ -48,6 +49,7 @@ export type ProcessedMail = {
     message?: string;
     reply_message?: string;
     responded_at?: string;
+    is_auction: boolean;
 }
 
 export type ThreadMail = {
@@ -60,6 +62,7 @@ export type ThreadMail = {
     value_usd?: number;
     tiplink_url?: string; // will have value if the mail expired
     is_processed: boolean;
+    is_auction: boolean;
 }
 
 export const fillableColumns = [
@@ -86,4 +89,5 @@ export const fillableColumns = [
     'message',
     'reply_message',
     'responded_at',
+    'is_auction',
 ];

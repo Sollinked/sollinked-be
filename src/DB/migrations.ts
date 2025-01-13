@@ -194,7 +194,7 @@ export default [
             CREATE INDEX stream_webhook_status_idx ON stream_webhooks (status);
             `,
         rollback_query: `
-            DROP TRIGGER update_stream_webhooks_updated_at;
+            DROP TRIGGER update_stream_webhooks_updated_at ON stream_webhooks;
             DROP INDEX stream_webhook_type_idx;
             DROP INDEX stream_webhook_status_idx;
         `
@@ -939,4 +939,63 @@ export default [
         `,
     },
 
+    // Auctions
+    {
+        name: "create_mail_auctions_table",
+        query: `
+            CREATE TABLE mail_auctions (
+                id serial PRIMARY KEY,
+                user_id integer not null,
+                start_date timestamp not null, -- timestamp,
+                end_date timestamp not null, -- timestamp,
+                min_bid decimal(18,2) default(0) not null,
+                created_at timestamp default current_timestamp not null,
+                deleted_at timestamp null
+            );
+            CREATE INDEX mail_auctions_user_id_idx ON mail_auctions(user_id);
+        `,
+        rollback_query: `
+            DROP INDEX mail_auctions_user_id_idx;
+            DROP TABLE mail_auctions;
+        `,
+    },
+    {
+        name: "create_mail_bids_table",
+        query: `
+            CREATE TABLE mail_bids (
+                id serial PRIMARY KEY,
+                auction_id integer not null,
+                user_id integer not null,
+                tiplink_url text not null,
+                tiplink_public_key text not null,
+                value_usd decimal default(0) not null,
+                subject text not null,
+                message text not null,
+                is_success boolean,
+                created_at timestamp default current_timestamp not null,
+                updated_at timestamp default current_timestamp not null
+            );
+            CREATE INDEX mail_bids_user_id_idx ON mail_bids(user_id);
+            CREATE INDEX mail_bids_auction_id_idx ON mail_bids(auction_id);
+            CREATE TRIGGER update_mail_bids_updated_at BEFORE UPDATE ON mail_bids FOR EACH ROW EXECUTE PROCEDURE update_at_column();
+        `,
+        rollback_query: `
+            DROP TRIGGER update_mail_bids_updated_at ON mail_bids;
+            DROP INDEX mail_bids_user_id_idx;
+            DROP INDEX mail_bids_auction_id_idx;
+            DROP TABLE mail_bids;
+        `,
+    },
+
+    {
+        name: "add_is_auction_to_mails",
+        query: `
+            ALTER TABLE mails
+            ADD is_auction boolean default(false) not null;
+        `,
+        rollback_query: `
+            ALTER TABLE mails
+            DROP COLUMN is_auction;
+        `,
+    },
 ];
