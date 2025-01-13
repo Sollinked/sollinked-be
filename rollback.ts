@@ -4,7 +4,7 @@ import prompt from 'prompt-sync';
 (() => {
   const yn = prompt({sigint: true})('Do you want to rollback? y/n\n');
   if(yn === 'y') {
-    new DB()
+    DB
       .rollback()
       .then(() => {
         console.log('Rollback Ended, press Ctrl + C to exit!')

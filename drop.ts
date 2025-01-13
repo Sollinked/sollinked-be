@@ -4,7 +4,7 @@ import prompt from 'prompt-sync';
 (() => {
   const yn = prompt({sigint: true})('Do you want to drop all tables? y/n\n');
   if(yn === 'y') {
-    new DB()
+    DB
       .droptable()
       .then(() => {
         console.log('Dropped all table')
