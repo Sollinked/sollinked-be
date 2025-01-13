@@ -147,8 +147,8 @@ routes.post('/updateTiers/:user_id', async(req, res) => {
     }
 
     catch(e: any) {
-        let db = new DB();
-        await db.log('user', '/updateTiers/:user_id', e.toString());
+        
+        await DB.log('user', '/updateTiers/:user_id', e.toString());
 
         return res.status(500).send("Unable to update tier");
 
@@ -204,8 +204,8 @@ routes.post('/updateReservationSettings/:user_id', async(req, res) => {
     }
 
     catch(e: any) {
-        let db = new DB();
-        await db.log('user', '/updateReservationSettings/:user_id', e.toString());
+        
+        await DB.log('user', '/updateReservationSettings/:user_id', e.toString());
 
         return res.status(500).send("Unable to update user reservation settings");
 
@@ -268,8 +268,8 @@ routes.post('/updateTags/:user_id', async(req, res) => {
     }
 
     catch(e: any) {
-        let db = new DB();
-        await db.log('user', '/updateTags/:user_id', e.toString());
+        
+        await DB.log('user', '/updateTags/:user_id', e.toString());
 
         return res.status(500).send("Unable to update tier");
 

@@ -34,8 +34,8 @@ export const processReservationPayments = async() => {
 
     // no mails
     if(!reservations) {
-        let db = new DB();
-        await db.log('ProcessReservationPayments', 'processReservationPayments', `No unprocessed reservations`);
+        
+        await DB.log('ProcessReservationPayments', 'processReservationPayments', `No unprocessed reservations`);
         return;
     }
 
@@ -84,8 +84,8 @@ export const processExpiredReservationPayments = async() => {
 
     // no mails
     if(!reservations) {
-        let db = new DB();
-        await db.log('ProcessReservationPayments', 'processExpiredReservationPayments', `No unprocessed expired reservations`);
+        
+        await DB.log('ProcessReservationPayments', 'processExpiredReservationPayments', `No unprocessed expired reservations`);
         socket.disconnect();
         return;
     }
@@ -136,8 +136,8 @@ export const processReservationClaims = async() => {
 
     // no mails
     if(!reservations) {
-        let db = new DB();
-        await db.log('ProcessReservationPayments', 'processReservationClaims', `No unprocessed paid reservations`);
+        
+        await DB.log('ProcessReservationPayments', 'processReservationClaims', `No unprocessed paid reservations`);
         return;
     }
 

@@ -87,15 +87,15 @@ export const sendEmail = async ({
                 replyTo
             });
     
-            let db = new DB();
-            await db.log('Mail', 'sendEmail', `Email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
+            
+            await DB.log('Mail', 'sendEmail', `Email sent to: ${to}, subject: ${subject}, bcc: ${bcc}`);
             sentMessageId = info.messageId;
             break;
         }
 
         catch(e: any) {
-            let db = new DB();
-            await db.log('Mail', 'sendEmail', `Send Email Error, retrying..\n\n${e.toString()}`);
+            
+            await DB.log('Mail', 'sendEmail', `Send Email Error, retrying..\n\n${e.toString()}`);
             retries++;
         }
     }
@@ -171,8 +171,8 @@ export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string, 
                             });
         
                             f.once('error', async e => {
-                                let db = new DB();
-                                await db.log('Mail', 'getEmailBy', `ME1:\n${e.toString()}`);
+                                
+                                await DB.log('Mail', 'getEmailBy', `ME1:\n${e.toString()}`);
                                 return reject();
                             });
         
@@ -184,8 +184,8 @@ export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string, 
 
                         catch(e: any) {
                             if(!e.message.includes("Nothing to fetch")) {
-                                let db = new DB();
-                                await db.log('Mail', 'getEmailBy', `ME2:\n${e.toString()}`);
+                                
+                                await DB.log('Mail', 'getEmailBy', `ME2:\n${e.toString()}`);
                                 imap.end();
                                 return reject();
                             }
@@ -197,8 +197,8 @@ export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string, 
             });
     
             imap.once('error', async(err: any) => {
-                let db = new DB();
-                await db.log('Mail', 'getEmailBy', `MEe:\n${err.toString()}`);
+                
+                await DB.log('Mail', 'getEmailBy', `MEe:\n${err.toString()}`);
                 return reject();
             });
     
@@ -210,8 +210,8 @@ export const getEmailBy = (header: 'Envelope-to' | 'Message-ID', value: string, 
         }
     
         catch (e: any){
-            let db = new DB();
-            await db.log('Mail', 'getEmailBy', `ME4:\n${e.toString()}`);
+            
+            await DB.log('Mail', 'getEmailBy', `ME4:\n${e.toString()}`);
             return reject();
         }
     })
@@ -230,8 +230,8 @@ export const createEmailForwarder = async(username: string) => {
     });
 
     if(res.data.errors && res.data.errors.length > 0) {
-        let db = new DB();
-        await db.log('Mail', 'createEmailForwarder', `Unable to create forwarder: ${res.data.errors.join(", ")}\nForwarder: ${username}`);
+        
+        await DB.log('Mail', 'createEmailForwarder', `Unable to create forwarder: ${res.data.errors.join(", ")}\nForwarder: ${username}`);
         return;
     }
     return;
@@ -249,8 +249,8 @@ export const deleteEmailForwarder = async(username: string) => {
     });
 
     if(res.data.errors && res.data.errors.length > 0) {
-        let db = new DB();
-        await db.log('Mail', 'deleteEmailForwarder', `Unable to delete forwarder: ${res.data.errors.join(", ")}\nForwarder: ${username}`);
+        
+        await DB.log('Mail', 'deleteEmailForwarder', `Unable to delete forwarder: ${res.data.errors.join(", ")}\nForwarder: ${username}`);
         return;
     }
 
@@ -264,8 +264,8 @@ export const changeEmailForwarder = async(newUsername: string, oldUsername: stri
     }
 
     catch (e: any){
-        let db = new DB();
-        await db.log('Mail', 'changeEmailForwarder', `Unable to change forwarder:\n\n${e.toString()}`);
+        
+        await DB.log('Mail', 'changeEmailForwarder', `Unable to change forwarder:\n\n${e.toString()}`);
         return false;
     }
 

@@ -108,8 +108,8 @@ routes.post('/payment/:username', async(req, res) => {
             let tiers = user.tiers;
 
             if(!tiers) {
-                let db = new DB();
-                await db.log('mail', '/payment/:username', `No tier`);
+                
+                await DB.log('mail', '/payment/:username', `No tier`);
                 // user didn't set tiers, all emails are ineligible
                 break;
             }
@@ -182,8 +182,8 @@ routes.post('/payment/:username', async(req, res) => {
                 return res.status(400).send("Old Tx");
             }
 
-            let db = new DB();
-            await db.log('mail', '/payment/:username', e.toString());
+            
+            await DB.log('mail', '/payment/:username', e.toString());
 
             retries++;
             await sleep(2000); //sleep 2s

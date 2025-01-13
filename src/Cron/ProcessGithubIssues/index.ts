@@ -6,8 +6,8 @@ export const processGithubIssues = async() => {
     let userGithubSettings = await userGithubSettingController.list();
     if(!userGithubSettings){
 
-        let db = new DB();
-        await db.log('ProcessGithubIssues', 'processGithubIssues', 'Missing setting');
+        
+        await DB.log('ProcessGithubIssues', 'processGithubIssues', 'Missing setting');
         return;
     }
 
@@ -18,8 +18,8 @@ export const processGithubIssues = async() => {
         }
 
         catch(e: any) {
-            let db = new DB();
-            await db.log('ProcessGithubIssues', 'processGithubIssues', e.toString());
+            
+            await DB.log('ProcessGithubIssues', 'processGithubIssues', e.toString());
         }
     }
 }

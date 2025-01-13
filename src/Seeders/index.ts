@@ -7,10 +7,10 @@ import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
 
 export const seedUsers = async() => {
-    let db = new DB();
+    
     let table = 'users';
     let checkerQuery = `SELECT COUNT(*) as count FROM ${table}`;
-    let checkerRes = await db.executeQueryForResults<{count: number}>(checkerQuery);
+    let checkerRes = await DB.executeQueryForResults<{count: number}>(checkerQuery);
 
     if(checkerRes && checkerRes[0].count > 0) {
         console.log(`${table} already seeded! Skipping..`);
@@ -22,7 +22,7 @@ export const seedUsers = async() => {
 
     let query = getInsertQuery(columns, values, table);
     try {
-        await db.executeQuery(query);
+        await DB.executeQuery(query);
         console.log(`Seeded ${table}`);
         return true;
     }
@@ -34,10 +34,10 @@ export const seedUsers = async() => {
 }
 
 export const seedUserTiers = async() => {
-    let db = new DB();
+    
     let table = 'user_tiers';
     let checkerQuery = `SELECT COUNT(*) as count FROM ${table}`;
-    let checkerRes = await db.executeQueryForResults<{count: number}>(checkerQuery);
+    let checkerRes = await DB.executeQueryForResults<{count: number}>(checkerQuery);
 
     if(checkerRes && checkerRes[0].count > 0) {
         console.log(`${table} already seeded! Skipping..`);
@@ -49,7 +49,7 @@ export const seedUserTiers = async() => {
 
     let query = getInsertQuery(columns, values, table);
     try {
-        await db.executeQuery(query);
+        await DB.executeQuery(query);
         console.log(`Seeded ${table}`);
         return true;
     }

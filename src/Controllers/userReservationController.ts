@@ -19,8 +19,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     return result;
 }
@@ -29,8 +29,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<UserReservation>(query);
+    
+    const result = await DB.executeQueryForSingleResult<UserReservation>(query);
 
     return result ?? {};
 }
@@ -40,8 +40,8 @@ export const find = async(whereParams: {[key: string]: any}, withCancelled: bool
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} ${withCancelled? '' : `AND status <> ${RESERVATION_STATUS_CANCELLED}`} ORDER BY date desc`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserReservation>(query);
+    
+    const result = await DB.executeQueryForResults<UserReservation>(query);
 
     return result;
 }
@@ -51,8 +51,8 @@ export const findAfter = async(whereParams: {[key: string]: any}, reservedAfter:
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} AND reserved_at >= '${reservedAfter}' ORDER BY date desc`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserReservation>(query);
+    
+    const result = await DB.executeQueryForResults<UserReservation>(query);
 
     if(!result) {
         return result;
@@ -74,8 +74,8 @@ export const findBefore = async(whereParams: {[key: string]: any}, reservedBefor
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} AND reserved_at <= '${reservedBefore}' ORDER BY date desc`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserReservation>(query);
+    
+    const result = await DB.executeQueryForResults<UserReservation>(query);
 
     if(!result) {
         return result;
@@ -96,8 +96,8 @@ export const findByUsername = async(user_id: number, hideDetails: boolean = fals
     // ignore cancelled
     const query = `SELECT * FROM ${table} WHERE user_id = ${user_id} AND status >= ${RESERVATION_STATUS_BLOCKED} ORDER BY date asc`;
 
-    const db = new DB();
-    let result = await db.executeQueryForResults<UserReservation>(query);
+    
+    let result = await DB.executeQueryForResults<UserReservation>(query);
 
     if(!result) {
         return result;
@@ -133,8 +133,8 @@ export const findByUsername = async(user_id: number, hideDetails: boolean = fals
 export const list = async() => {
     const query = `SELECT * FROM ${table} ORDER BY value_usd desc`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserReservation>(query);
+    
+    const result = await DB.executeQueryForResults<UserReservation>(query);
 
     return result ?? [];
 }
@@ -147,16 +147,16 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }

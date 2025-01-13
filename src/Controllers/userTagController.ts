@@ -18,8 +18,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     return result;
 }
@@ -28,8 +28,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<UserTag>(query);
+    
+    const result = await DB.executeQueryForSingleResult<UserTag>(query);
 
     return result ?? {};
 }
@@ -39,8 +39,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserTag>(query);
+    
+    const result = await DB.executeQueryForResults<UserTag>(query);
 
     return result;
 }
@@ -49,8 +49,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
 export const list = async() => {
     const query = `SELECT * FROM ${table} ORDER BY id desc`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserTag>(query);
+    
+    const result = await DB.executeQueryForResults<UserTag>(query);
 
     return result ?? [];
 }
@@ -63,16 +63,16 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 export const updateByUserId = async(user_id: number, tags: string[]): Promise<void> => {
     // filter
-    const db = new DB();
+    
 
     const deleteQuery = `DELETE FROM ${table} WHERE user_id = ${user_id}`;
-    await db.executeQuery(deleteQuery);
+    await DB.executeQuery(deleteQuery);
 
     let columns = ['user_id', 'name'];
     let values: any[] = []; // change test to admin later
@@ -85,15 +85,15 @@ export const updateByUserId = async(user_id: number, tags: string[]): Promise<vo
     }
 
     let query = getInsertQuery(columns, values, table);
-    await db.executeQueryForSingleResult(query);
+    await DB.executeQueryForSingleResult(query);
 }
 
 export const deleteByUserId = async(user_id: number) => {
     const params = formatDBParamsToStr({ user_id });
     const query = `DELETE FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 
     return;
 }

@@ -25,8 +25,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     return uuid;
 }
@@ -35,8 +35,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<UserGithubSetting>(query);
+    
+    const result = await DB.executeQueryForSingleResult<UserGithubSetting>(query);
     if(!result) {
         return result;
     }
@@ -56,8 +56,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true, isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    const results = await db.executeQueryForResults<UserGithubSetting>(query);
+    
+    const results = await DB.executeQueryForResults<UserGithubSetting>(query);
 
     if(!results) {
         return results;
@@ -80,8 +80,8 @@ export const findActiveSynced = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', shouldLower: true, isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} AND is_active = true AND last_synced_at is not null;`;
 
-    const db = new DB();
-    const results = await db.executeQueryForResults<UserGithubSetting>(query);
+    
+    const results = await DB.executeQueryForResults<UserGithubSetting>(query);
 
     if(!results) {
         return results;
@@ -103,8 +103,8 @@ export const findActiveSynced = async(whereParams: {[key: string]: any}) => {
 export const list = async() => {
     const query = `SELECT * FROM ${table} WHERE is_active = true`;
 
-    const db = new DB();
-    const results = await db.executeQueryForResults<UserGithubSetting>(query);
+    
+    const results = await DB.executeQueryForResults<UserGithubSetting>(query);
 
     if(!results) {
         return results;
@@ -130,16 +130,16 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 export const updateLastSynced = async(id: number): Promise<void> => {
     // filter
     const query = `UPDATE ${table} SET last_synced_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 // delete (soft delete?)
@@ -153,8 +153,8 @@ export const deleteDuplicate = async() => {
             AND last_synced_at is null;
         `;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 export const deleteSettingById = async(id: number) => {
@@ -163,6 +163,6 @@ export const deleteSettingById = async(id: number) => {
         WHERE id = ${id}
         `;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }

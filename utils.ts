@@ -4,7 +4,7 @@ import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
 import crypto from "crypto";
 import DB from './src/DB';
-import { Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { ComputeBudgetProgram, Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
@@ -279,9 +279,9 @@ export const isValidMail = (email: string) => {
 }
 
 export const isCurrentUserAdmin = async(discord_id: string) => {
-    let db = new DB();
+
     let query = `select count(*) as admin_count from admins where discord_id = '${discord_id}'`;
-    let result = await db.executeQueryForSingleResult<{ admin_count: number }>(query);
+    let result = await DB.executeQueryForSingleResult<{ admin_count: number }>(query);
     return result !== undefined && result.admin_count > 0;
 }
 
@@ -442,6 +442,10 @@ export const getPeriod = (period: 'monthly' | 'weekly' | 'daily') => {
     return { start: dayjs().startOf(dayParam[period] as OpUnitType).format('YYYY-MM-DD HH:mm:ss'), end: dayjs().endOf(dayParam[period] as OpUnitType).format('YYYY-MM-DD HH:mm:ss') };
 }
 
+export const getDateTime = () => {
+    return moment().format('YYYY-MM-DD HH:mm:ss');
+}
+
 /**
  * Get server port from env
  * @param { string } url
@@ -507,6 +511,22 @@ export const getAddressNftDetails = async(isPublicKey: boolean, account: string)
     return result;
 }
 
+export const addPriorityFeeToTransaction = (tx: Transaction, microLamports: number, limit: number) => {
+    // Create the priority fee instructions
+    const computePriceIx = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports,
+    });
+
+    const computeLimitIx = ComputeBudgetProgram.setComputeUnitLimit({
+        units: limit,
+    });
+
+    tx.instructions.unshift(computePriceIx);
+    tx.instructions.unshift(computeLimitIx);
+
+    return tx;
+}
+
 export const getAddressSOLBalance = async(publicKey: PublicKey) => {
     // load the env variables and store the cluster RPC url
     const CLUSTER_URL = getRPCEndpoint();
@@ -543,12 +563,12 @@ export const sendSOLTo = async(isPublicKey: boolean, account: string, amount: nu
     return txSignature;
 }
 
-export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: number, amount: number, keypair?: Keypair) => {
+export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: number, amount: number, keypair?: Keypair, payer?: Keypair) => {
     // load the env variables and store the cluster RPC url
     const CLUSTER_URL = getRPCEndpoint();
 
     // create a new rpc connection, using the ReadApi wrapper
-    const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
+    const connection = new Connection(CLUSTER_URL, "confirmed");
     let currentKeypair = keypair ?? getAdminAccount();
 
     const mintToken = new PublicKey(token);
@@ -566,7 +586,7 @@ export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: 
     let {
         associatedTokenTo,
         transaction: createTransaction,
-    } = await getOrCreateAssociatedAccount(mintToken, currentKeypair.publicKey, recipientAddress);
+    } = await getOrCreateAssociatedAccount(mintToken, payer? payer.publicKey : currentKeypair.publicKey, recipientAddress);
 
     if(createTransaction) {
         transactionInstructions.push(createTransaction);
@@ -581,13 +601,50 @@ export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: 
         Math.round(amount * tokenDecimals),
       )
     );
+    let memoIx =  new TransactionInstruction({
+        keys: [{ pubkey: currentKeypair.publicKey, isSigner: true, isWritable: true }],
+        data: Buffer.from("Room|public|SOL", "utf-8"),
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+    });
 
-    // send the transactions
-    const transaction = new Transaction().add(...transactionInstructions);
-    // Send and confirm transaction
-    // Note: feePayer is by default the first signer, or payer, if the parameter is not set
-    const signature = await connection.sendTransaction(transaction, [currentKeypair]);
-    return signature;
+    transactionInstructions.push(memoIx);
+    let retries = 0;
+    while(retries < 3) {
+        try {
+
+            // send the transactions
+            const blockHash = await connection.getLatestBlockhash('confirmed');
+            let transaction = new Transaction().add(...transactionInstructions);
+            let signers = [currentKeypair];
+            if(payer) {
+                transaction.feePayer = payer.publicKey;
+                signers.push(payer);
+            }
+
+            transaction = addPriorityFeeToTransaction(transaction, 50_000, 200_000);
+            transaction.recentBlockhash = blockHash.blockhash;
+            transaction.lastValidBlockHeight = blockHash.lastValidBlockHeight;
+
+            // Send and confirm transaction
+            // Note: feePayer is by default the first signer, or payer, if the parameter is not set
+            const signature = await connection.sendTransaction(transaction, signers);
+
+            await connection.confirmTransaction({
+                blockhash: blockHash.blockhash,
+                lastValidBlockHeight: blockHash.lastValidBlockHeight,
+                signature,
+            });
+
+            return signature;
+        }
+
+        catch(e: any) {
+            await DB.log("utils", "sendTokensTo", e.toString());
+            console.log('unable to send tokens, retrying');
+            retries++;
+            continue;
+        }
+    }
 }
 
 // return associatedTokenAddress and transaction
@@ -632,11 +689,11 @@ export const clawbackSOLFrom = async(keypair: Keypair) => {
     let solBalance = await getAddressSOLBalance(keypair.publicKey);
 
     // leave 0.001 SOL
-    let db = new DB();
+    
     let clawbackBalance = solBalance - 0.001;
 
     if(clawbackBalance <= 0) {
-        await db.log('utils', 'clawbackSolFrom', `Balance too low to clawback`);
+        await DB.log('utils', 'clawbackSolFrom', `Balance too low to clawback`);
         return "";
     }
 
@@ -655,7 +712,7 @@ export const clawbackSOLFrom = async(keypair: Keypair) => {
 
     let txSignature = await connection.sendTransaction(transaction, [keypair]);
 
-    await db.log('utils', 'clawbackSolFrom', `${clawbackBalance} SOL, tx: ${txSignature}`);
+    await DB.log('utils', 'clawbackSolFrom', `${clawbackBalance} SOL, tx: ${txSignature}`);
     return txSignature;
 }
 
@@ -747,8 +804,8 @@ export const getTokensTransferredToUser = async(txHash: string, toAddress: strin
     let now = moment().add(-2, 'minute');
     let txDetails = await getTx(txHash);
     if(!txDetails || !txDetails.blockTime || !txDetails.meta) {
-        let db = new DB();
-        await db.log('utils', 'getTokensTransferredToUser', 'No Tx');
+        
+        await DB.log('utils', 'getTokensTransferredToUser', 'No Tx');
         throw new Error("No Tx Details");
     }
 
@@ -766,8 +823,8 @@ export const getTokensTransferredToUser = async(txHash: string, toAddress: strin
 
     let txMoment = moment(blockTime * 1000);
     if(txMoment.isBefore(now)) {
-        let db = new DB();
-        await db.log('utils', 'getTokensTransferredToUser', 'Old Tx detected');
+        
+        await DB.log('utils', 'getTokensTransferredToUser', 'Old Tx detected');
         throw Error("Old Tx");
     }
 
@@ -952,8 +1009,8 @@ export const createUnderdogNFT = async({
     }
 
     catch(e: any) {
-        let db = new DB();
-        await db.log('utils', 'createUnderdogNFT', e.toString());
+        
+        await DB.log('utils', 'createUnderdogNFT', e.toString());
         return;
     }
 }
@@ -1084,8 +1141,8 @@ export const createSpherePrice = async(
         );
     
         if(!priceRes.data.ok || !priceRes.data.data || !priceRes.data.data.price) {
-            let db = new DB();
-            await db.log('utils', 'createSpherePrice', 'Unable to create price');
+            
+            await DB.log('utils', 'createSpherePrice', 'Unable to create price');
             return;
         }
         let priceRet = priceRes.data.data.price;
@@ -1094,8 +1151,8 @@ export const createSpherePrice = async(
     }
 
     catch (e: any){
-        let db = new DB();
-        await db.log('utils', 'createSpherePrice', `Unable to create price\n\n${e.toString()}`);
+        
+        await DB.log('utils', 'createSpherePrice', `Unable to create price\n\n${e.toString()}`);
         return;
     }
 }
@@ -1127,8 +1184,8 @@ export const createSpherePaymentLink = async(
         );
     
         if(!paymentLinkRes.data.ok || !paymentLinkRes.data.data || !paymentLinkRes.data.data.paymentLink) {
-            let db = new DB();
-            await db.log('utils', 'createSpherePaymentLink', 'Unable to create payment link');
+            
+            await DB.log('utils', 'createSpherePaymentLink', 'Unable to create payment link');
             return;
         }
 
@@ -1136,8 +1193,8 @@ export const createSpherePaymentLink = async(
     }
 
     catch (e: any){
-        let db = new DB();
-        await db.log('utils', 'createSpherePaymentLink', `Unable to create payment link\n\n${e.toString()}`);
+        
+        await DB.log('utils', 'createSpherePaymentLink', `Unable to create payment link\n\n${e.toString()}`);
         return;
     }
 }

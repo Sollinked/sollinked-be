@@ -22,8 +22,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     return result;
 }
@@ -32,8 +32,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number, hideSubcriberCount: boolean = false) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    let result = await db.executeQueryForSingleResult<MailingListPriceTier>(query);
+    
+    let result = await DB.executeQueryForSingleResult<MailingListPriceTier>(query);
     if(!result) {
         return result;
     }
@@ -52,8 +52,8 @@ export const view = async(id: number, hideSubcriberCount: boolean = false) => {
 export const publicView = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    let result = await db.executeQueryForSingleResult<MailingListPriceTier>(query);
+    
+    let result = await DB.executeQueryForSingleResult<MailingListPriceTier>(query);
     if(!result) {
         return result;
     }
@@ -80,8 +80,8 @@ export const find = async(whereParams: {[key: string]: any}, hideSubcriberCount:
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    const results = await db.executeQueryForResults<MailingListPriceTier>(query);
+    
+    const results = await DB.executeQueryForResults<MailingListPriceTier>(query);
     if(!results) {
         return [];
     }
@@ -106,8 +106,8 @@ export const find = async(whereParams: {[key: string]: any}, hideSubcriberCount:
 export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<MailingListPriceTier>(query);
+    
+    const result = await DB.executeQueryForResults<MailingListPriceTier>(query);
 
     return result ?? [];
 }
@@ -120,8 +120,8 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 export const getUniqueEmailsForTiers = async(tiers: number[], user_id: number) => {
@@ -165,8 +165,8 @@ export const getUniqueEmailsForTiers = async(tiers: number[], user_id: number) =
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }

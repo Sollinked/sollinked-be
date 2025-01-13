@@ -40,8 +40,8 @@ export const processPayments = async() => {
 
     // no mails
     if(!mails) {
-        let db = new DB();
-        await db.log('ProcessPayments', 'processPayments', 'No unprocessed mails');
+        
+        await DB.log('ProcessPayments', 'processPayments', 'No unprocessed mails');
         return;
     }
 
@@ -64,20 +64,20 @@ export const processPayments = async() => {
         let tiers = await userTierController.find({ user_id: mail.user_id });
 
         if(!user) {
-            let db = new DB();
-            await db.log('ProcessPayments', 'processPayments', 'No user');
+            
+            await DB.log('ProcessPayments', 'processPayments', 'No user');
             continue;
         }
         
         if(!user.email_address) {
-            let db = new DB();
-            await db.log('ProcessPayments', 'processPayments', `No email address: ${user.id}`);
+            
+            await DB.log('ProcessPayments', 'processPayments', `No email address: ${user.id}`);
             continue;
         }
 
         if(!tiers) {
-            let db = new DB();
-            await db.log('ProcessPayments', 'processPayments', `No tier: ${user.id}`);
+            
+            await DB.log('ProcessPayments', 'processPayments', `No tier: ${user.id}`);
             /* // user didn't set tiers, all emails are eligible
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);
@@ -176,8 +176,8 @@ export const processFromSitePayments = async() => {
 
     // no mails
     if(!mails) {
-        let db = new DB();
-        await db.log('ProcessPayments', 'processFromSitePayments', 'No unprocessed mails');
+        
+        await DB.log('ProcessPayments', 'processFromSitePayments', 'No unprocessed mails');
         return;
     }
 
@@ -200,20 +200,20 @@ export const processFromSitePayments = async() => {
         let tiers = await userTierController.find({ user_id: mail.user_id });
 
         if(!user) {
-            let db = new DB();
-            await db.log('ProcessPayments', 'processPayments', 'No user');
+            
+            await DB.log('ProcessPayments', 'processPayments', 'No user');
             continue;
         }
         
         if(!user.email_address) {
-            let db = new DB();
-            await db.log('ProcessPayments', 'processPayments', `No email address: ${user.id}`);
+            
+            await DB.log('ProcessPayments', 'processPayments', `No email address: ${user.id}`);
             continue;
         }
 
         if(!tiers) {
-            let db = new DB();
-            await db.log('ProcessPayments', 'processPayments', `No tier: ${user.id}`);
+            
+            await DB.log('ProcessPayments', 'processPayments', `No tier: ${user.id}`);
             /* // user didn't set tiers, all emails are eligible
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);
@@ -297,8 +297,8 @@ export const processFromSitePayments = async() => {
 export const processMailsWithNoResponse = async() => {
     let mails = await mailController.getExpired();
     if(!mails) {
-        let db = new DB();
-        await db.log('ProcessPayments', 'processMailsWithNoResponse', `No expired mails`);
+        
+        await DB.log('ProcessPayments', 'processMailsWithNoResponse', `No expired mails`);
         return;
     }
 

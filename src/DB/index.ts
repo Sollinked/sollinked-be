@@ -1,6 +1,6 @@
 import migrations from './migrations';
 import pg, { Client } from 'pg';
-import { getDbConfig, getUTCMoment, isProduction } from '../../utils';
+import { getDateTime, getDbConfig, getUTCMoment, isProduction } from '../../utils';
 
 /** Fix big int returning as string */
 pg.types.setTypeParser(20, BigInt); // Type Id 20 = BIGINT | BIGSERIAL
@@ -10,13 +10,13 @@ pg.types.setTypeParser(1114, function(stringValue) {
 
 export default class DB {
 
-    user: string;
-    password: string;
-    port: number;
-    host: string;
-    database: string;
+    static user: string;
+    static password: string;
+    static port: number;
+    static host: string;
+    static database: string;
 
-    constructor() {
+    static init = () => {
         let { user, password, port, host, database } = getDbConfig();
         this.user = user;
         this.password = password;
@@ -25,7 +25,11 @@ export default class DB {
         this.database = database;
     }
 
-    migrate = async(isInit = false) => {
+    static migrate = async(isInit = false) => {
+        if(!this.user) {
+            this.init();
+        }
+
         let now = getUTCMoment();
         let groupQuery = `
             SELECT name, migration_group FROM migrations ORDER BY migration_group DESC;
@@ -70,7 +74,11 @@ export default class DB {
         return;
     }
 
-    droptable = async() => {
+    static droptable = async() => {
+        if(!this.user) {
+            this.init();
+        }
+
         if(isProduction()) {
             throw Error('Production environment detected, not dropping..');
         }
@@ -82,7 +90,11 @@ export default class DB {
         await this.executeQuery(dropQuery);
     }
 
-    rollback = async() => {
+    static rollback = async() => {
+        if(!this.user) {
+            this.init();
+        }
+
         let rollbackIdQuery = `
             SELECT name FROM migrations
             WHERE migration_group = (SELECT migration_group FROM migrations ORDER BY id DESC LIMIT 1);
@@ -142,7 +154,11 @@ export default class DB {
         return;
     }
 
-    executeQuery = async (query: string) => {
+    static executeQuery = async (query: string) => {
+        if(!this.user) {
+            this.init();
+        }
+
         const client = new Client({
             user: this.user,
             password: this.password,
@@ -168,7 +184,11 @@ export default class DB {
         }
     }
 
-    executeQueryForResults = async<T = any>(query: string): Promise<T[] | undefined> => {
+    static executeQueryForResults = async<T = any>(query: string): Promise<T[] | undefined> => {
+        if(!this.user) {
+            this.init();
+        }
+        
         const client = new Client({
             user: this.user,
             password: this.password,
@@ -196,7 +216,7 @@ export default class DB {
         else return res.rows;
     }
 
-    executeQueryForSingleResult = async<T = any>(query: string): Promise<T | undefined> => {
+    static executeQueryForSingleResult = async<T = any>(query: string): Promise<T | undefined> => {
         let rows = await this.executeQueryForResults<T>(query);
         if(!rows || rows.length == 0) {
             return undefined;
@@ -204,7 +224,11 @@ export default class DB {
         return rows[0];
     }
 
-    log = async(file: string, fn: string, logText: string) => {
+    static log = async(file: string, fn: string, logText: string) => {
+        if(!this.user) {
+            this.init();
+        }
+        console.log(`${getDateTime()}: ${file} ${fn} ${logText}`);
         let query = `INSERT INTO logs(file, function, log) values ('${file}','${fn}','${logText.replace(/'/g, "''")}')`;
         await this.executeQuery(query);
     }

@@ -56,8 +56,8 @@ const processEmailToUser = async({
             // so we just need to check if toEmails.length is 0 (not sent to original sender)
             // to send on behalf of the user
             if(toEmailMatch.length >= 1 && toEmails.length === 0) {
-                let db = new DB();
-                await db.log('ProcessEmails', 'processEmailToUser', `Sending on behalf of ${mail.to_email}`);
+                
+                await DB.log('ProcessEmails', 'processEmailToUser', `Sending on behalf of ${mail.to_email}`);
                 try {
                     let { subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(messageId) as any;
                     let attachments = mapAttachments(parserAttachments);
@@ -76,8 +76,8 @@ const processEmailToUser = async({
                 }
 
                 catch(e: any) {
-                    let db = new DB();
-                    await db.log('ProcessEmails', 'processEmailToUser', `PE5: ${e.name}`);
+                    
+                    await DB.log('ProcessEmails', 'processEmailToUser', `PE5: ${e.name}`);
                     unreadCallback();
                     return;
                 }
@@ -85,8 +85,8 @@ const processEmailToUser = async({
 
             // sent to user from own email
             else if(toEmails.length === 0) {
-                let db = new DB();
-                await db.log('ProcessEmails', 'processEmailToUser', `Cant find email original sender, aborting\noriginal sender: ${originalSender}\ntoEmailMatch: ${toEmailMatch.join(",")}`);
+                
+                await DB.log('ProcessEmails', 'processEmailToUser', `Cant find email original sender, aborting\noriginal sender: ${originalSender}\ntoEmailMatch: ${toEmailMatch.join(",")}`);
                 return;
             }
 
@@ -99,8 +99,8 @@ const processEmailToUser = async({
             return;
         }
 
-        let db = new DB();
-        await db.log('ProcessEmails', 'processEmailToUser', `Cant find user: ${username}`);
+        
+        await DB.log('ProcessEmails', 'processEmailToUser', `Cant find user: ${username}`);
         
         return;
     }
@@ -176,8 +176,8 @@ const processEmailResponse = async({
     let bccToEmail = bccEmails[0];
     let mails = await controller.find({ bcc_to_email: bccToEmail });
     if(!mails || mails.length === 0){
-        let db = new DB();
-        await db.log('ProcessEmails', 'processEmailResponse', `Cant find bcc email: ${bccToEmail}`);
+        
+        await DB.log('ProcessEmails', 'processEmailResponse', `Cant find bcc email: ${bccToEmail}`);
         return;
     }
 
@@ -187,8 +187,8 @@ const processEmailResponse = async({
     // check if the responder actually responded to the original sender
     let toEmails = toEmailMatch.filter(x => x.toLowerCase() === originalSender);
     if(toEmails.length === 0) {
-        let db = new DB();
-        await db.log('ProcessEmails', 'processEmailResponse', `Cant find email original sender, aborting\noriginal sender: ${originalSender}`);
+        
+        await DB.log('ProcessEmails', 'processEmailResponse', `Cant find email original sender, aborting\noriginal sender: ${originalSender}`);
         return;
     }
 
@@ -288,8 +288,8 @@ export const processEmails = async() => {
                         });
     
                         f.once('error', async e => {
-                            let db = new DB();
-                            await db.log('ProcessEmails', 'processEmails', `PE1: ${e.toString()}`);
+                            
+                            await DB.log('ProcessEmails', 'processEmails', `PE1: ${e.toString()}`);
                         });
     
                         f.once('end', () => {
@@ -300,8 +300,8 @@ export const processEmails = async() => {
 
                     catch(e: any) {
                         if(!e.message.includes("Nothing to fetch")) {
-                            let db = new DB();
-                            await db.log('ProcessEmails', 'processEmails', `PE2: ${e.message}`);
+                            
+                            await DB.log('ProcessEmails', 'processEmails', `PE2: ${e.message}`);
                         }
                         imap.end();
                     }
@@ -310,8 +310,8 @@ export const processEmails = async() => {
         });
 
         imap.once('error', async(err: any) => {
-            let db = new DB();
-            await db.log('ProcessEmails', 'processEmails', `PE3: ${err.toString()}`);
+            
+            await DB.log('ProcessEmails', 'processEmails', `PE3: ${err.toString()}`);
         });
 
         imap.once('end', () => {
@@ -322,8 +322,8 @@ export const processEmails = async() => {
     }
 
     catch (e: any){
-        let db = new DB();
-        await db.log('ProcessEmails', 'processEmails', `PE4: ${e.toString()}`)
+        
+        await DB.log('ProcessEmails', 'processEmails', `PE4: ${e.toString()}`)
     }
 }
 
@@ -342,14 +342,14 @@ export const processUnclaimedRespondedEmails = async() => {
 const autoClaimFromMail = async(mail: ProcessedMail) => {
     let user = await userController.find({ id: mail.user_id });
     if(!user)  {
-        let db = new DB();
-        await db.log('ProcessEmails', 'autoClaimFromMail', `Missing user`);
+        
+        await DB.log('ProcessEmails', 'autoClaimFromMail', `Missing user`);
         return;
     }
 
     if(!mail.value_usd) {
-        let db = new DB();
-        await db.log('ProcessEmails', 'autoClaimFromMail', `Mail has 0 value`);
+        
+        await DB.log('ProcessEmails', 'autoClaimFromMail', `Mail has 0 value`);
         return;
     }
 
@@ -359,15 +359,15 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
         try {
             await sendTokensTo(user[0].address, USDC_ADDRESS, USDC_DECIMALS, mail.value_usd, tiplink.keypair);
 
-            let db = new DB();
-            await db.log('ProcessEmails', 'autoClaimFromMail', `Sent ${mail.value_usd} USDC to ${user[0].username} (${user[0].address})`);
+            
+            await DB.log('ProcessEmails', 'autoClaimFromMail', `Sent ${mail.value_usd} USDC to ${user[0].username} (${user[0].address})`);
 
             break;
         }
 
         catch(e: any) {
-            let db = new DB();
-            await db.log('ProcessEmails', 'autoClaimFromMail', e.toString());
+            
+            await DB.log('ProcessEmails', 'autoClaimFromMail', e.toString());
             retries++;
         }
     }
@@ -378,8 +378,8 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
             await controller.update(mail.key, { claim_balance_verify_count: mail.claim_balance_verify_count + 1 });
         }
 
-        let db = new DB();
-        await db.log('ProcessEmails', 'autoClaimFromMail', `Unable to auto claim: ${tiplink.url}`);
+        
+        await DB.log('ProcessEmails', 'autoClaimFromMail', `Unable to auto claim: ${tiplink.url}`);
         
         return;
     }
@@ -392,14 +392,14 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
         }
 
         catch(e: any) {
-            let db = new DB();
-            await db.log('ProcessEmails', 'autoClaimFromMail', e.toString());
+            
+            await DB.log('ProcessEmails', 'autoClaimFromMail', e.toString());
             retries++;
         }
     }
     if(retries >= 3) {
-        let db = new DB();
-        await db.log('ProcessEmails', 'autoClaimFromMail', `Unable to clawback from: ${tiplink.url}`);
+        
+        await DB.log('ProcessEmails', 'autoClaimFromMail', `Unable to clawback from: ${tiplink.url}`);
         return;
     }
 

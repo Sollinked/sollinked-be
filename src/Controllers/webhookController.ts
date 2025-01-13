@@ -30,7 +30,7 @@ export const init = async(user_id: number) => {
 
 // create
 export const create = async(insertParams: any): Promise<{[id: string]: number}> => {
-    const db = new DB();
+    
 
     // get qr insert field
     const fillableColumns = [ 'user_id', 'status', 'value', 'template', 'type' ];
@@ -40,7 +40,7 @@ export const create = async(insertParams: any): Promise<{[id: string]: number}> 
 
     // insert into qr table
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
-    const result = await db.executeQueryForSingleResult(query);
+    const result = await DB.executeQueryForSingleResult(query);
 
     return result;
 }
@@ -49,8 +49,8 @@ export const create = async(insertParams: any): Promise<{[id: string]: number}> 
 export const view = async(id: number): Promise<Webhook> => {
     const query = `SELECT * FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult(query);
+    
+    const result = await DB.executeQueryForSingleResult(query);
 
     return result ?? {};
 }
@@ -60,8 +60,8 @@ export const find = async(whereParams: {[key: string]: any}): Promise<Webhook[]>
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    const result: Webhook[] | undefined = await db.executeQueryForResults(query);
+    
+    const result: Webhook[] | undefined = await DB.executeQueryForResults(query);
     return result as Webhook[] ?? [];
 }
 
@@ -69,8 +69,8 @@ export const find = async(whereParams: {[key: string]: any}): Promise<Webhook[]>
 export const list = async(): Promise<Webhook[]> => {
     const query = `SELECT * FROM ${table}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults(query);
+    
+    const result = await DB.executeQueryForResults(query);
 
     return result as Webhook[] ?? [];
 }
@@ -84,8 +84,8 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 // tests the webhook notification
@@ -187,8 +187,8 @@ export const execute = async(id: number, params: WebhookExecuteParams) => {
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }

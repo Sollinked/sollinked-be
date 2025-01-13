@@ -220,8 +220,8 @@ routes.post('/newIssue', async(req, res) => {
                 });
 
                 if(!label) {
-                    let db = new DB();
-                    await db.log('gitgud', '/newIssue', 'No labels');
+                    
+                    await DB.log('gitgud', '/newIssue', 'No labels');
                     break;
                 }
                 

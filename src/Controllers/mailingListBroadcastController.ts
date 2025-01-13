@@ -22,8 +22,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     if(!result) {
         return;
@@ -34,7 +34,7 @@ export const create = async(insertParams: any) => {
 
 export const broadcast = async(broadcast_id: number, emails?: string[]) => {
     if(emails && emails.length > 0) {
-        let db = new DB();
+        
         let columns = ['mailing_list_broadcast_id', 'to_email'];
         let values: any[] = []; // change test to admin later
         emails.forEach(email => {
@@ -42,7 +42,7 @@ export const broadcast = async(broadcast_id: number, emails?: string[]) => {
         });
 
         let insertSubscriberQuery = getInsertQuery(columns, values, 'mailing_list_broadcast_logs');
-        await db.executeQueryForSingleResult(insertSubscriberQuery);
+        await DB.executeQueryForSingleResult(insertSubscriberQuery);
     }
     return;
 }
@@ -68,21 +68,21 @@ export const testDraft = async(broadcast_id: number) => {
 
     let broadcast = await view(broadcast_id);
     if(!broadcast) {
-        let db = new DB();
-        await db.log('mailingListBroadcastController', 'testDraft', 'Missing broadcast object');
+        
+        await DB.log('mailingListBroadcastController', 'testDraft', 'Missing broadcast object');
         return;
     }
 
     let user = await userController.view(broadcast.user_id);
     if(!user) {
-        let db = new DB();
-        await db.log('mailingListBroadcastController', 'testDraft', 'Missing user');
+        
+        await DB.log('mailingListBroadcastController', 'testDraft', 'Missing user');
         return;
     }
 
     if(!user.email_address) {
-        let db = new DB();
-        await db.log('mailingListBroadcastController', 'testDraft', 'Missing email address');
+        
+        await DB.log('mailingListBroadcastController', 'testDraft', 'Missing email address');
         return;
     }
 
@@ -116,8 +116,8 @@ export const findPastBroadcastsByPriceTierId = async(tier_id: number, user_id: n
                         )
                         AND is_draft = false`;
                         
-    const db = new DB();
-    const result = await db.executeQueryForResults<PastBroadcast>(query);
+    
+    const result = await DB.executeQueryForResults<PastBroadcast>(query);
     if(!result) {
         return [];
     }
@@ -129,8 +129,8 @@ export const findPastBroadcastsByPriceTierId = async(tier_id: number, user_id: n
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<MailingListBroadcast>(query);
+    
+    const result = await DB.executeQueryForSingleResult<MailingListBroadcast>(query);
     return result;
 }
 
@@ -139,8 +139,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params} order by id desc`;
 
-    const db = new DB();
-    let results = await db.executeQueryForResults<MailingListBroadcast>(query);
+    
+    let results = await DB.executeQueryForResults<MailingListBroadcast>(query);
     if(!results) {
         return results;
     }
@@ -159,8 +159,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
 export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<MailingListBroadcast>(query);
+    
+    const result = await DB.executeQueryForResults<MailingListBroadcast>(query);
 
     return result ?? [];
 }
@@ -173,16 +173,16 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }

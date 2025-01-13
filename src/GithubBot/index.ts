@@ -37,8 +37,8 @@ export class GithubBot {
 
     getAllLabels = async() => {
         if(!this.repo) {
-            let db = new DB();
-            await db.log('GithubBot', 'getAllLabels', `No repo`);
+            
+            await DB.log('GithubBot', 'getAllLabels', `No repo`);
             return;
         }
 
@@ -65,8 +65,8 @@ export class GithubBot {
         color: string;
     }) => {
         if(!this.repo) {
-            let db = new DB();
-            await db.log('GithubBot', 'createLabel', `No repo`);
+            
+            await DB.log('GithubBot', 'createLabel', `No repo`);
             return;
         }
 
@@ -85,8 +85,8 @@ export class GithubBot {
         }
 
         catch(e: any) {
-            let db = new DB();
-            await db.log('GithubBot', 'createLabel', e.message);
+            
+            await DB.log('GithubBot', 'createLabel', e.message);
         }
     }
 
@@ -98,8 +98,8 @@ export class GithubBot {
         color: string;
     }) => {
         if(!this.repo) {
-            let db = new DB();
-            await db.log('GithubBot', 'updateLabel', `No repo`);
+            
+            await DB.log('GithubBot', 'updateLabel', `No repo`);
             return;
         }
 
@@ -117,8 +117,8 @@ export class GithubBot {
 
     createOrUpdateLabels = async(tiers: ProcessedUserGithubTier[]) => {
         if(!this.repo) {
-            let db = new DB();
-            await db.log('GithubBot', 'createOrUpdateLabels', `No repo`);
+            
+            await DB.log('GithubBot', 'createOrUpdateLabels', `No repo`);
             return;
         }
 
@@ -151,8 +151,8 @@ export class GithubBot {
         label: string;
     }) => {
         if(!this.repo) {
-            let db = new DB();
-            await db.log('GithubBot', 'createIssue', `No repo`);
+            
+            await DB.log('GithubBot', 'createIssue', `No repo`);
             return;
         }
         await this.octokit.request('POST /repos/{owner}/{repo}/issues', {
@@ -171,14 +171,14 @@ export class GithubBot {
 
     readIssues = async(state: 'open' | 'closed' | 'all' = "all") => {
         if(!this.repo) {
-            let db = new DB();
-            await db.log('GithubBot', 'readIssues', `No repo`);
+            
+            await DB.log('GithubBot', 'readIssues', `No repo`);
             return;
         }
 
         if(!this.last_synced_at) {
-            let db = new DB();
-            await db.log('GithubBot', 'readIssues', `No start monitoring date`);
+            
+            await DB.log('GithubBot', 'readIssues', `No start monitoring date`);
             return;
         }
 
@@ -201,28 +201,28 @@ export class GithubBot {
 
         let issues = await this.readIssues("open");
         if(!issues) {
-            let db = new DB();
-            await db.log('GithubBot', 'closeIssues', `No issues`);
+            
+            await DB.log('GithubBot', 'closeIssues', `No issues`);
             return;
         }
         for(const [index, issue] of issues.entries()) {
             if(!issue.user) {
-                let db = new DB();
-                await db.log('GithubBot', 'closeIssues', `No user`);
+                
+                await DB.log('GithubBot', 'closeIssues', `No user`);
                 continue;
             }
 
             let issuer = issue.user.login;
             let issuerEmail = issue.user.email ?? "";
             if(!issuer) {
-                let db = new DB();
-                await db.log('GithubBot', 'closeIssues', `No issuer`);
+                
+                await DB.log('GithubBot', 'closeIssues', `No issuer`);
                 continue;
             }
 
             if(this.whitelists.includes(issuer) || this.whitelists.includes(issuerEmail)) {
-                let db = new DB();
-                await db.log('GithubBot', 'closeIssues', `Issuer in whitelist`);
+                
+                await DB.log('GithubBot', 'closeIssues', `Issuer in whitelist`);
                 continue;
             }
 
@@ -250,28 +250,28 @@ export class GithubBot {
 
         let issues = await this.readIssues("open");
         if(!issues) {
-            let db = new DB();
-            await db.log('GithubBot', 'markIssues', `No issues`);
+            
+            await DB.log('GithubBot', 'markIssues', `No issues`);
             return;
         }
         for(const [index, issue] of issues.entries()) {
             if(!issue.user) {
-                let db = new DB();
-                await db.log('GithubBot', 'markIssues', `No users`);
+                
+                await DB.log('GithubBot', 'markIssues', `No users`);
                 continue;
             }
 
             let issuer = issue.user.login;
             let issuerEmail = issue.user.email ?? "";
             if(!issuer) {
-                let db = new DB();
-                await db.log('GithubBot', 'markIssues', `Empty issuer`);
+                
+                await DB.log('GithubBot', 'markIssues', `Empty issuer`);
                 continue;
             }
 
             if(this.whitelists.includes(issuer) || this.whitelists.includes(issuerEmail)) {
-                let db = new DB();
-                await db.log('GithubBot', 'markIssues', `Issuer in whitelist`);
+                
+                await DB.log('GithubBot', 'markIssues', `Issuer in whitelist`);
                 continue;
             }
 
@@ -337,8 +337,8 @@ export class GithubBot {
             }
 
             catch(e) {
-                let db = new DB();
-                await db.log('GithubBot', 'acceptAllInvitations', `Unable to accept invitation`);
+                
+                await DB.log('GithubBot', 'acceptAllInvitations', `Unable to accept invitation`);
             }
         }
         let orgInvitations = await this.getAllOrgInvitations();
@@ -354,8 +354,8 @@ export class GithubBot {
             }
 
             catch(e) {
-                let db = new DB();
-                await db.log('GithubBot', 'acceptAllInvitations', `Unable to accept organization invitation`);
+                
+                await DB.log('GithubBot', 'acceptAllInvitations', `Unable to accept organization invitation`);
             }
         }
     }
@@ -374,14 +374,14 @@ export class GithubBot {
                 // delete the issue
                 let uuid = issue.body?.trim() ?? "";
                 if(!uuid) {
-                    let db = new DB();
-                    await db.log('GithubBot', 'trySyncRepo', `No UUID`);
+                    
+                    await DB.log('GithubBot', 'trySyncRepo', `No UUID`);
                     return;
                 }
 
                 if(!issue.repository) {
-                    let db = new DB();
-                    await db.log('GithubBot', 'trySyncRepo', `No repo`);
+                    
+                    await DB.log('GithubBot', 'trySyncRepo', `No repo`);
                     return;
                 }
 
@@ -405,8 +405,8 @@ export class GithubBot {
                 let repoLink = `/${issue.repository.full_name}`.trim();
                 let settings = await userGithubSettingController.find({ uuid, repo_link: repoLink });
                 if(!settings || settings.length === 0) {
-                    let db = new DB();
-                    await db.log('GithubBot', 'trySyncRepo', `No settings`);
+                    
+                    await DB.log('GithubBot', 'trySyncRepo', `No settings`);
                     return;
                 }
 
@@ -416,8 +416,8 @@ export class GithubBot {
         }
 
         catch(e: any) {
-            let db = new DB();
-            await db.log('GithubBot', 'trySyncRepo', e.message);
+            
+            await DB.log('GithubBot', 'trySyncRepo', e.message);
         }
     }
 

@@ -59,8 +59,8 @@ routes.post('/', async(req, res) => {
     }
 
     catch (e: any){
-        let db = new DB();
-        await db.log('mailingList', '/', e.toString());
+        
+        await DB.log('mailingList', '/', e.toString());
         return res.status(500).send("Unable to create product");
     }
     
@@ -175,8 +175,8 @@ routes.post('/priceList', async(req, res) => {
             }
         
             catch (e: any){
-                let db = new DB();
-                await db.log('mailingList', '/priceList', `Unable to create price\n\n${e.toString()}`);
+                
+                await DB.log('mailingList', '/priceList', `Unable to create price\n\n${e.toString()}`);
                 return;
             }
             
@@ -452,8 +452,8 @@ routes.post('/resend', async(req, res) => {
     }
 
     if(subscriber.user_id !== user.id) {
-        let db = new DB();
-        await db.log('mailingList', '/resend', 'Wrong subscriber');
+        
+        await DB.log('mailingList', '/resend', 'Wrong subscriber');
         return res.status(401).send("Unauthorized");
     }
 
@@ -462,14 +462,14 @@ routes.post('/resend', async(req, res) => {
     }
 
     if(!subscriber.price_tier) {
-        let db = new DB();
-        await db.log('mailingList', '/resend', 'No subscriber');
+        
+        await DB.log('mailingList', '/resend', 'No subscriber');
         return res.status(401).send("Unauthorized");
     }
 
     if(subscriber.price_tier.past_broadcasts.filter(x => x.id === Number(broadcast_id)).length === 0) {
-        let db = new DB();
-        await db.log('mailingList', '/resend', 'Price tier doesnt contain broadcast id');
+        
+        await DB.log('mailingList', '/resend', 'Price tier doesnt contain broadcast id');
         return res.status(401).send("Unauthorized");
     }
 

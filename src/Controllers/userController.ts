@@ -32,8 +32,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
     await createEmailForwarder(filtered.username);
     // init webhooks
     await webhookController.init(result!.id);
@@ -45,8 +45,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<User>(query);
+    
+    const result = await DB.executeQueryForSingleResult<User>(query);
 
     if(!result) {
         return result;
@@ -64,8 +64,8 @@ export const viewByUsername = async(username: string) => {
     username = username.replace(/'/g, "''");
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE lower(username) = lower('${username}') LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<User>(query);
+    
+    const result = await DB.executeQueryForSingleResult<User>(query);
 
     if(!result) {
         return result;
@@ -106,8 +106,8 @@ export const publicView = async(id: number) => {
                         holiday_mode
                     FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<PublicUser>(query);
+    
+    const result = await DB.executeQueryForSingleResult<PublicUser>(query);
 
     if(!result) {
         return result;
@@ -146,8 +146,8 @@ export const publicViewByUsername = async(username: string) => {
                         holiday_mode
                     FROM ${table} WHERE lower(username) = lower('${username}') LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<PublicUser>(query);
+    
+    const result = await DB.executeQueryForSingleResult<PublicUser>(query);
 
     if(!result) {
         return result;
@@ -168,8 +168,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
 
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    let result = await db.executeQueryForResults<User>(query);
+    
+    let result = await DB.executeQueryForResults<User>(query);
 
     if(!result) {
         return result;
@@ -200,8 +200,8 @@ export const findByAddress = async(address: string) => {
 
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    let result = await db.executeQueryForSingleResult<User>(query);
+    
+    let result = await DB.executeQueryForSingleResult<User>(query);
 
     if(!result) {
         return result;
@@ -229,8 +229,8 @@ export const findByAddress = async(address: string) => {
 export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<User>(query);
+    
+    const result = await DB.executeQueryForResults<User>(query);
 
     return result ?? [];
 }
@@ -253,16 +253,16 @@ export const update = async(id: number, updateParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(filtered);
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    return await db.executeQueryForResults(query);
+    
+    return await DB.executeQueryForResults(query);
 }
 
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }
@@ -372,8 +372,8 @@ export const getHomepageUsers = async() => {
                     order by value_usd desc nulls last, is_verified desc, profile_picture desc nulls last
                     limit 50`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<HomepageUser>(query);
+    
+    const result = await DB.executeQueryForResults<HomepageUser>(query);
 
     if(!result) {
         return result;
@@ -401,8 +401,8 @@ export const search = async(username: string) => {
                     where username ilike '%${username}%' or display_name ilike '%${username}%'
                     limit 50`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<HomepageUser>(query);
+    
+    const result = await DB.executeQueryForResults<HomepageUser>(query);
 
     if(!result) {
         return result;
@@ -431,8 +431,8 @@ export const searchAddress = async(address: string) => {
                     where address = '${address}'
                     limit 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<HomepageUser>(query);
+    
+    const result = await DB.executeQueryForSingleResult<HomepageUser>(query);
 
     if(!result) {
         return result;

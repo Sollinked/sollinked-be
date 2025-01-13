@@ -331,8 +331,8 @@ routes.post('/payment/:id', async(req, res) => {
         });
 
         if(!passRes || !passRes.mintAddress) {
-            let db = new DB();
-            await db.log('contentPass', '/payment/:id', `Unable to mint pass, below is passRes\n\n${passRes}`);
+            
+            await DB.log('contentPass', '/payment/:id', `Unable to mint pass, below is passRes\n\n${passRes}`);
             await refund(cNftRes.id);
             return res.status(500).send("Unable to mint pass!")
         }

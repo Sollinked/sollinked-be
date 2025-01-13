@@ -19,8 +19,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     return result;
 }
@@ -29,8 +29,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<UserGithubWhitelist>(query);
+    
+    const result = await DB.executeQueryForSingleResult<UserGithubWhitelist>(query);
 
     return result ?? {};
 }
@@ -40,8 +40,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserGithubWhitelist>(query);
+    
+    const result = await DB.executeQueryForResults<UserGithubWhitelist>(query);
 
     return result;
 }
@@ -50,8 +50,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
 export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<UserGithubWhitelist>(query);
+    
+    const result = await DB.executeQueryForResults<UserGithubWhitelist>(query);
 
     return result ?? [];
 }
@@ -59,10 +59,10 @@ export const list = async() => {
 // update
 export const update = async(user_github_id: number, whitelists: string[]): Promise<void> => {
     // filter
-    const db = new DB();
+    
 
     const deleteQuery = `DELETE FROM ${table} WHERE user_github_id = ${user_github_id}`;
-    await db.executeQuery(deleteQuery);
+    await DB.executeQuery(deleteQuery);
 
     let columns = ['user_github_id', 'username'];
     let values: any[] = []; // change test to admin later
@@ -75,15 +75,15 @@ export const update = async(user_github_id: number, whitelists: string[]): Promi
     }
 
     let query = getInsertQuery(columns, values, table);
-    await db.executeQueryForSingleResult(query);
+    await DB.executeQueryForSingleResult(query);
 }
 
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }

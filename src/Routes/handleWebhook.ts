@@ -33,45 +33,45 @@ const notifyPayer = (address: string) => {
 const processSubscription = async(payment: any, paymentRet: any) => {
     let paymentLink = paymentRet.paymentLink;
     if(!paymentLink) {
-        let db = new DB();
-        await db.log('handleWebhook', '/sphere', `Missing payment link: ${payment.id}`);
+        
+        await DB.log('handleWebhook', '/sphere', `Missing payment link: ${payment.id}`);
         return "Payment link missing";
     }
 
     let customer = paymentRet.customer;
     if(!customer || !customer.solanaPubKey) {
-        let db = new DB();
-        await db.log('handleWebhook', '/sphere', `Missing customer: ${payment.id}`);
+        
+        await DB.log('handleWebhook', '/sphere', `Missing customer: ${payment.id}`);
         return "customer missing";
     }
 
     let lineItems = paymentLink.lineItems;
     if(!lineItems || lineItems.length === 0) {
-        let db = new DB();
-        await db.log('handleWebhook', '/sphere', `Missing lineItems: ${payment.id}`);
+        
+        await DB.log('handleWebhook', '/sphere', `Missing lineItems: ${payment.id}`);
         return "lineItems missing";
     }
 
     let lineItem = lineItems[0];
     let price = lineItem.price;
     if(!price) {
-        let db = new DB();
-        await db.log('handleWebhook', '/sphere', `Missing price: ${payment.id}`);
+        
+        await DB.log('handleWebhook', '/sphere', `Missing price: ${payment.id}`);
         return "price missing";
     }
 
     let priceTiers = await mailingListPriceTierController.find({ price_id: price.id }, true);
     if(!priceTiers || priceTiers.length === 0) {
-        let db = new DB();
-        await db.log('handleWebhook', '/sphere', `Unable to find priceTier: ${payment.id}`);
+        
+        await DB.log('handleWebhook', '/sphere', `Unable to find priceTier: ${payment.id}`);
         return "Unable to find priceTier";
     }
 
     let priceTier = priceTiers[0];
 
     if(!paymentRet.personalInfo || !paymentRet.personalInfo.email) {
-        let db = new DB();
-        await db.log('handleWebhook', '/sphere', `Unable to find email: ${payment.id}`);
+        
+        await DB.log('handleWebhook', '/sphere', `Unable to find email: ${payment.id}`);
         return "Unable to find email";
     }
 
@@ -80,8 +80,8 @@ const processSubscription = async(payment: any, paymentRet: any) => {
     let user_id = 0;
     if(!users || users.length === 0) {
         if(!paymentRet.personalInfo) {
-            let db = new DB();
-            await db.log('handleWebhook', '/sphere', `Unable to create cause there is no email: ${payment.id}`);
+            
+            await DB.log('handleWebhook', '/sphere', `Unable to create cause there is no email: ${payment.id}`);
             return "Unable to create user";
         }
         let result = await userController.create({
@@ -91,8 +91,8 @@ const processSubscription = async(payment: any, paymentRet: any) => {
             email_address: email,
         });
         if(!result) {
-            let db = new DB();
-            await db.log('handleWebhook', '/sphere', `Unable to create user: ${payment.id}`);
+            
+            await DB.log('handleWebhook', '/sphere', `Unable to create user: ${payment.id}`);
             return "Unable to create user";
         }
         user_id = result.id;
@@ -117,15 +117,15 @@ const processSubscription = async(payment: any, paymentRet: any) => {
 const processOneTimePayment = async(payment: any, paymentRet: any) => {
     let paymentLink = paymentRet.paymentLink;
     if(!paymentLink) {
-        let db = new DB();
-        await db.log('handleWebhook', 'processOneTimePayment', `Missing payment link: ${payment.id}`);
+        
+        await DB.log('handleWebhook', 'processOneTimePayment', `Missing payment link: ${payment.id}`);
         return "Payment link missing";
     }
 
     let customer = paymentRet.customer;
     if(!customer || !customer.solanaPubKey) {
-        let db = new DB();
-        await db.log('handleWebhook', 'processOneTimePayment', `Missing customer: ${payment.id}`);
+        
+        await DB.log('handleWebhook', 'processOneTimePayment', `Missing customer: ${payment.id}`);
         return "customer missing";
     }
 
@@ -133,8 +133,8 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
     let user_id = 0;
     if(!users || users.length === 0) {
         if(!paymentRet.personalInfo) {
-            let db = new DB();
-            await db.log('handleWebhook', 'processOneTimePayment', `Unable to create cause there is no email: ${payment.id}`);
+            
+            await DB.log('handleWebhook', 'processOneTimePayment', `Unable to create cause there is no email: ${payment.id}`);
             return "Unable to create user";
         }
         let result = await userController.create({
@@ -143,8 +143,8 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
             calendar_advance_days: 100,
         });
         if(!result) {
-            let db = new DB();
-            await db.log('handleWebhook', 'processOneTimePayment', `Unable to create user: ${payment.id}`);
+            
+            await DB.log('handleWebhook', 'processOneTimePayment', `Unable to create user: ${payment.id}`);
             return "Unable to create user";
         }
         user_id = result.id;
@@ -168,16 +168,16 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
         });
 
         if(!paymentRes) {
-            let db = new DB();
-            await db.log('handleWebhook', 'processOneTimePayment', "Unable to create payment history: tx_hash might be duplicated");
+            
+            await DB.log('handleWebhook', 'processOneTimePayment', "Unable to create payment history: tx_hash might be duplicated");
             return "Unable to create payment history: tx_hash might be duplicated";
         }
 
         // send payment to user
         let contentCreator = await userController.view(content.user_id);
         if(!contentCreator) {
-            let db = new DB();
-            await db.log('handleWebhook', 'processOneTimePayment', `Unable to find content creator: ${content.user_id} for content: ${content.id}`);
+            
+            await DB.log('handleWebhook', 'processOneTimePayment', `Unable to find content creator: ${content.user_id} for content: ${content.id}`);
         }
 
         if(contentCreator) {
@@ -202,8 +202,8 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
         });
 
         if(!paymentRes) {
-            let db = new DB();
-            await db.log('handleWebhook', 'processOneTimePayment', "Unable to create payment history: tx_hash might be duplicated");
+            
+            await DB.log('handleWebhook', 'processOneTimePayment', "Unable to create payment history: tx_hash might be duplicated");
             return "Unable to create payment history: tx_hash might be duplicated";
         }
 
@@ -224,8 +224,8 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
         await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, contentPass.value_usd);
 
         if(!passRes || !passRes.nftId) {
-            let db = new DB();
-            await db.log('handleWebhook', 'processOneTimePayment', `Unable to mint pass, below is passRes\n\n${passRes}`);
+            
+            await DB.log('handleWebhook', 'processOneTimePayment', `Unable to mint pass, below is passRes\n\n${passRes}`);
             return "Unable to mint pass!";
         }
 
@@ -269,23 +269,23 @@ routes.post('/sphere', async(req, res) => {
         });
             
         if(!paymentRes.data.ok || !paymentRes.data.data || !paymentRes.data.data.payment) {
-            let db = new DB();
-            await db.log('handleWebhook', '/sphere', `Unable to get payment: ${payment.id}`);
+            
+            await DB.log('handleWebhook', '/sphere', `Unable to get payment: ${payment.id}`);
             return res.status(400).send("Unable to get payment");
         }
 
         let paymentRet = paymentRes.data.data.payment;
         if(paymentRet.status !== "succeeded") {
-            let db = new DB();
-            await db.log('handleWebhook', '/sphere', `Payment failed: ${payment.id}`);
+            
+            await DB.log('handleWebhook', '/sphere', `Payment failed: ${payment.id}`);
             return res.status(400).send("Payment failed");
         }
 
         if(paymentRet.type === "subscription") {
             let errorMessage = await processSubscription(payment, paymentRet);
             if(errorMessage !== "") {
-                let db = new DB();
-                await db.log('handleWebhook', '/sphere', errorMessage);
+                
+                await DB.log('handleWebhook', '/sphere', errorMessage);
                 return res.status(400).send("Payment failed");
             }
         }
@@ -293,8 +293,8 @@ routes.post('/sphere', async(req, res) => {
         else {
             let errorMessage = await processOneTimePayment(payment, paymentRet);
             if(errorMessage !== "") {
-                let db = new DB();
-                await db.log('handleWebhook', '/sphere', errorMessage);
+                
+                await DB.log('handleWebhook', '/sphere', errorMessage);
                 return res.status(400).send("Payment failed");
             }
         }
@@ -302,8 +302,8 @@ routes.post('/sphere', async(req, res) => {
     }
 
     catch {
-        let db = new DB();
-        await db.log('handleWebhook', '/sphere', 'Unable to create subscriber');
+        
+        await DB.log('handleWebhook', '/sphere', 'Unable to create subscriber');
         return;
     }
 

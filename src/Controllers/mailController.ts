@@ -19,8 +19,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     return result;
 }
@@ -29,8 +29,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<Mail>(query);
+    
+    const result = await DB.executeQueryForSingleResult<Mail>(query);
     if(!result) {
         return undefined;
     }
@@ -94,8 +94,8 @@ export const find = async(whereParams: {[key: string]: any}, args?: {
                     )
                     ORDER BY created_at desc`;
 
-    const db = new DB();
-    let results = await db.executeQueryForResults<Mail>(query);
+    
+    let results = await DB.executeQueryForResults<Mail>(query);
 
     if(!results) {
         return results;
@@ -146,8 +146,8 @@ export const getExpired = async() => {
                         AND has_responded = false
                         AND expiry_date < '${moment().format('YYYY-MM-DDTHH:mm:ssZ')}'`;
 
-    const db = new DB();
-    let results = await db.executeQueryForResults<Mail>(query);
+    
+    let results = await DB.executeQueryForResults<Mail>(query);
 
     if(!results) {
         return results;
@@ -168,8 +168,8 @@ export const getExpired = async() => {
 export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<Mail>(query);
+    
+    const result = await DB.executeQueryForResults<Mail>(query);
 
     return result ?? [];
 }
@@ -182,16 +182,16 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }

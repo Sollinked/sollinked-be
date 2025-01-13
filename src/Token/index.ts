@@ -218,8 +218,8 @@ export const getAddressAssets = async(userAccount: string) => {
         }
 
         catch(e: any) {
-            let db = new DB();
-            await db.log('Token', 'getAddressAssets', e.toString());
+            
+            await DB.log('Token', 'getAddressAssets', e.toString());
             errors++;
         }
     }

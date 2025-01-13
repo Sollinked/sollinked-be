@@ -19,8 +19,8 @@ export const create = async(insertParams: any) => {
 
     const query = `INSERT INTO ${table} (${_.join(insertColumns, ', ')}) VALUES (${params}) RETURNING id`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<{ id: number }>(query);
+    
+    const result = await DB.executeQueryForSingleResult<{ id: number }>(query);
 
     return result;
 }
@@ -29,8 +29,8 @@ export const create = async(insertParams: any) => {
 export const view = async(id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE id = ${id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<MailingList>(query);
+    
+    const result = await DB.executeQueryForSingleResult<MailingList>(query);
 
     return result;
 }
@@ -38,8 +38,8 @@ export const view = async(id: number) => {
 export const getUserMailingList = async(user_id: number) => {
     const query = `SELECT ${fillableColumns.join(",")} FROM ${table} WHERE user_id = ${user_id} LIMIT 1`;
 
-    const db = new DB();
-    const result = await db.executeQueryForSingleResult<MailingList>(query);
+    
+    const result = await DB.executeQueryForSingleResult<MailingList>(query);
     if(!result) {
         return result;
     }
@@ -53,8 +53,8 @@ export const find = async(whereParams: {[key: string]: any}) => {
     const params = formatDBParamsToStr(whereParams, { separator: ' AND ', isSearch: true });
     const query = `SELECT * FROM ${table} WHERE ${params}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<MailingList>(query);
+    
+    const result = await DB.executeQueryForResults<MailingList>(query);
 
     return result;
 }
@@ -63,8 +63,8 @@ export const findByUserId = async(user_id: number, onlyActive: boolean = true) =
     // ignore cancelled
     const query = `SELECT * FROM ${table} WHERE user_id = ${user_id}`;
 
-    const db = new DB();
-    let result = await db.executeQueryForSingleResult<MailingList>(query);
+    
+    let result = await DB.executeQueryForSingleResult<MailingList>(query);
 
     if(!result) {
         return result;
@@ -84,8 +84,8 @@ export const findByUserId = async(user_id: number, onlyActive: boolean = true) =
 export const list = async() => {
     const query = `SELECT * FROM ${table}`;
 
-    const db = new DB();
-    const result = await db.executeQueryForResults<MailingList>(query);
+    
+    const result = await DB.executeQueryForResults<MailingList>(query);
 
     return result ?? [];
 }
@@ -98,16 +98,16 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 
     const query = `UPDATE ${table} SET ${params} WHERE id = ${id}`;
 
-    const db = new DB();
-    await db.executeQueryForSingleResult(query);
+    
+    await DB.executeQueryForSingleResult(query);
 }
 
 // delete (soft delete?)
 // export const delete = async(userId: number) => {
 //     const query = `DELETE FROM ${table} WHERE user_id = ${userId}`;
 
-//     const db = new DB();
-//     await db.executeQueryForSingleResult(query);
+//     
+//     await DB.executeQueryForSingleResult(query);
 
 //     return result;
 // }

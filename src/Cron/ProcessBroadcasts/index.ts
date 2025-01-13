@@ -17,8 +17,8 @@ export const processBroadcasts = async() => {
         let broadcast_id = broadcastObject.mailing_list_broadcast_id;
         let broadcast = await mailingListBroadcastController.view(broadcast_id);
         if(!broadcast) {
-            let db = new DB();
-            await db.log('ProcessBroadcasts', 'processBroadcasts', 'Missing broadcast object');
+            
+            await DB.log('ProcessBroadcasts', 'processBroadcasts', 'Missing broadcast object');
             return;
         }
     
@@ -31,15 +31,15 @@ export const processBroadcasts = async() => {
     
         let logs = await mailingListBroadcastLogController.getDistinctEmailsForBroadcastId(broadcast_id);
         if(!logs || logs.length === 0) {
-            let db = new DB();
-            await db.log('ProcessBroadcasts', 'processBroadcasts', 'Missing logs');
+            
+            await DB.log('ProcessBroadcasts', 'processBroadcasts', 'Missing logs');
             return;
         }
     
         let user = await userController.view(broadcast.user_id);
         if(!user) {
-            let db = new DB();
-            await db.log('ProcessBroadcasts', 'processBroadcasts', 'Missing user');
+            
+            await DB.log('ProcessBroadcasts', 'processBroadcasts', 'Missing user');
             return;
         }
         
