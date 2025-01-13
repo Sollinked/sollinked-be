@@ -144,8 +144,6 @@ export const processPayments = async() => {
                 subject: subject ?? "No Subject"
             });
 
-            await sendSOLTo(true, mail.tiplink_public_key, 0.003);
-
             // delete attachments
             deleteAttachments(attachments);
 
@@ -275,8 +273,6 @@ export const processFromSitePayments = async() => {
                 sent_message_id,
                 subject: mail.subject ?? "No Subject"
             });
-
-            await sendSOLTo(true, mail.tiplink_public_key, 0.003);
 
             await webhookController.executeByUserId(mail.user_id, {
                 payer: mail.from_email,

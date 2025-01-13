@@ -160,8 +160,6 @@ routes.post('/payment/:username', async(req, res) => {
                     subject: subject ?? "No Subject"
                 });
     
-                await sendSOLTo(true, mail.tiplink_public_key, 0.003);
-    
                 await webhookController.executeByUserId(mail.user_id, {
                     payer: mail.from_email,
                     amount: valueUsd,

@@ -414,7 +414,7 @@ routes.post('/payment/:id', async(req, res) => {
 
     if(amount > 0) {
         // send usdc to the content creator
-        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, amount);
+        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, amount, getAdminAccount());
     }
 
     return res.send({

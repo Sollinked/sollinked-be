@@ -10,7 +10,7 @@ import * as contentCNFTController from '../Controllers/contentCNFTController';
 import * as contentPaymentController from '../Controllers/contentPaymentController';
 import axios from 'axios';
 import moment from 'moment';
-import { createContentPass, createSpherePaymentLink, createSpherePrice, createSphereProduct, getDappDomain, getServerPort, getSphereKey, getSphereWalletId, getSubscriptionFee, sendTokensTo } from '../../utils';
+import { createContentPass, createSpherePaymentLink, createSpherePrice, createSphereProduct, getAdminAccount, getDappDomain, getServerPort, getSphereKey, getSphereWalletId, getSubscriptionFee, sendTokensTo } from '../../utils';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../Constants';
 import DB from '../DB';
 import * as clientio from 'socket.io-client';
@@ -181,7 +181,7 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
         }
 
         if(contentCreator) {
-            await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, content.value_usd);
+            await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, content.value_usd, getAdminAccount());
         }
 
         notifyPayer(customer.solanaPubKey);
@@ -221,7 +221,7 @@ const processOneTimePayment = async(payment: any, paymentRet: any) => {
         });
 
         // send usdc to the content creator
-        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, contentPass.value_usd);
+        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, contentPass.value_usd, getAdminAccount());
 
         if(!passRes || !passRes.nftId) {
             

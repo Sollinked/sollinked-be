@@ -4,7 +4,7 @@ import { deleteEmailForwarder, getEmailByMessageId, getImap, mapAttachments, sen
 import * as controller from '../../../src/Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
-import { clawbackSOLFrom, getExcludeEmailDomains, getMailCredentials, sendTokensTo } from '../../../utils';
+import { clawbackSOLFrom, getAdminAccount, getExcludeEmailDomains, getMailCredentials, sendTokensTo } from '../../../utils';
 import moment from 'moment';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../../Constants';
 import { ProcessedMail } from '../../Models/mail';
@@ -357,7 +357,7 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
     let tiplink = await TipLink.fromUrl(new URL(mail.tiplink_url));
     while(retries < 3) {
         try {
-            await sendTokensTo(user[0].address, USDC_ADDRESS, USDC_DECIMALS, mail.value_usd, tiplink.keypair);
+            await sendTokensTo(user[0].address, USDC_ADDRESS, USDC_DECIMALS, mail.value_usd, tiplink.keypair, getAdminAccount());
 
             
             await DB.log('ProcessEmails', 'autoClaimFromMail', `Sent ${mail.value_usd} USDC to ${user[0].username} (${user[0].address})`);

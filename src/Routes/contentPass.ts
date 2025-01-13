@@ -271,7 +271,7 @@ routes.post('/payment/:id', async(req, res) => {
     }
 
     const refund = async(id?: number) => {
-        await sendTokensTo(user!.address, USDC_ADDRESS, USDC_DECIMALS, valueUsd);
+        await sendTokensTo(user!.address, USDC_ADDRESS, USDC_DECIMALS, valueUsd, getAdminAccount());
         if(id) {
             await contentCNFTController.deleteById(id);
         }
@@ -338,7 +338,7 @@ routes.post('/payment/:id', async(req, res) => {
         }
 
         // send usdc to the content creator
-        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, amount);
+        await sendTokensTo(contentCreator.address, USDC_ADDRESS, USDC_DECIMALS, amount, getAdminAccount());
 
         // create a log in db
         let { mintAddress, nftId } = passRes;
