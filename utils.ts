@@ -621,7 +621,7 @@ export const sendTokensTo = async(sendTo: string, token: string, tokenDecimals: 
                 signers.push(payer);
             }
 
-            transaction = addPriorityFeeToTransaction(transaction, 50_000, 200_000);
+            transaction = addPriorityFeeToTransaction(transaction, 200_000, 50_000);
             transaction.recentBlockhash = blockHash.blockhash;
             transaction.lastValidBlockHeight = blockHash.lastValidBlockHeight;
 
@@ -775,7 +775,7 @@ export const closeEmptyAccounts = async(fromKeypair: Keypair) => {
             const connection = new Connection(getRPCEndpoint(), "confirmed");
             const blockHash = await connection.getLatestBlockhash('confirmed');
             tx.feePayer = adminAccount.publicKey;
-            tx = addPriorityFeeToTransaction(tx, 50_000, 200_000);
+            tx = addPriorityFeeToTransaction(tx, 200_000, 50_000);
             tx.recentBlockhash = blockHash.blockhash;
             tx.lastValidBlockHeight = blockHash.lastValidBlockHeight;
             let txSignature = await connection.sendTransaction(tx, [fromKeypair, adminAccount]);
