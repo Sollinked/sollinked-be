@@ -196,7 +196,7 @@ export const live = async(withPublicKey?: boolean) => {
 
     let publicAuctionWithBidders: PublicMailAuctionWithBidder[] = [];
     if(result && result.length > 0) {
-        for(const auction of result) {
+        for(let auction of result) {
             const bidderQuery = `SELECT 
                         coalesce(u.display_name, u.address) as display_name,
                         u.profile_picture,
@@ -218,6 +218,10 @@ export const live = async(withPublicKey?: boolean) => {
                 }
             }
 
+            if(auction.profile_picture) {
+                auction.profile_picture = getProfilePictureLink(auction.profile_picture);
+            }
+            
             publicAuctionWithBidders.push({
                 ...auction,
                 bidders: processedBidderResult,
