@@ -25,6 +25,12 @@ export type AuctionStats = {
     bid_count: number;
 }
 
+export type OwnPreviousBid = { 
+    message: string;
+    subject: string; 
+    value_usd: number;
+}
+
 export const fillableColumns = [
     'id',
     'auction_id',

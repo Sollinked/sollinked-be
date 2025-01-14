@@ -34,6 +34,27 @@ routes.get('/:id', async(req, res) => {
     });
 });
 
+routes.post('/previousBid/:id', async(req, res) => {
+    let { address } = req.body;
+    let user = await userController.findByAddress(address);
+    if(!user) {
+        return res.status(404).send("Unable to find user");
+    }
+
+    let { id } = req.params;
+    if(!id) {
+        return res.status(400).send("No id");
+    }
+
+    let bid = await mailBidController.getUserMailBidByAuctionId(Number(user.id), Number(id));
+
+    return res.send({
+        success: true,
+        message: "Success",
+        data: bid,
+    });
+});
+
 routes.post('/', async(req, res) => {
     let { start_date, end_date, min_bid, address } = req.body;
     let user = await userController.findByAddress(address);

@@ -1,7 +1,7 @@
 import { formatDBParamsToStr, getProfilePictureLink } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { AuctionStats, MailBid, PublicBidder, fillableColumns } from "../Models/mailBid";
+import { AuctionStats, MailBid, OwnPreviousBid, PublicBidder, fillableColumns } from "../Models/mailBid";
 
 const table = 'mail_bids';
 
@@ -50,6 +50,25 @@ export const getUserMailBids = async(user_id: number) => {
 
     
     const result = await DB.executeQueryForSingleResult<MailBid>(query);
+    if(!result) {
+        return result;
+    }
+
+    return result;
+}
+
+export const getUserMailBidByAuctionId = async(user_id: number, auction_id: number) => {
+    const query = `
+        SELECT 
+            subject,
+            message,
+            value_usd
+        FROM ${table} 
+        WHERE user_id = ${Number(user_id)}
+          AND auction_id = ${Number(auction_id)}
+        LIMIT 1`;
+
+    const result = await DB.executeQueryForSingleResult<OwnPreviousBid>(query);
     if(!result) {
         return result;
     }
