@@ -183,7 +183,7 @@ routes.post('/bid/:id', async(req, res) => {
     let mailBid = await mailBidController.findByUserIdAndAuctionId(fromUser.id, mailAuction.id);
 
     let depositTo = mailBid?.tiplink_public_key ?? "";
-    if(!depositTo) {
+    if(!mailBid || !depositTo) {
         const tiplink = await TipLink.create();
         depositTo = tiplink.keypair.publicKey.toBase58();
 
@@ -201,6 +201,14 @@ routes.post('/bid/:id', async(req, res) => {
         if(!result) {
             return res.status(500).send("Server Error");
         }
+    }
+
+    else {
+        await mailBidController.update(mailBid.id, {
+            subject,
+            message: emailMessage,
+            email: fromEmail,
+        });
     }
 
     return res.send({
