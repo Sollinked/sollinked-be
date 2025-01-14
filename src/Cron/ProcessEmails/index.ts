@@ -4,7 +4,7 @@ import { deleteEmailForwarder, getEmailByMessageId, getImap, mapAttachments, sen
 import * as controller from '../../../src/Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
-import { clawbackSOLFrom, getAdminAccount, getExcludeEmailDomains, getMailCredentials, sendTokensTo } from '../../../utils';
+import { clawbackSOLFrom, closeEmptyAccounts, getAdminAccount, getExcludeEmailDomains, getMailCredentials, sendTokensTo } from '../../../utils';
 import moment from 'moment';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../../Constants';
 import { ProcessedMail } from '../../Models/mail';
@@ -400,6 +400,25 @@ const autoClaimFromMail = async(mail: ProcessedMail) => {
     if(retries >= 3) {
         
         await DB.log('ProcessEmails', 'autoClaimFromMail', `Unable to clawback from: ${tiplink.url}`);
+        return;
+    }
+
+    retries = 0;
+    while(retries < 3) {
+        try {
+            await closeEmptyAccounts(tiplink.keypair);
+            break;
+        }
+
+        catch(e: any) {
+            
+            await DB.log('ProcessEmails', 'autoClaimFromMail', e.toString());
+            retries++;
+        }
+    }
+    if(retries >= 3) {
+        
+        await DB.log('ProcessEmails', 'autoClaimFromMail', `Unable to close account: ${tiplink.url}`);
         return;
     }
 

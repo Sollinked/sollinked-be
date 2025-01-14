@@ -1,19 +1,21 @@
 import { processEmails, processUnclaimedRespondedEmails } from "./ProcessEmails";
 import cron from 'node-cron';
-import { processFromSitePayments, processMailsWithNoResponse, processPayments } from "./ProcessPayments";
+import { processFromSitePayments, processMailsWithNoResponse, processPaymentsAndAuctionWinners } from "./ProcessPayments";
 import { processClaims } from "./ProcessClaims";
 import { processExpiredReservationPayments, processReservationClaims, processReservationPayments } from "./ProcessReservationPayments";
 import { processGithubInvitations, syncRepo } from "./ProcessGithubInvitations";
 import { processGithubIssues } from "./ProcessGithubIssues";
 import { processBroadcasts } from "./ProcessBroadcasts";
-import { processAuctionPayments } from "./ProcessAuctions";
+import { processAuctionPayments, processAuctions } from "./ProcessAuctions";
 
 
 export const init = () => {
     // run every 1 minute
     cron.schedule('*/1 * * * *', () => {
         // processEmails();
-        processPayments();
+        processAuctions();
+        processAuctionPayments();
+        processPaymentsAndAuctionWinners();
         processFromSitePayments();
         processClaims();
         processExpiredReservationPayments();
@@ -22,7 +24,6 @@ export const init = () => {
         // syncRepo();
         // processGithubIssues();
         processMailsWithNoResponse();
-        processAuctionPayments();
     });
 
     setInterval(() => {

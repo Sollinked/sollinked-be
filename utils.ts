@@ -4,7 +4,7 @@ import path from 'path';
 dotenv.config({ path: path.join(__dirname, '.env')});
 import crypto from "crypto";
 import DB from './src/DB';
-import { ComputeBudgetProgram, Connection, GetProgramAccountsFilter, Keypair, PublicKey, SystemProgram, Transaction, TransactionInstruction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
+import { ComputeBudgetProgram, Connection, GetProgramAccountsFilter, Keypair, LAMPORTS_PER_SOL, PublicKey, SystemProgram, Transaction, TransactionInstruction, clusterApiUrl, sendAndConfirmRawTransaction, sendAndConfirmTransaction } from '@solana/web3.js';
 import dayjs, { OpUnitType } from 'dayjs';
 import _ from 'lodash';
 import { loadOrGenerateKeypair, loadPublicKeysFromFile } from './src/Helpers';
@@ -16,7 +16,7 @@ import nacl from 'tweetnacl';
 import bs58 from 'bs58';
 import axios from 'axios';
 import { md5 } from 'js-md5';
-import { createAssociatedTokenAccountInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
+import { createAssociatedTokenAccountInstruction, createCloseAccountInstruction, createTransferInstruction, getAccount, getAssociatedTokenAddress } from '@solana/spl-token';
 
 export function sleep(ms: number) {
     return new Promise((resolve, reject) => {
@@ -687,17 +687,11 @@ export const clawbackSOLFrom = async(keypair: Keypair) => {
     const connection = new WrapperConnection(CLUSTER_URL, "confirmed");
 
     let solBalance = await getAddressSOLBalance(keypair.publicKey);
-
-    // leave 0.001 SOL
-    
-    let clawbackBalance = solBalance - 0.001;
-
-    if(clawbackBalance <= 0) {
-        await DB.log('utils', 'clawbackSolFrom', `Balance too low to clawback`);
+    if(solBalance === 0) {
         return "";
     }
 
-    let lamports = Math.round(clawbackBalance * 1000000000);
+    let lamports = Math.round(solBalance * LAMPORTS_PER_SOL);
 
     let adminAccount = getAdminAccount();
     let transaction = new Transaction().add(
@@ -710,11 +704,97 @@ export const clawbackSOLFrom = async(keypair: Keypair) => {
     // Send and confirm transaction
     // Note: feePayer is by default the first signer, or payer, if the parameter is not set
 
-    let txSignature = await connection.sendTransaction(transaction, [keypair]);
+    transaction.feePayer = adminAccount.publicKey;
+    let txSignature = await connection.sendTransaction(transaction, [keypair, adminAccount]);
 
-    await DB.log('utils', 'clawbackSolFrom', `${clawbackBalance} SOL, tx: ${txSignature}`);
+    await DB.log('utils', 'clawbackSolFrom', `${solBalance} SOL, tx: ${txSignature}`);
     return txSignature;
 }
+
+
+export const getUserTokensDetailed = async(userAccount: PublicKey) => {
+    // load the env variables and store the cluster RPC url
+    const CLUSTER_URL = getRPCEndpoint();
+
+    // create a new rpc connection, using the ReadApi wrapper
+    const connection = new Connection(CLUSTER_URL, "confirmed");
+
+    let mintObject: {[mintAddress: string]: {
+        amount: number;
+        decimals: number;
+        ata: string;
+    }} = {};
+
+    let userAccounts = await getTokenAccounts(connection, userAccount.toString());
+    for(let account of userAccounts) {
+        let anyAccount = account.account as any;
+        let mint: string = anyAccount.data["parsed"]["info"]["mint"];
+        let decimals: number = anyAccount.data["parsed"]["info"]["tokenAmount"]["decimals"];
+        let accountAmount: number = anyAccount.data["parsed"]["info"]["tokenAmount"]["uiAmount"];
+
+        let isFrozen = anyAccount.data["parsed"]["info"]["state"] === "frozen";
+        // we dont add frozen states
+        if(isFrozen) {
+            continue;
+        }
+
+        mintObject[mint] = {
+            amount: accountAmount,
+            decimals,
+            ata: account.pubkey.toBase58(),
+        };
+    }
+
+    return mintObject;
+}
+
+
+export const closeEmptyAccounts = async(fromKeypair: Keypair) => {
+    const tokenObject = await getUserTokensDetailed(fromKeypair.publicKey);
+
+    let tx = new Transaction();
+    let hasInstruction = false;
+    const adminAccount = getAdminAccount();
+    for(const [mintAddress, { amount, ata }] of Object.entries(tokenObject)) {
+        if(amount > 0) {
+            continue;
+        }
+
+        hasInstruction = true;
+        tx.add(
+            createCloseAccountInstruction(
+                new PublicKey(ata), // to be closed token account
+                adminAccount.publicKey, // rent's destination
+                fromKeypair.publicKey, // token account authority
+            )
+        );
+    }
+
+    if(hasInstruction) {
+        try {
+            const connection = new Connection(getRPCEndpoint(), "confirmed");
+            const blockHash = await connection.getLatestBlockhash('confirmed');
+            tx.feePayer = adminAccount.publicKey;
+            tx = addPriorityFeeToTransaction(tx, 50_000, 200_000);
+            tx.recentBlockhash = blockHash.blockhash;
+            tx.lastValidBlockHeight = blockHash.lastValidBlockHeight;
+            let txSignature = await connection.sendTransaction(tx, [fromKeypair, adminAccount]);
+            await connection.confirmTransaction({
+                blockhash: blockHash.blockhash,
+                lastValidBlockHeight: blockHash.lastValidBlockHeight,
+                signature: txSignature,
+            })
+            await DB.log("utils", "closeEmptyAccounts", `Closed, hash: ${txSignature}`);
+        }
+
+        catch {
+            console.log('Error closing empty account')
+        }
+    }
+
+    return true;
+}
+
 
 export const transferCNfts = async(nft_ids: string[], nonPublicKeyAccount: string, to: string) => {
     if(nft_ids.length === 0){

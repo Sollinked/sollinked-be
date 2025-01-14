@@ -119,20 +119,35 @@ export const findByUserId = async(user_id: number) => {
                      AND deleted_at is null`;
 
     
-    let result = await DB.executeQueryForSingleResult<MailAuction>(query);
+    let result = await DB.executeQueryForResults<MailAuction>(query);
 
     if(!result) {
         return result;
     }
 
-    let ret: ProcessedMailAuction = {
-        ...result,
-        stats: await mailBidController.getStatsForAuction(result.id),
+
+    let ret: ProcessedMailAuction[] = [];
+    for(const auction of result) {
+        ret.push({
+            ...auction,
+            stats: await mailBidController.getStatsForAuction(auction.id),
+        });
     }
 
     return ret;
 }
 
+export const getUnprocessedEndedAuctions = async() => {
+    const query = `SELECT * 
+                    FROM ${table} 
+                    WHERE processed_at is null
+				      AND EXTRACT(EPOCH FROM end_date) <= EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
+                      AND deleted_at is null`;
+
+    
+    const result = await DB.executeQueryForResults<MailAuction>(query);
+    return result;
+}
 
 // list (all)
 export const list = async() => {
@@ -169,7 +184,7 @@ export const live = async(withPublicKey?: boolean) => {
                         EXTRACT(EPOCH FROM a.end_date) as end_date
                    FROM mail_auctions a
                    JOIN users u on u.id = a.user_id
-                   WHERE a.end_date > CURRENT_TIMESTAMP
+                   WHERE EXTRACT(EPOCH FROM a.end_date) > EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
                      AND deleted_at is null
                    ORDER BY end_date`;
     
@@ -211,4 +226,10 @@ export const live = async(withPublicKey?: boolean) => {
     }
 
     return publicAuctionWithBidders;
+}
+
+export const markAsProcessed = async(id: number) => {
+    // filter
+    const query = `UPDATE ${table} SET processed_at = CURRENT_TIMESTAMP WHERE id = ${id}`;
+    await DB.executeQueryForSingleResult(query);
 }

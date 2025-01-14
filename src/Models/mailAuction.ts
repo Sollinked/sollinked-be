@@ -6,6 +6,7 @@ export type MailAuction = {
     start_date: string;
     end_date: string;
     min_bid: number;
+    processed_at?: string;
     created_at: string;
     deleted_at?: string;
 }
@@ -40,6 +41,7 @@ export const fillableColumns = [
     'start_date',
     'end_date',
     'min_bid',
+    'processed_at',
     'created_at',
     'deleted_at',
 ];

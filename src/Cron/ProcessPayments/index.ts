@@ -9,6 +9,9 @@ import { BALANCE_ERROR_NUMBER, getAddressUSDCBalance } from '../../Token';
 import { v4 as uuidv4 } from 'uuid';
 import { getMailCredentials, getServerPort, sendSOLTo } from '../../../utils';
 import DB from '../../DB';
+import { ProcessedMail } from '../../Models/mail';
+import { UserTier } from '../../Models/userTier';
+import { User } from '../../Models/user';
 
 const port = getServerPort();
 let socket = clientio.connect(`ws://localhost:${port}`);
@@ -28,27 +31,175 @@ const notifyPayer = (tiplink_public_key: string) => {
     }
 }
 
-export const processPayments = async() => {
+const internalSendEmail = async({
+    user, 
+    mail, 
+    tier, 
+    tokenBalance,
+    uuid,
+    domain,
+    bcc_to_email,
+}: {
+    user: User;
+    mail: ProcessedMail;
+    tier?: UserTier; // when it's auction, then there's no tier
+    tokenBalance: number;
+    uuid: string;
+    domain: string;
+    bcc_to_email: string;
+}) => {
+    let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
+    let attachments = mapAttachments(parserAttachments);
+
+    let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
+    let expiry_date: string = "";
+    let utc_expiry_date: string = "";
+
+    if(!tier || tier.respond_days === 0) {
+        // add 12 hours instead
+        expiry_date = moment().add(7, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
+        utc_expiry_date = moment().utc().add(7, 'd').format('YYYY-MM-DD HH:mm');
+    }
+
+    else {
+        expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
+        utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
+    }
+
+    let sent_message_id = await sendEmail({
+        to: user.email_address!,
+        subject: `${subject ?? "No Subject"}`,
+        text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${from}\n\n${text}`,
+        textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${from}</p><br>${textAsHtml}`,
+        attachments,
+        replyTo: `${uuid}@${domain}`
+    });
+
+    // receipt
+    await sendEmail({
+        to: from,
+        subject: subject ?? "Re:",
+        text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.`,
+        inReplyTo: mail.message_id, // have to set this to reply to message in a thread
+        references: mail.message_id, // have to set this to reply to message in a thread
+    });
+
+    // create a forwarder for responses
+    // delete this forwarder once done
+    await createEmailForwarder(uuid);
+
+    // update the mail to contain the necessary info
+    await mailController.update(mail.key, { 
+        processed_at,
+        expiry_date,
+        value_usd: tokenBalance,
+        is_processed: true,
+        bcc_to_email,
+        sent_message_id,
+        subject: subject ?? "No Subject"
+    });
+
+    // delete attachments
+    deleteAttachments(attachments);
+
+    await webhookController.executeByUserId(mail.user_id, {
+        payer: mail.from_email,
+        amount: tokenBalance,
+        expiry_date: utc_expiry_date + " UTC",
+        bcc_to: bcc_to_email,
+    });
+
+    // notify
+    notifyPayer(mail.tiplink_public_key);
+}
+const internalSendAuctionEmail = async({
+    user, 
+    mail, 
+    tier, 
+    tokenBalance,
+    uuid,
+    domain,
+    bcc_to_email,
+}: {
+    user: User;
+    mail: ProcessedMail;
+    tier?: UserTier; // when it's auction, then there's no tier
+    tokenBalance: number;
+    uuid: string;
+    domain: string;
+    bcc_to_email: string;
+}) => {
+    let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
+    let expiry_date: string = moment().add(7, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
+    let utc_expiry_date: string =  moment().utc().add(7, 'd').format('YYYY-MM-DD HH:mm');
+
+    let sent_message_id = await sendEmail({
+        to: user.email_address!,
+        subject: `${mail.subject ?? "No Subject"}`,
+        text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${mail.from_email}\n\n${mail.message}`,
+        textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${mail.from_email}</p><br>${mail.message}`,
+        // attachments,
+        replyTo: `${uuid}@${domain}`
+    });
+
+    // receipt
+    await sendEmail({
+        to: mail.from_email,
+        subject: mail.subject ?? "Re:",
+        text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.`,
+        inReplyTo: mail.message_id, // have to set this to reply to message in a thread
+        references: mail.message_id, // have to set this to reply to message in a thread
+    });
+
+    // create a forwarder for responses
+    // delete this forwarder once done
+    await createEmailForwarder(uuid);
+
+    // update the mail to contain the necessary info
+    await mailController.update(mail.key, { 
+        processed_at,
+        expiry_date,
+        value_usd: tokenBalance,
+        is_processed: true,
+        bcc_to_email,
+        sent_message_id,
+        subject: mail.subject ?? "No Subject"
+    });
+
+    // delete attachments
+    // deleteAttachments(attachments);
+
+    await webhookController.executeByUserId(mail.user_id, {
+        payer: mail.from_email,
+        amount: tokenBalance,
+        expiry_date: utc_expiry_date + " UTC",
+        bcc_to: bcc_to_email,
+    });
+
+    // notify
+    notifyPayer(mail.tiplink_public_key);
+}
+
+// and auctions
+export const processPaymentsAndAuctionWinners = async() => {
     let credentials = getMailCredentials();
     let createdAfter = moment().add(-2, 'd').format('YYYY-MM-DD')
     let mails = await mailController.find({
         is_processed: false,
     }, {
         createdAfter,
-        onlyFromSMTP: true,
+        onlyFromSMTP: true, // and auctions
     });
 
     // no mails
     if(!mails) {
-        
-        await DB.log('ProcessPayments', 'processPayments', 'No unprocessed mails');
+        await DB.log('ProcessPayments', 'processPaymentsAndAuctionWinners', 'No unprocessed mails');
         return;
     }
 
     for(const [index, mail] of mails.entries()) {
         let uuid = uuidv4();
         let bcc_to_email = `${uuid}@${credentials.domain}`;
-    
         let tokenBalance = await getAddressUSDCBalance(mail.tiplink_public_key);
 
         // errored
@@ -64,20 +215,31 @@ export const processPayments = async() => {
         let tiers = await userTierController.find({ user_id: mail.user_id });
 
         if(!user) {
-            
-            await DB.log('ProcessPayments', 'processPayments', 'No user');
+            await DB.log('ProcessPayments', 'processPaymentsAndAuctionWinners', 'No user');
             continue;
         }
-        
+
         if(!user.email_address) {
-            
-            await DB.log('ProcessPayments', 'processPayments', `No email address: ${user.id}`);
+            await DB.log('ProcessPayments', 'processPaymentsAndAuctionWinners', `No email address: ${user.id}`);
+            continue;
+        }
+
+        // auction email
+        if(mail.is_auction) {
+            // send email if it won an auction, dont care about tiers
+            await internalSendAuctionEmail({
+                user,
+                mail,
+                tokenBalance,
+                uuid,
+                domain: credentials.domain,
+                bcc_to_email,
+            });
             continue;
         }
 
         if(!tiers) {
-            
-            await DB.log('ProcessPayments', 'processPayments', `No tier: ${user.id}`);
+            await DB.log('ProcessPayments', 'processPaymentsAndAuctionWinners', `No tier: ${user.id}`);
             /* // user didn't set tiers, all emails are eligible
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);
@@ -99,64 +261,15 @@ export const processPayments = async() => {
                 continue;
             }
 
-            let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
-            let attachments = mapAttachments(parserAttachments);
-
-            let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
-            let expiry_date = moment().add(tier.respond_days, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
-            let utc_expiry_date = moment().utc().add(tier.respond_days, 'd').format('YYYY-MM-DD HH:mm');
-
-            if(tier.respond_days === 0) {
-                // add 12 hours instead
-                expiry_date = moment().add(12, 'h').format('YYYY-MM-DDTHH:mm:ssZ');
-            }
-
-            let sent_message_id = await sendEmail({
-                to: user.email_address,
-                subject: `${subject ?? "No Subject"}`,
-                text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${from}\n\n${text}`,
-                textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${from}</p><br>${textAsHtml}`,
-                attachments,
-                replyTo: `${uuid}@${credentials.domain}`
-            });
-            
-            // receipt
-            await sendEmail({
-                to: from,
-                subject: subject ?? "Re:",
-                text: `Email has been sent to ${user.username}. You will be refunded if they don't reply by ${utc_expiry_date} UTC.`,
-                inReplyTo: mail.message_id, // have to set this to reply to message in a thread
-                references: mail.message_id, // have to set this to reply to message in a thread
-            });
-
-            // create a forwarder for responses
-            // delete this forwarder once done
-            await createEmailForwarder(uuid);
-
-            // update the mail to contain the necessary info
-            await mailController.update(mail.key, { 
-                processed_at,
-                expiry_date,
-                value_usd: tokenBalance,
-                is_processed: true,
+            await internalSendEmail({
+                user,
+                mail,
+                tier,
+                tokenBalance,
+                uuid,
+                domain: credentials.domain,
                 bcc_to_email,
-                sent_message_id,
-                subject: subject ?? "No Subject"
             });
-
-            // delete attachments
-            deleteAttachments(attachments);
-
-            await webhookController.executeByUserId(mail.user_id, {
-                payer: mail.from_email,
-                amount: tokenBalance,
-                expiry_date: utc_expiry_date + " UTC",
-                bcc_to: bcc_to_email,
-            });
-
-            // notify
-            notifyPayer(mail.tiplink_public_key);
-
             // dont process the rest of the tiers
             break;
         }
@@ -170,6 +283,7 @@ export const processFromSitePayments = async() => {
         is_processed: false,
     }, {
         createdAfter,
+        onlyFromSite: true,
     });
 
     // no mails
@@ -199,19 +313,19 @@ export const processFromSitePayments = async() => {
 
         if(!user) {
             
-            await DB.log('ProcessPayments', 'processPayments', 'No user');
+            await DB.log('ProcessPayments', 'processFromSitePayments', 'No user');
             continue;
         }
         
         if(!user.email_address) {
             
-            await DB.log('ProcessPayments', 'processPayments', `No email address: ${user.id}`);
+            await DB.log('ProcessPayments', 'processFromSitePayments', `No email address: ${user.id}`);
             continue;
         }
 
         if(!tiers) {
             
-            await DB.log('ProcessPayments', 'processPayments', `No tier: ${user.id}`);
+            await DB.log('ProcessPayments', 'processFromSitePayments', `No tier: ${user.id}`);
             /* // user didn't set tiers, all emails are eligible
             let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(mail.message_id) as any;
             let attachments = mapAttachments(parserAttachments);

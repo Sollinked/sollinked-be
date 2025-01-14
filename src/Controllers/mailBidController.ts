@@ -1,7 +1,7 @@
 import { formatDBParamsToStr, getProfilePictureLink } from "../../utils";
 import DB from "../DB"
 import _ from "lodash";
-import { AuctionStats, MailBid, OwnPreviousBid, PublicBidder, fillableColumns } from "../Models/mailBid";
+import { AuctionStats, Bidder, MailBid, OwnPreviousBid, PublicBidder, fillableColumns } from "../Models/mailBid";
 
 const table = 'mail_bids';
 
@@ -133,30 +133,33 @@ export const update = async(id: number, updateParams: {[key: string]: any}): Pro
 //     return result;
 // }
 
-export const getHighestBidderForAuction = async(auction_id: number) => {
+export const getBiddersForAuction = async(auction_id: number) => {
     const query = `
         SELECT
-            u.display_name,
-            u.profile_picture,
+            b.id,
+            user_id,
+            address,
+            subject,
+            message,
+            email,
+            tiplink_url,
+            tiplink_public_key,
             value_usd
-        FROM mail_bids
-        JOIN users u on u.id = mail_bids.user_id
-        WHERE mail_bids.auction_id = ${auction_id}
+        FROM mail_bids b
+        JOIN users u on u.id = b.user_id
+        WHERE b.auction_id = ${auction_id}
         ORDER BY value_usd desc, updated_at asc
-        LIMIT 1
     `; 
 
-    let highestBidder = await DB.executeQueryForSingleResult<PublicBidder>(query);
-    if(highestBidder) {
-        highestBidder.profile_picture = getProfilePictureLink(highestBidder.profile_picture);
-    }
-    return highestBidder;
+    let bidders = await DB.executeQueryForResults<Bidder>(query);
+    return bidders;
 }
+
 export const getStatsForAuction = async(auction_id: number) => {
     const query = `
         SELECT
-            MAX(value_usd) as highest_bid,
-            COUNT(DISTINCT id) as bid_count
+            MAX(value_usd)::decimal as highest_bid,
+            COUNT(DISTINCT id)::integer as bid_count
         FROM mail_bids
         WHERE mail_bids.auction_id = ${auction_id}
     `; 

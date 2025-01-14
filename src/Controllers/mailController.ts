@@ -47,6 +47,7 @@ export const find = async(whereParams: {[key: string]: any}, args?: {
     onlyFromSMTP?: boolean, 
     unexpiredOnly?: boolean,
     checkBalanceCount?: number;
+    onlyFromSite?: boolean;
 }) => {
     const filtered = _.pick(whereParams, fillableColumns);
     const params = formatDBParamsToStr(filtered, { separator: ' AND ', isSearch: true });
@@ -74,11 +75,13 @@ export const find = async(whereParams: {[key: string]: any}, args?: {
                         from_user_id,
                         message,
                         reply_message,
-                        responded_at
+                        responded_at,
+                        is_auction
                     FROM ${table} 
                     WHERE ${params}
                     ${args?.createdAfter? `AND created_at >= '${args?.createdAfter}'` : ""}
                     ${args?.onlyFromSMTP? `AND is_from_site = false` : ""}
+                    ${args?.onlyFromSite? `AND is_from_site = true` : ""}
                     ${args?.unexpiredOnly? `AND expiry_date > '${moment().format('YYYY-MM-DDTHH:mm:ssZ')}'` : ""}
                     ${args?.checkBalanceCount? `AND claim_balance_verify_count < ${args?.checkBalanceCount}` : ""}
                     AND (

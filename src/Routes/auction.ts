@@ -97,6 +97,10 @@ routes.post('/update/:id', async(req, res) => {
         return res.status(401).send("Unauthorized");
     }
 
+    if(moment(auction.end_date).isBefore(moment())) {
+        return res.status(400).send("Auction ended");
+    }
+
     await mailAuctionController.update(auction.id, {
         start_date: moment(start_date * 1000).toISOString(),
         end_date: moment(end_date * 1000).toISOString(),
@@ -129,6 +133,10 @@ routes.post('/delete/:id', async(req, res) => {
 
     if(auction.user_id !== user.id) {
         return res.status(401).send("Unauthorized");
+    }
+
+    if(moment(auction.end_date).isBefore(moment())) {
+        return res.status(400).send("Auction ended");
     }
 
     await mailAuctionController.softDelete(Number(id));
@@ -187,6 +195,7 @@ routes.post('/bid/:id', async(req, res) => {
             value_usd: 0,
             subject,
             message: emailMessage,
+            email: fromEmail,
         });
 
         if(!result) {

@@ -210,7 +210,7 @@ export const findByAddress = async(address: string) => {
 
     result.tiers =  await userTierController.find({'user_id': result.id});
     result.mails =  await mailController.find({'user_id': result.id});
-    result.auctions =  await mailAuctionController.find({'user_id': result.id});
+    result.auctions =  await mailAuctionController.findByUserId(result.id);
     result.mailingList =  await mailingListController.getUserMailingList(result.id);
     result.broadcasts = await mailingListBroadcastController.find({ user_id: result.id });
     result.contentPasses = await contentPassController.find({ user_id: result.id });

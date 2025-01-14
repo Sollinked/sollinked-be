@@ -20,6 +20,18 @@ export type PublicBidder = {
     tiplink_public_key?: string;
 }
 
+export type Bidder = {
+    id: number;
+    user_id: number;
+    address: string;
+    subject: string;
+    message: string;
+    email?: string;
+    tiplink_url: string;
+    tiplink_public_key: string;
+    value_usd: string;
+}
+
 export type AuctionStats = {
     highest_bid: number;
     bid_count: number;

@@ -998,4 +998,28 @@ export default [
             DROP COLUMN is_auction;
         `,
     },
+
+    {
+        name: "add_processed_at_to_mail_auctions",
+        query: `
+            ALTER TABLE mail_auctions
+            ADD processed_at timestamp null;
+        `,
+        rollback_query: `
+            ALTER TABLE mail_auctions
+            DROP COLUMN processed_at;
+        `,
+    },
+
+    {
+        name: "add_email_to_mail_bids",
+        query: `
+            ALTER TABLE mail_bids
+            ADD email text;
+        `,
+        rollback_query: `
+            ALTER TABLE mail_bids
+            DROP COLUMN email;
+        `,
+    },
 ];
