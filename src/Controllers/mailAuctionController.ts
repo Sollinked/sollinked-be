@@ -43,7 +43,8 @@ export const publicView = async(id: number) => {
                         u.profile_picture,
                         EXTRACT(EPOCH FROM a.start_date) as start_date,
                         EXTRACT(EPOCH FROM a.end_date) as end_date,
-                        min_bid
+                        min_bid,
+                        winner_count
                    FROM mail_auctions a
                    JOIN users u on u.id = a.user_id
                    WHERE a.id = ${id}
@@ -116,7 +117,8 @@ export const findByUserId = async(user_id: number) => {
     const query = `SELECT * 
                     FROM ${table} 
                     WHERE user_id = ${user_id}
-                     AND deleted_at is null`;
+                     AND deleted_at is null
+                    ORDER BY id desc`;
 
     
     let result = await DB.executeQueryForResults<MailAuction>(query);
@@ -181,7 +183,8 @@ export const live = async(withPublicKey?: boolean) => {
                         coalesce(u.display_name, u.address) as display_name,
                         u.profile_picture,
                         EXTRACT(EPOCH FROM a.start_date) as start_date,
-                        EXTRACT(EPOCH FROM a.end_date) as end_date
+                        EXTRACT(EPOCH FROM a.end_date) as end_date,
+                        a.winner_count
                    FROM mail_auctions a
                    JOIN users u on u.id = a.user_id
                    WHERE EXTRACT(EPOCH FROM a.end_date) > EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)

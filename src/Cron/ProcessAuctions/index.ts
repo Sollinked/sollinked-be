@@ -45,7 +45,6 @@ export const processAuctions = async() => {
     let auctions = await mailAuctionController.getUnprocessedEndedAuctions();
     let { domain } = getMailCredentials();
 
-    console.log({auctions});
     // no auctions
     if(!auctions || auctions.length === 0) {
         return;
@@ -97,5 +96,25 @@ export const processAuctions = async() => {
             }
         }
         await mailAuctionController.markAsProcessed(auction.id);
+    }
+}
+
+export const processAutoAuctions = async() => {
+    let users = await userController.getAutoAuctionUsersWithoutOngoingAuction();
+    if(!users || users.length === 0) {
+        return;
+    }
+
+    let startDate = moment();
+    for(const user of users) {
+        let endDate = moment(startDate).add(user.auto_auction_duration, 'days');
+        await mailAuctionController.create({
+            start_date: startDate.toISOString(),
+            end_date: endDate.toISOString(),
+            min_bid: user.auto_auction_start_bid,
+            winner_count: user.auto_auction_winner_count,
+            user_id: user.id,
+        });
+        console.log('created')
     }
 }

@@ -446,3 +446,22 @@ export const searchAddress = async(address: string) => {
 
     return result;
 }
+
+export const getAutoAuctionUsersWithoutOngoingAuction = async() => {
+    let query = `
+                with ongoing_user_ids as (
+                    select distinct user_id
+                    from mail_auctions
+                    where end_date >= current_timestamp
+					  and deleted_at is null
+                )
+
+                select *
+                from users u
+                where not exists (select 1 from ongoing_user_ids ui where ui.user_id = u.id)
+                  and is_auto_auction
+                  and auto_auction_duration > 0
+                  and auto_auction_winner_count > 0`;
+
+    return await DB.executeQueryForResults<User>(query);
+}

@@ -9,6 +9,7 @@ export type MailAuction = {
     processed_at?: string;
     created_at: string;
     deleted_at?: string;
+    winner_count: number;
 }
 
 export type ProcessedMailAuction = MailAuction & {
@@ -22,6 +23,7 @@ export type PublicMailAuction = {
     start_date: number; // unix
     end_date: number; // unix
     min_bid: number;
+    winner_count: number;
 }
 
 export type PublicMailAuctionWithBidder = {
@@ -31,6 +33,7 @@ export type PublicMailAuctionWithBidder = {
     start_date: number; // unix
     end_date: number; // unix
     min_bid: number;
+    winner_count: number;
 
     bidders: PublicBidder[];
 }
@@ -44,4 +47,5 @@ export const fillableColumns = [
     'processed_at',
     'created_at',
     'deleted_at',
+    'winner_count',
 ];

@@ -43,6 +43,10 @@ export type User = {
     tags?: UserTag[];
     is_verified: boolean;
     holiday_mode: boolean;
+    is_auto_auction: boolean;
+    auto_auction_duration: number;
+    auto_auction_start_bid: number;
+    auto_auction_winner_count: number;
 }
 
 export type PublicUser = {
@@ -93,4 +97,8 @@ export const fillableColumns = [
     'calendar_advance_days',
     'is_verified',
     'holiday_mode',
+    'is_auto_auction',
+    'auto_auction_duration',
+    'auto_auction_start_bid',
+    'auto_auction_winner_count',
 ];

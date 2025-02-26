@@ -6,7 +6,7 @@ import { processExpiredReservationPayments, processReservationClaims, processRes
 import { processGithubInvitations, syncRepo } from "./ProcessGithubInvitations";
 import { processGithubIssues } from "./ProcessGithubIssues";
 import { processBroadcasts } from "./ProcessBroadcasts";
-import { processAuctionPayments, processAuctions } from "./ProcessAuctions";
+import { processAuctionPayments, processAuctions, processAutoAuctions } from "./ProcessAuctions";
 
 
 export const init = () => {
@@ -29,6 +29,7 @@ export const init = () => {
     setInterval(() => {
         processReservationPayments();
         processUnclaimedRespondedEmails();
+        processAutoAuctions();
     }, 5000);
 
     // process emails every 30s

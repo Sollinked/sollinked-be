@@ -9,7 +9,4 @@ dotenv.config({ path: path.join(__dirname, '.env')});
 // for testing purposes only
 (async() => {
     // await initializeToken("gold");
-    console.log(process.env)
-    console.log(process.env.BE_DOMAIN!)
-    console.log(base58.decode(process.env.SECRET_KEY!));
 })();

@@ -1022,4 +1022,46 @@ export default [
             DROP COLUMN email;
         `,
     },
+
+    {
+        name: "add_limit_to_mail_auctions",
+        query: `
+            ALTER TABLE mail_auctions
+            ADD winner_count int default(1) not null;
+        `,
+        rollback_query: `
+            ALTER TABLE mail_auctions
+            DROP COLUMN winner_count;
+        `,
+    },
+
+    {
+        name: "add_auction_mode_to_users",
+        query: `
+            ALTER TABLE users
+            ADD is_auto_auction bool default(false) not null;
+
+            ALTER TABLE users
+            ADD auto_auction_duration int default(0) not null;
+
+            ALTER TABLE users
+            ADD auto_auction_start_bid decimal(18,2) default(0) not null;
+
+            ALTER TABLE users
+            ADD auto_auction_winner_count int default(1) not null;
+        `,
+        rollback_query: `
+            ALTER TABLE users
+            DROP COLUMN is_auto_auction;
+            
+            ALTER TABLE users
+            DROP COLUMN auto_auction_duration;
+            
+            ALTER TABLE users
+            DROP COLUMN auto_auction_start_bid;
+            
+            ALTER TABLE users
+            DROP COLUMN auto_auction_winner_count;
+        `,
+    },
 ];
