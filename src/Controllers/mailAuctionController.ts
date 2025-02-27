@@ -186,6 +186,7 @@ export const live = async(withPublicKey?: boolean, withZeroValue?: boolean) => {
                    JOIN users u on u.id = a.user_id
                    WHERE EXTRACT(EPOCH FROM a.end_date) > EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
                      AND deleted_at is null
+                     AND processed_at is null
                    ORDER BY end_date`;
     
     const result = await DB.executeQueryForResults<PublicMailAuction>(query);
