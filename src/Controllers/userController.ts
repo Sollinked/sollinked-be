@@ -92,6 +92,7 @@ export const publicView = async(id: number) => {
     // tiktok: string;
     // youtube: string;
     // tiers?: UserTier[];
+    // auction_id?: number;
     const query = `SELECT 
                         id,
                         username,
@@ -117,6 +118,8 @@ export const publicView = async(id: number) => {
     result.profile_picture = getProfilePictureLink(result.profile_picture);
     result.tiers = await userTierController.find({ user_id: id });
     result.tags = await userTagController.find({ user_id: id });
+    let auction = await mailAuctionController.findOldestLiveByUserId(id);
+    result.auction_id = auction?.id;
     return result;
 }
 
@@ -132,6 +135,7 @@ export const publicViewByUsername = async(username: string) => {
     // tiktok: string;
     // youtube: string;
     // tiers?: UserTier[];
+    // auction_id?: number;
     const query = `SELECT 
                         id,
                         username,
@@ -160,6 +164,8 @@ export const publicViewByUsername = async(username: string) => {
     result.contentPasses = await contentPassController.find({ user_id: result.id });
     result.contents = await contentController.find({ user_id: result.id, status: "published" }, true);
     result.tags = await userTagController.find({ user_id: result.id });
+    let auction = await mailAuctionController.findOldestLiveByUserId(result.id);
+    result.auction_id = auction?.id;
     return result;
 }
 
@@ -414,6 +420,8 @@ export const search = async(username: string) => {
         result[index].value_usd = 0; // dont display
         result[index].profile_picture = getProfilePictureLink(result[index].profile_picture);
         result[index].tags = await userTagController.find({ user_id: result[index].id });
+        let auction = await mailAuctionController.findOldestLiveByUserId(result[index].id);
+        result[index].auction_id = auction?.id;
     }
 
     return result;

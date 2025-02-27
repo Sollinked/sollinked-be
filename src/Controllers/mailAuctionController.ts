@@ -136,6 +136,19 @@ export const findByUserId = async(user_id: number) => {
     return ret;
 }
 
+export const findOldestLiveByUserId = async(user_id: number) => {
+    // ignore cancelled
+    const query = `SELECT * 
+                    FROM ${table} 
+                    WHERE user_id = ${user_id}
+                     AND deleted_at is null
+                     AND processed_at is null
+                     AND EXTRACT(EPOCH FROM end_date) > EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)
+                    ORDER BY end_date`;
+
+    return await DB.executeQueryForSingleResult<MailAuction>(query);
+}
+
 export const getUnprocessedEndedAuctions = async() => {
     const query = `SELECT * 
                     FROM ${table} 

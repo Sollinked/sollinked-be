@@ -68,6 +68,7 @@ export type PublicUser = {
     is_verified: boolean;
     holiday_mode: boolean;
     tags?: UserTag[];
+    auction_id?: number;
 }
 
 export type HomepageUser = {
@@ -79,6 +80,7 @@ export type HomepageUser = {
     is_verified: boolean;
     tags?: UserTag[];
     holiday_mode: boolean;
+    auction_id?: number;
 }
 
 export const fillableColumns = [
