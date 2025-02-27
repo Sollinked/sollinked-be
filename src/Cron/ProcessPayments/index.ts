@@ -127,7 +127,7 @@ const internalSendAuctionEmail = async({
     domain: string;
     bcc_to_email: string;
 }) => {
-    let split = mail.message?.split("|")[0];
+    let split = mail.message?.split("|");
 
     let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
     let expiry_date: string = moment().add(7, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
@@ -135,14 +135,14 @@ const internalSendAuctionEmail = async({
     let sent_message_id = "";
 
     // from email
-    if(split === "bid_from_email") {
+    if(split && split[0] === "bid_from_email") {
         let message_id = split[1];
         let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(message_id) as any;
         let attachments = mapAttachments(parserAttachments);
 
         sent_message_id = await sendEmail({
             to: user.email_address!,
-            subject: `${subject ?? "No Subject"}`,
+            subject: `Auction Winner: ${subject ?? "No Subject"}`,
             text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${from}\n\n${text}`,
             textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${from}</p><br>${textAsHtml}`,
             attachments,
