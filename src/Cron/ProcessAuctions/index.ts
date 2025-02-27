@@ -120,8 +120,8 @@ export const processAutoAuctions = async() => {
     for(const user of users) {
         let endDate = moment(startDate).add(user.auto_auction_duration, 'days');
         await mailAuctionController.create({
-            start_date: startDate.format('YYYY-MM-DD HH:mm:ss'),
-            end_date: endDate.format('YYYY-MM-DD HH:mm:ss'),
+            start_date: startDate.utc().format('YYYY-MM-DD HH:mm:ss'),
+            end_date: endDate.utc().format('YYYY-MM-DD HH:mm:ss'),
             min_bid: user.auto_auction_start_bid,
             winner_count: user.auto_auction_winner_count,
             user_id: user.id,
