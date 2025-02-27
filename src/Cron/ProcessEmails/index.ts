@@ -4,7 +4,9 @@ import { deleteEmailForwarder, getEmailByMessageId, getImap, mapAttachments, sen
 import * as controller from '../../../src/Controllers/mailController';
 import * as userController from '../../Controllers/userController';
 import * as userTierController from '../../Controllers/userTierController';
-import { clawbackSOLFrom, closeEmptyAccounts, getAdminAccount, getExcludeEmailDomains, getMailCredentials, sendTokensTo } from '../../../utils';
+import * as mailAuctionController from '../../Controllers/mailAuctionController';
+import * as mailBidController from '../../Controllers/mailBidController';
+import { clawbackSOLFrom, closeEmptyAccounts, getAdminAccount, getDappDomain, getExcludeEmailDomains, getMailCredentials, sendTokensTo } from '../../../utils';
 import moment from 'moment';
 import { USDC_ADDRESS, USDC_DECIMALS } from '../../Constants';
 import { ProcessedMail } from '../../Models/mail';
@@ -117,34 +119,78 @@ const processEmailToUser = async({
     const tiplink = await TipLink.create();
 
     let fromUsers = await userController.find({ email_address: returnToEmail });
+    let auctions = await mailAuctionController.getUserLiveMailAuctions(users[0].id);
+    let isAuction = (auctions?.length ?? 0) > 0;
+    let returnText = "";
 
-    // save from, to, messageId and tiplink url to db
-    await controller.create({
-        user_id: users[0].id,
-        from_user_id: fromUsers?.[0]?.id ?? null,
-        from_email: returnToEmail,
-        to_email: toEmail,
-        message_id: messageId,
-        tiplink_url: tiplink.url.toString(),
-        tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
-    });
-
-    // need to include guide to deposit?
-    let returnText = `Please deposit USDC (Solana) to the Solana Address below for a guaranteed audience\n${tiplink.keypair.publicKey.toBase58()}.\nPlease deposit by ${moment().add(2, 'd').utc().format('YYYY-MM-DD HH:mm:ss')} UTC, deposits after this date will not be processed.`;
-    let userTiers = await userTierController.find({ user_id: users[0].id });
-    if(userTiers && userTiers.length > 0){
-        returnText += "\n\nThey will reply in:";
-
-        userTiers.forEach((tier, index) => {
-            if(tier.respond_days === 0) {
-                returnText += `\n${index + 1}. 12 hours for ${parseFloat(tier.value_usd).toFixed(2)} USDC`;
-                return;
-            }
-
-            returnText += `\n${index + 1}. ${tier.respond_days} days for ${parseFloat(tier.value_usd).toFixed(2)} USDC`;
+    // add mail bid
+    if(isAuction) {
+        let auction = auctions![0];
+        await mailBidController.create({
+            auction_id: auction.id,
+            user_id: fromUsers?.[0]?.id ?? null,
+            tiplink_url: tiplink.url.toString(),
+            tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
+            value_usd: 0,
+            subject,
+            message: `bid_from_email|${messageId}`,
+            email: returnToEmail,
         });
 
-        returnText += "\n\nFunds will be returned if they did not reply.";
+        let bidders = await mailBidController.getBiddersForAuction(auction.id);
+
+        returnText = `The person you're trying to reach is currently hosting an auction. You will need to be among the top ${auction.winner_count} bidders if you want this email to reach them.`;
+        
+        if(bidders && bidders.length > 0) {
+            returnText += `\n\nLeaderboard:`;
+            let index = 1;
+            for(const bidder of bidders) {
+                returnText += `\n${index}. ${bidder.value_usd} USDC`;
+                index++;
+            }
+        }
+        
+        else {
+            returnText += `\n\nBe the first bidder! Bid starts at ${auction.min_bid} USDC.`;
+        }
+
+        returnText += `\n\nPlease deposit USDC (Solana) to the Solana Address below to enter the auction.\n${tiplink.keypair.publicKey.toBase58()}.`;
+        returnText += `\nThe auction will end at ${moment(auction.end_date).utc().format('YYYY-MM-DD HH:mm:ss')} UTC.`;
+        returnText += `\nAuction Link: ${getDappDomain()}/auction/${auction.id}`;
+    }
+
+    else {
+
+        // save from, to, messageId and tiplink url to db
+        await controller.create({
+            user_id: users[0].id,
+            from_user_id: fromUsers?.[0]?.id ?? null,
+            from_email: returnToEmail,
+            to_email: toEmail,
+            message_id: messageId,
+            tiplink_url: tiplink.url.toString(),
+            tiplink_public_key: tiplink.keypair.publicKey.toBase58(),
+            is_auction: false,
+            is_from_site: false,
+        });
+    
+        // need to include guide to deposit?
+        returnText = `Please deposit USDC (Solana) to the Solana Address below for a guaranteed audience\n${tiplink.keypair.publicKey.toBase58()}.\nPlease deposit by ${moment().add(2, 'd').utc().format('YYYY-MM-DD HH:mm:ss')} UTC, deposits after this date will not be processed.`;
+        let userTiers = await userTierController.find({ user_id: users[0].id });
+        if(userTiers && userTiers.length > 0){
+            returnText += "\n\nThey will reply in:";
+    
+            userTiers.forEach((tier, index) => {
+                if(tier.respond_days === 0) {
+                    returnText += `\n${index + 1}. 12 hours for ${parseFloat(tier.value_usd).toFixed(2)} USDC`;
+                    return;
+                }
+    
+                returnText += `\n${index + 1}. ${tier.respond_days} days for ${parseFloat(tier.value_usd).toFixed(2)} USDC`;
+            });
+    
+            returnText += "\n\nFunds will be returned if they did not reply.";
+        }
     }
     
     await sendEmail({

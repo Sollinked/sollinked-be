@@ -81,20 +81,17 @@ export const publicView = async(id: number) => {
     } as PublicMailAuctionWithBidder;
 }
 
-export const getUserMailAuctions = async(user_id: number) => {
+export const getUserLiveMailAuctions = async(user_id: number) => {
     const query = `
             SELECT ${fillableColumns.join(",")} 
             FROM ${table} 
             WHERE user_id = ${user_id}
               AND deleted_at is null 
-            ORDER BY end_date desc`;
+              AND end_date > CURRENT_TIMESTAMP
+            ORDER BY end_date`;
 
     
-    const result = await DB.executeQueryForSingleResult<MailAuction>(query);
-    if(!result) {
-        return result;
-    }
-
+    const result = await DB.executeQueryForResults<MailAuction>(query);
     return result;
 }
 
@@ -177,7 +174,7 @@ export const softDelete = async(id: number) => {
     return;
 }
 
-export const live = async(withPublicKey?: boolean) => {
+export const live = async(withPublicKey?: boolean, withZeroValue?: boolean) => {
     const query = `SELECT 
                         a.id,
                         coalesce(u.display_name, u.address) as display_name,
@@ -209,7 +206,7 @@ export const live = async(withPublicKey?: boolean) => {
                     FROM mail_bids b
                     JOIN users u on u.id = b.user_id
                     WHERE b.auction_id = ${auction.id}
-                     ${withPublicKey? '' : 'AND value_usd > 0'}
+                     ${withZeroValue? '' : 'AND value_usd > 0'}
                     ORDER BY value_usd desc, updated_at asc`
 
             const bidderResult = await DB.executeQueryForResults<PublicBidder>(bidderQuery);

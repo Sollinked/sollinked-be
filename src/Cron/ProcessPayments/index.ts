@@ -115,7 +115,6 @@ const internalSendEmail = async({
 const internalSendAuctionEmail = async({
     user, 
     mail, 
-    tier, 
     tokenBalance,
     uuid,
     domain,
@@ -123,24 +122,45 @@ const internalSendAuctionEmail = async({
 }: {
     user: User;
     mail: ProcessedMail;
-    tier?: UserTier; // when it's auction, then there's no tier
     tokenBalance: number;
     uuid: string;
     domain: string;
     bcc_to_email: string;
 }) => {
+    let split = mail.message?.split("|")[0];
+
     let processed_at = moment().format('YYYY-MM-DDTHH:mm:ssZ');
     let expiry_date: string = moment().add(7, 'd').format('YYYY-MM-DDTHH:mm:ssZ');
     let utc_expiry_date: string =  moment().utc().add(7, 'd').format('YYYY-MM-DD HH:mm');
+    let sent_message_id = "";
 
-    let sent_message_id = await sendEmail({
-        to: user.email_address!,
-        subject: `${mail.subject ?? "No Subject"}`,
-        text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${mail.from_email}\n\n${mail.message}`,
-        textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${mail.from_email}</p><br>${mail.message}`,
-        // attachments,
-        replyTo: `${uuid}@${domain}`
-    });
+    // from email
+    if(split === "bid_from_email") {
+        let message_id = split[1];
+        let { from, subject, textAsHtml, text, attachments: parserAttachments } = await getEmailByMessageId(message_id) as any;
+        let attachments = mapAttachments(parserAttachments);
+
+        sent_message_id = await sendEmail({
+            to: user.email_address!,
+            subject: `${subject ?? "No Subject"}`,
+            text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${from}\n\n${text}`,
+            textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${from}</p><br>${textAsHtml}`,
+            attachments,
+            replyTo: `${uuid}@${domain}`
+        });
+    }
+
+    // from site
+    else {
+        sent_message_id = await sendEmail({
+            to: user.email_address!,
+            subject: `${mail.subject ?? "No Subject"}`,
+            text: `Paid: ${tokenBalance} USDC\nExpiry Date: ${utc_expiry_date} UTC\nSender: ${mail.from_email}\n\n${mail.message}`,
+            textAsHtml: `<p>Paid: ${tokenBalance} USDC</p><p>Expiry Date: ${utc_expiry_date} UTC</p><p>Sender: ${mail.from_email}</p><br>${mail.message}`,
+            // attachments,
+            replyTo: `${uuid}@${domain}`
+        });
+    }
 
     // receipt
     await sendEmail({

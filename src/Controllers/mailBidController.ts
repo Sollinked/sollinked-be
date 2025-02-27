@@ -148,6 +148,7 @@ export const getBiddersForAuction = async(auction_id: number) => {
         FROM mail_bids b
         JOIN users u on u.id = b.user_id
         WHERE b.auction_id = ${auction_id}
+          AND value_usd > 0
         ORDER BY value_usd desc, updated_at asc
     `; 
 

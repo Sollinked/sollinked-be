@@ -14,7 +14,7 @@ import DB from '../../DB';
 import { BALANCE_ERROR_NUMBER, getAddressUSDCBalance } from '../../Token';
 
 export const processAuctionPayments = async() => {
-    let auctions = await mailAuctionController.live(true);
+    let auctions = await mailAuctionController.live(true, true);
 
     // no mails
     if(!auctions || auctions.length === 0) {
@@ -53,10 +53,13 @@ export const processAuctions = async() => {
     const adminAccount = getAdminAccount();
     for(const auction of auctions) {
         let bidders = await mailBidController.getBiddersForAuction(auction.id);
+        let auctionUser = await userController.view(auction.user_id);
+
         if(bidders && bidders.length > 0) {
-            let isFirst = true;
+            let index = 0;
             for(const bidder of bidders) {
-                if(isFirst) {
+                index++;
+                if(index <= auction.winner_count) {
                     //send email
                     let user = await userController.view(auction.user_id);
                     let fromUser = await userController.view(bidder.user_id);
@@ -75,7 +78,7 @@ export const processAuctions = async() => {
                         message: bidder.message,
                     });
                     await mailBidController.update(bidder.id, { is_success: true });
-                    isFirst = false;
+                    
                     continue;
                 }
 
@@ -87,6 +90,14 @@ export const processAuctions = async() => {
                         await mailBidController.update(bidder.id, { is_success: false });
                         await DB.log('ProcessAuctions', 'processAuctionPayments', `Refunded: ${bidder.id}`);
                         await closeEmptyAccounts(tiplink.keypair);
+    
+                        if(bidder.email) {
+                            await sendEmail({
+                                to: bidder.email,
+                                subject: "You lost the auction!",
+                                text: `Your bid of ${Number(bidder.value_usd)} USDC was not enough to be among the top ${auction.winner_count} in ${auctionUser!.display_name ?? auctionUser!.username}'s auction. Try again next time!\nYour bid is transferred back to your Solana address.`,
+                            });
+                        }
                     }
 
                     catch(e: any) {
@@ -109,12 +120,11 @@ export const processAutoAuctions = async() => {
     for(const user of users) {
         let endDate = moment(startDate).add(user.auto_auction_duration, 'days');
         await mailAuctionController.create({
-            start_date: startDate.toISOString(),
-            end_date: endDate.toISOString(),
+            start_date: startDate.format('YYYY-MM-DD HH:mm:ss'),
+            end_date: endDate.format('YYYY-MM-DD HH:mm:ss'),
             min_bid: user.auto_auction_start_bid,
             winner_count: user.auto_auction_winner_count,
             user_id: user.id,
         });
-        console.log('created')
     }
 }
