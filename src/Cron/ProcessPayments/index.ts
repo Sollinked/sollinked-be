@@ -148,6 +148,8 @@ const internalSendAuctionEmail = async({
             attachments,
             replyTo: `${uuid}@${domain}`
         });
+
+        await mailController.update(mail.key, { message_id: message_id, message: text })
     }
 
     // from site
